@@ -55,8 +55,9 @@ import org.springframework.lang.Nullable;
  * @see ConfigurableBeanFactory#addBeanPostProcessor
  * @see BeanFactoryPostProcessor
  *
- * 如果使用BeanFactory实现，非ApplicationContext实现，BeanPostProcessor执行顺序就是添加顺序。
- * 如果使用的是AbstractApplicationContext（实现了ApplicationContext）的实现，则通过如下规则指定顺序。PriorityOrdered > Ordered > 无实现接口的 > 内部Bean后处理器（实现了MergedBeanDefinitionPostProcessor接口的是内部Bean PostProcessor，将在最后且无序注册）
+ * 1.如果使用BeanFactory实现，非ApplicationContext实现，BeanPostProcessor执行顺序就是添加顺序。
+ * 2.如果使用的是AbstractApplicationContext（实现了ApplicationContext）的实现，则通过如下规则指定顺序。
+ * PriorityOrdered > Ordered > 无实现接口的 > 内部Bean后处理器（实现了MergedBeanDefinitionPostProcessor接口的是内部Bean PostProcessor，将在最后且无序注册）
  */
 public interface BeanPostProcessor {
 
@@ -72,13 +73,13 @@ public interface BeanPostProcessor {
 	 * if {@code null}, no subsequent BeanPostProcessors will be invoked
 	 * @throws org.springframework.beans.BeansException in case of errors
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
+	 *
+	 *  postProcessBeforeInitialization()在每个bean创建之后
+	 *  在任何显示初始化方法（例如上面的三种方式，定义的init方法，@PostConstruct，接口InitializingBean的方法）调用之前工作
 	 * 
-	 * 在任何初始化方法（例如上面的三种方式，定义的init方法，@PostConstruct，接口InitializingBean的方法）调用之前工作
-	 * postProcessBeforeInitialization()在每个bean创建之后,初始化方法之前调用
-	 * 实例化、依赖注入完毕。在调用**显示的初始化之前,完成一些定制的初始化任务
-	 * 1. BeanValidationPostProcessor完成JSR-303 @Valid注解Bean验证
-	 * 2. InitDestroyAnnotationBeanPostProcessor：完成@PostConstruct注解的初始化方法调用(所以它是在init显示调用之前执行的)
-	 * 3. ApplicationContextAwareProcessor完成一些Aware接口的注入（如EnvironmentAware、ResourceLoaderAware、ApplicationContextAware）
+	 * 1. BeanValidationPostProcessor 完成JSR-303 @Valid注解Bean验证
+	 * 2. InitDestroyAnnotationBeanPostProcessor 完成@PostConstruct注解的初始化方法调用(所以它是在@Bean指定初始化方法调用之前执行的)
+	 * 3. ApplicationContextAwareProcessor 完成一些Aware接口的注入（如EnvironmentAware、ResourceLoaderAware、ApplicationContextAware）
 	 */
 	@Nullable
 	default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
@@ -106,12 +107,11 @@ public interface BeanPostProcessor {
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
 	 * @see org.springframework.beans.factory.FactoryBean
 	 *
-	 * 在初始化方法（例如上面的三种方式，定义的init方法，@PostConstruct，接口InitializingBean的方法）调用之后工作
-	 * postProcessAfterInitialization在每个bean的初始化方法执行之后被调用,该方法通常用户修改预定义的bean的属性值，可以实现该接口进行覆盖。
-	 * （该方法特别的重要，可以做一些全局统一处理的操作）
+	 *  postProcessAfterInitialization在每个bean的初始化方法（例如上面的三种方式，@Bean指定初始化方法，@PostConstruct，接口InitializingBean的方法）调用之后工作
+	 *  该方法通常用于修改预定义的bean的属性值，可以实现属性覆盖。（该方法特别的重要，可以做一些全局统一处理的操作）
 	 * 整个bean初始化都完全完毕了。做一些事情
-	 * 1. AspectJAwareAdvisorAutoProxyCreator：完成xml风格的AOP配置(aop:config)的目标对象包装到AOP代理对象
-	 * 2. AnnotationAwareAspectJAutoProxyCreator：完成@Aspectj注解风格（aop:aspectj-autoproxy @Aspect）的AOP配置的目标对象包装到AOP代理对象
+	 * 1. AspectJAwareAdvisorAutoProxyCreator 完成xml风格的AOP配置(aop:config)的目标对象包装到AOP代理对象
+	 * 2. AnnotationAwareAspectJAutoProxyCreator 完成@Aspectj注解风格（aop:aspectj-autoproxy @Aspect）的AOP配置的目标对象包装到AOP代理对象
 	 */
 	@Nullable
 	default Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {

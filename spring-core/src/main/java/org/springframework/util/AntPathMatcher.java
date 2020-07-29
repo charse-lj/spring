@@ -70,6 +70,10 @@ import org.springframework.lang.Nullable;
  * @author Sam Brannen
  * @author Vladislav Kisel
  * @since 16.07.2003
+ *
+ * 1.?（匹配任何单字符）
+ * 2.*（匹配0或者任意数量的字符）
+ * 3.**（匹配0或者更多的目录）
  */
 public class AntPathMatcher implements PathMatcher {
 

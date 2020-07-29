@@ -79,6 +79,16 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
  * @see #DelegatingFilterProxy(String, WebApplicationContext)
  * @see javax.servlet.ServletContext#addFilter(String, Filter)
  * @see org.springframework.web.WebApplicationInitializer
+ *
+ * 就是一个filter的代理,通过spring容器来管理filter的生命周期(过滤器是servlet规范中定义的，并不归Spring容器管理，也无法直接注入spring中的Bean,Spring Boot环境下使用Filter,可以直接@Autowired注入)
+ *
+ * @WebFilter(urlPatterns = "/*", initParams = {
+ *         @WebInitParam(name = "targetFilterLifecycle", value = "true"),
+ *         @WebInitParam(name = "targetBeanName", value = "helloFilter")})
+ * public class HelloFilterProxy extends DelegatingFilterProxy {
+ *
+ * }
+ * bean的id是能对应上
  */
 public class DelegatingFilterProxy extends GenericFilterBean {
 

@@ -65,6 +65,23 @@ import org.springframework.web.util.WebUtils;
  * @author Juergen Hoeller
  * @author Rossen Stoyanchev
  * @since 06.12.2003
+ *
+ * 能够确保在一次请求中只通过一次filter
+ * 此方法是为了兼容不同的web container，也就是说并不是所有的container都入我们期望的只过滤一次，servlet版本不同，执行过程也不同
+ * 适配了不同的web容器，以及对异步请求，也只过滤一次的需求
+ *
+ * 继承自OncePerRequestFilter的Filter,采用@WebFilter以及Spring Bean的方式都是ok好使的
+ * 采用@WebFilterinitFilterBean方法就只会被执行一次，但是，但是，但是此时@Autowaire自动注入就不好使了,需要自己去容器里拿
+ *
+ * Spring内置OncePerRequestFilter实现
+ * {@link org.springframework.web.filter.CharacterEncodingFilter}
+ * {@link org.springframework.web.filter.HiddenHttpMethodFilter}
+ * {@link org.springframework.web.filter.HttpPutFormContentFilter}
+ * {@link org.springframework.web.filter.FormContentFilter}
+ * {@link org.springframework.web.filter.RequestContextFilter}  让你在一个请求的线程内，任意地方都可以获取到请求参数的相关信息，非常的方便;
+ * 这里注意一个概念，缺省情况下，Servlet容器对一个请求的整个处理过程，是由同一个线程完成的，中途不会切换线程。但这个线程在处理完一个请求后，会被放回到线程池用于处理其他请求。
+ * {@link org.springframework.web.multipart.support.MultipartFilter}
+ * {@link org.springframework.web.filter.CorsFilter}
  */
 public abstract class OncePerRequestFilter extends GenericFilterBean {
 
@@ -72,6 +89,7 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	 * Suffix that gets appended to the filter name for the
 	 * "already filtered" request attribute.
 	 * @see #getAlreadyFilteredAttributeName
+	 * 已过滤过的过滤器的固定后缀名
 	 */
 	public static final String ALREADY_FILTERED_SUFFIX = ".FILTERED";
 
@@ -87,13 +105,14 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	@Override
 	public final void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-
+		//只处理http请求
 		if (!(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
 			throw new ServletException("OncePerRequestFilter just supports HTTP requests");
 		}
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
-
+		
+		//判断这个请求是否需要执行过滤
 		String alreadyFilteredAttributeName = getAlreadyFilteredAttributeName();
 		boolean hasAlreadyFilteredAttribute = request.getAttribute(alreadyFilteredAttributeName) != null;
 
@@ -108,14 +127,16 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 				doFilterNestedErrorDispatch(httpRequest, httpResponse, filterChain);
 				return;
 			}
-
+			// 直接放行，不执行此过滤器的过滤操作
 			// Proceed without invoking this filter...
 			filterChain.doFilter(request, response);
 		}
 		else {
 			// Do invoke this filter...
+			// 执行过滤，并且向请求域设置一个值，key就是生成的全局唯一的·alreadyFilteredAttributeName·
 			request.setAttribute(alreadyFilteredAttributeName, Boolean.TRUE);
 			try {
+				//由子类自己去实现拦截的逻辑  注意 自己写时，filterChain.doFilter(request, response);这句代码不要忘了
 				doFilterInternal(httpRequest, httpResponse, filterChain);
 			}
 			finally {
@@ -125,6 +146,11 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 		}
 	}
 
+	/**
+	 * 这里很清楚的记录着  需要被跳过的请求们，这种请求直接就放行了
+	 * @param request
+	 * @return
+	 */
 	private boolean skipDispatch(HttpServletRequest request) {
 		if (isAsyncDispatch(request) && shouldNotFilterAsyncDispatch()) {
 			return true;
@@ -143,6 +169,8 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	 * @param request the current request
 	 * @since 3.2
 	 * @see WebAsyncManager#hasConcurrentResult()
+	 *
+	 * 判断该请求是否是异步请求（Servlet 3.0后有异步请求,Spring MVC3.2开始）
 	 */
 	protected boolean isAsyncDispatch(HttpServletRequest request) {
 		return WebAsyncUtils.getAsyncManager(request).hasConcurrentResult();
@@ -167,6 +195,8 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	 * it falls back to its class name.
 	 * @see #getFilterName
 	 * @see #ALREADY_FILTERED_SUFFIX
+	 *
+	 * 相当于生成已过滤的过滤器的名字（全局唯一的）
 	 */
 	protected String getAlreadyFilteredAttributeName() {
 		String name = getFilterName();
@@ -183,6 +213,8 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	 * @param request current HTTP request
 	 * @return whether the given request should <i>not</i> be filtered
 	 * @throws ServletException in case of errors
+	 *
+	 * 可以人工直接返回true  那这个请求就肯定不会被过滤了~~~~
 	 */
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
 		return false;
@@ -204,6 +236,9 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	 * be invoked during async dispatches with the same guarantees of being
 	 * invoked only once during a request within a single thread.
 	 * @since 3.2
+	 *
+	 * 是否需要不过滤异步的请求（默认是不多次过滤异步请求的）
+	 * javadoc：javax.servlet.DispatcherType.ASYNC的请求方式意味着可能在一个请求里这个过滤器会被多个不同线程调用多次，而这里返回true，就能保证只会被调用一次
 	 */
 	protected boolean shouldNotFilterAsyncDispatch() {
 		return true;

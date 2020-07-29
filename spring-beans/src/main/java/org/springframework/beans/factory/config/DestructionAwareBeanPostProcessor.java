@@ -43,7 +43,7 @@ public interface DestructionAwareBeanPostProcessor extends BeanPostProcessor {
 	 * @see org.springframework.beans.factory.support.AbstractBeanDefinition#setDestroyMethodName(String)
 	 *
 	 * 销毁后处理回调方法，该回调只能应用到单例Bean
-	 * 如InitDestroyAnnotationBeanPostProcessor完成@PreDestroy注解的销毁方法调用
+	 * 如 InitDestroyAnnotationBeanPostProcessor 完成@PreDestroy注解的销毁方法调用
 	 */
 	void postProcessBeforeDestruction(Object bean, String beanName) throws BeansException;
 

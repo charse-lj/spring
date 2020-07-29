@@ -206,6 +206,8 @@ public abstract class GenericFilterBean implements Filter, BeanNameAware, Enviro
 	 * @throws ServletException if bean properties are invalid (or required
 	 * properties are missing), or if subclass initialization fails.
 	 * @see #initFilterBean
+	 *
+	 * Final掉了init方法，因此若我们继承它，无法使用init方法了。但我们可以复写initFilterBean这个方法，实现我们比init方法更强大的一些逻辑，可以直接使用容器对象了
 	 */
 	@Override
 	public final void init(FilterConfig filterConfig) throws ServletException {
@@ -265,6 +267,10 @@ public abstract class GenericFilterBean implements Filter, BeanNameAware, Enviro
 	 * @throws ServletException if subclass initialization fails
 	 * @see #getFilterName()
 	 * @see #getServletContext()
+	 *
+	 * initFilterBean()在初始化的时候，会被执行两次
+	 * 1.afterPropertiesSet()
+	 * 2.init()
 	 */
 	protected void initFilterBean() throws ServletException {
 	}
@@ -292,6 +298,9 @@ public abstract class GenericFilterBean implements Filter, BeanNameAware, Enviro
 	 * @see javax.servlet.GenericServlet#getServletName()
 	 * @see javax.servlet.FilterConfig#getFilterName()
 	 * @see #setBeanName
+	 *
+	 *  如果在Spring应用程序上下文中初始化为bean，那么它将返回到bean工厂中定义的bean名称。
+	 *  需要注意的是，如果是以bean的形式加入了。（比如Boot环境下），此时FilterConfig还为null的，所以有这个判断
 	 */
 	@Nullable
 	protected String getFilterName() {

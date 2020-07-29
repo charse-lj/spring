@@ -40,6 +40,9 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
  * @author Arjen Poutsma
  * @author Chris Beams
  * @since 3.2
+ *
+ * 自己来实现AbstractAnnotationConfigDispatcherServletInitializer一个初始化实体类
+ * 你想定制化父类的一些默认行为  这里都是可以复写父类的protected方法的~~~~
  */
 public abstract class AbstractAnnotationConfigDispatcherServletInitializer
 		extends AbstractDispatcherServletInitializer {
@@ -87,6 +90,16 @@ public abstract class AbstractAnnotationConfigDispatcherServletInitializer
 	 * {@linkplain #createRootApplicationContext() root application context}.
 	 * @return the configuration for the root application context, or {@code null}
 	 * if creation and registration of a root context is not desired
+	 *
+	 * 根容器的配置类；（Spring的配置文件）   父容器；
+	 * // 备注：此处@ControllerAdvice、RestControllerAdvice 这个注解不要忘了，属于Controller层处理全局异常的，应该交给web去扫描
+	 * @ComponentScan(value = "com.fsx", excludeFilters = {
+	 *         @Filter(type = FilterType.ANNOTATION, classes = {Controller.class, ControllerAdvice.class, RestControllerAdvice.class})
+	 * })
+	 * @Configuration //最好标注上，本人亲测若不标准，可能扫描不生效
+	 * public class RootConfig {
+	 *
+	 * }
 	 */
 	@Nullable
 	protected abstract Class<?>[] getRootConfigClasses();
@@ -96,6 +109,16 @@ public abstract class AbstractAnnotationConfigDispatcherServletInitializer
 	 * {@linkplain #createServletApplicationContext() Servlet application context}.
 	 * @return the configuration for the Servlet application context, or
 	 * {@code null} if all configuration is specified through root config classes.
+	 *
+	 * web容器的配置类（SpringMVC配置文件）  子容器；
+	 * // 此处记得排除掉@Controller和@ControllerAdvice、@RestControllerAdvice
+	 * @ComponentScan(value = "com.fsx", useDefaultFilters = false,
+	 *         includeFilters = {@Filter(type = FilterType.ANNOTATION, classes = {Controller.class, ControllerAdvice.class, RestControllerAdvice.class})}
+	 * )
+	 * @Configuration //最好标注上，本人亲测若不标准，可能扫描不生效
+	 * public class AppConfig {
+	 *
+	 * }
 	 */
 	@Nullable
 	protected abstract Class<?>[] getServletConfigClasses();

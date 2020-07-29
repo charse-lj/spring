@@ -45,28 +45,42 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	/** Logger available to subclasses. */
 	protected final Log logger = LogFactory.getLog(getClass());
 
-	/** Map from alias to canonical name. */
+	/** Map from alias to canonical name. 
+	 *  key为alias别名，value为name真实值
+	 */
 	private final Map<String, String> aliasMap = new ConcurrentHashMap<>(16);
 
 
+	/**
+	 * 1、需要避免循环别名和name之间循环引用的问题。比如a->b b->c c->a这就循环引用了，是需要避免的，否则很容易出问题
+	 * 2、不能出现并发问题直接出现如下情况。a -> b b->a (其实也是一种循环引用嘛)
+	 * @param name the canonical name
+	 * @param alias the alias to be registered
+	 */
 	@Override
 	public void registerAlias(String name, String alias) {
 		Assert.hasText(name, "'name' must not be empty");
 		Assert.hasText(alias, "'alias' must not be empty");
+		//此处注意：很多人疑问的地方，用了ConcurrentHashMap，为何此处还要加锁呢？有必要吗？
+		//答：非常有必要的。因为ConcurrentHashMap只能保证单个put、remove方法的原子性。而不能保证多个操作同时的原子性。比如我一边添加、一边删除  显然这是不被允许的
 		synchronized (this.aliasMap) {
 			if (alias.equals(name)) {
+				//若发现别名和name是相同的，就不需要做啥了。而且顺手把这个key给移除掉
 				this.aliasMap.remove(alias);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Alias definition '" + alias + "' ignored since it points to same name");
 				}
 			}
 			else {
+				//拿到这个别名对应的name，看看该别名是否已经存在对应的name了
 				String registeredName = this.aliasMap.get(alias);
 				if (registeredName != null) {
 					if (registeredName.equals(name)) {
 						// An existing alias - no need to re-register
+						//若已经存在对应的name了，而且还和传进俩的name相同，那啥都不做就行
 						return;
 					}
+					//若存在对应的name了，切还不让复写此别名（让其指向别的name），那就跑错吧
 					if (!allowAliasOverriding()) {
 						throw new IllegalStateException("Cannot define alias '" + alias + "' for name '" +
 								name + "': It is already registered for name '" + registeredName + "'.");
@@ -76,6 +90,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 								registeredName + "' with new target name '" + name + "'");
 					}
 				}
+				//当alias对应的name不存在的时候
 				checkForAliasCircle(name, alias);
 				this.aliasMap.put(alias, name);
 				if (logger.isTraceEnabled()) {
@@ -98,9 +113,15 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 * @param name the name to check
 	 * @param alias the alias to look for
 	 * @since 4.2.1
+	 *
+	 * {b:a,c:b} -->hasAlias(a,b)
+	 * 		     -->hasAlias(a,c)  都会循环依赖
 	 */
 	public boolean hasAlias(String name, String alias) {
 		String registeredName = this.aliasMap.get(alias);
+		//如果此alias和传入的alias相同，返回true  证明name有这个alias
+		//一般人可能上面那一步就算了直接return了，但是，但是，但是还有一种情况也必须考虑到：倘若这个已经注册过的registeredAlias和传入的alias不相等。
+		//但是把他作为name去找是否有alias的时候，如果有也得判断是true，表示有。 防止了a -> b  b->c  c->a的循环的情况  此处处理可以说是非常的优雅和谨慎了~
 		return ObjectUtils.nullSafeEquals(registeredName, name) || (registeredName != null
 				&& hasAlias(name, registeredName));
 	}

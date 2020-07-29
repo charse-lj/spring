@@ -48,8 +48,9 @@ public interface SmartInstantiationAwareBeanPostProcessor extends InstantiationA
 	 * @throws org.springframework.beans.BeansException in case of errors
 	 *
 	 *  predictBeanType：预测Bean的类型，返回第一个预测成功的Class类型，如果不能预测返回null；
-	 *  当你调用BeanFactory.getType(name)时当通过Bean定义无法得到Bean类型信息时就调用该回调方法来决定类型信息。
-	 *  方法：getBeanNamesForType(,)会循环调用此方法~~~ 如 BeanFactory.isTypeMatch(name, targetType)用于检测给定名字的Bean是否匹配目标类型（在依赖注入时需要使用）
+	 *  当你调用BeanFactory.getType(name)时,通过Bean定义无法得到Bean类型信息时就调用该回调方法来决定类型信息。
+	 *  方法：getBeanNamesForType()会循环调用此方法~~~
+	 *  如 BeanFactory.isTypeMatch(name, targetType)用于检测给定名字的Bean是否匹配目标类型（在依赖注入时需要使用）
 	 *  如果目标对象被AOP代理对象包装，此处将返回AOP代理对象的类型（而不是目标对象的类型）
 	 *
 	 */
@@ -66,7 +67,7 @@ public interface SmartInstantiationAwareBeanPostProcessor extends InstantiationA
 	 * @return the candidate constructors, or {@code null} if none specified
 	 * @throws org.springframework.beans.BeansException in case of errors
 	 *
-	 * etermineCandidateConstructors：检测Bean的构造器，可以检测出多个候选构造器，再有相应的策略决定使用哪一个
+	 * determineCandidateConstructors：检测Bean的构造器，可以检测出多个候选构造器，再有相应的策略决定使用哪一个
 	 * 在createBeanInstance的时候，会通过此方法尝试去找到一个合适的构造函数。若返回null，可能就直接使用空构造函数去实例化了
 	 * 如：AutowiredAnnotationBeanPostProcessor：它会扫描Bean中使用了@Autowired/@Value注解的构造器从而可以完成构造器注入
 	 */
@@ -99,7 +100,7 @@ public interface SmartInstantiationAwareBeanPostProcessor extends InstantiationA
 	 * @throws org.springframework.beans.BeansException in case of errors
 	 *
 	 *  getEarlyBeanReference：和循环引用相关了。
-	 *  当正在创建A时，A依赖B。此时会：将A作为ObjectFactory放入单例工厂中进行early expose，此处又需要引用A，但A正在创建，从单例工厂拿到ObjectFactory**（其通过getEarlyBeanReference获取及早暴露Bean)**从而允许循环依赖
+	 *  当正在创建A时，A依赖B。此时会：将A作为 ObjectFactory 放入单例工厂中进行early expose，此处又需要引用A，但A正在创建，从单例工厂拿到ObjectFactory**（其通过getEarlyBeanReference获取及早暴露Bean)**从而允许循环依赖
 	 *  AspectJAwareAdvisorAutoProxyCreator或AnnotationAwareAspectJAutoProxyCreator他们都有调用此方法，通过early reference能得到正确的代理对象。 有个小细节：这两个类中若执行了getEarlyBeanReference，那postProcessAfterInitialization就不会再执行了。
 	 *  getEarlyBeanReference和postProcessAfterInitialization是二者选一的，而且单例Bean目标对象只能被增强一次，而原型Bean目标对象可能被包装多次
 	 */
