@@ -213,6 +213,9 @@ import org.springframework.core.annotation.AliasFor;
  * @see org.springframework.beans.factory.annotation.Autowired
  * @see org.springframework.beans.factory.annotation.Value
  *
+ * 如果是单实例Bean，IOC容器启动时就立马创建Bean，以后获取都从容器里拿(当然你也可以加上@Lazy这个注解，让单实例Bean也懒加载)
+ * 如果是多实例Bean，Bean只有获取的时候，获取一次就创建一次。
+ *
  * Bean生命周期初始化、销毁相关的4种方式
  * 1.@Bean指定初始化方法和销毁方法
  * 2.实现InitializingBean和DisposableBean接口
@@ -231,6 +234,8 @@ public @interface Bean {
 	 * {@code @Bean("customBeanName")}.
 	 * @since 4.3.3
 	 * @see #name
+	 * 当只写一个值的时候，只有名称没有别名。但是当你写多个值的时候，除了第一个是名称，后面的全都是别名
+	 * 若不指定value值，bean的id默认为方法名的名称
 	 */
 	@AliasFor("name")
 	String[] value() default {};
@@ -276,6 +281,8 @@ public @interface Bean {
 	 * <p>The default value is {@code ""}, indicating no init method to be called.
 	 * @see org.springframework.beans.factory.InitializingBean
 	 * @see org.springframework.context.ConfigurableApplicationContext#refresh()
+	 *
+	 * 注意：单实例Bean容器是管理bean的init和destroy方法的，但是多实例bean容器只管帮你创建和init，之后Spring就不管了
 	 */
 	String initMethod() default "";
 

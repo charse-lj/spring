@@ -121,6 +121,8 @@ public interface BeanFactory {
 	 * beans <i>created</i> by the FactoryBean. For example, if the bean named
 	 * {@code myJndiObject} is a FactoryBean, getting {@code &myJndiObject}
 	 * will return the factory, not the instance returned by the factory.
+	 *  该常量用来区分是获取FactoryBean还是FactoryBean的createBean创建的实例.如果&开始则获取FactoryBean;否则获取createBean创建的实例.
+	 * 	备注，此常量课时定义在BeanFactory里面的哟，因为它属于Bean工厂的处理机制~~~
 	 */
 	String FACTORY_BEAN_PREFIX = "&";
 
@@ -248,6 +250,7 @@ public interface BeanFactory {
 	 * will be able to obtain an instance for the same name.
 	 * @param name the name of the bean to query
 	 * @return whether a bean with the given name is present
+	 * //判断是否包含Bean。此处有个陷阱：这边不管类是否抽象类,懒加载,是否在容器范围内,只要符合都返回true,所以这边true,**不一定能从getBean获取实例**
 	 */
 	boolean containsBean(String name);
 

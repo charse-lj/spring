@@ -55,6 +55,9 @@ import java.lang.annotation.Target;
  * @author Sam Brannen
  * @since 4.0
  * @see Condition
+ *
+ *  Conditional:按照条件向Spring中期中注册Bean,需要配合实现Condition接口的类使用
+ *  注解不仅可以标注在方法上，还可以标注在类上。如果标注在配置类上，那么若不生效的话，这个配置类所有就将不会再生效了
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

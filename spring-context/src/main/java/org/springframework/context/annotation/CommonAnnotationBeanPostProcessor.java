@@ -147,8 +147,8 @@ import org.springframework.util.StringValueResolver;
  * 提供对JSR-250规范注解的支持@javax.annotation.Resource、@javax.annotation.PostConstruct和@javax.annotation.PreDestroy等的支持
  *
  * postProcessPropertyValues：通过此回调进行@Resource注解的依赖注入；（最重要）
- * postProcessBeforeInitialization()将会调用bean的@PostConstruct方法；（次重要）
- * postProcessBeforeDestruction()将会调用单例 Bean的@PreDestroy方法
+ * postProcessBeforeInitialization() 将会调用bean的@PostConstruct方法；（次重要）
+ * postProcessBeforeDestruction() 将会调用单例 Bean的@PreDestroy方法
  */
 @SuppressWarnings("serial")
 public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor

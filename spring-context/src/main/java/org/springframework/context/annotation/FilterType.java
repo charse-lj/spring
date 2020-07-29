@@ -28,6 +28,8 @@ package org.springframework.context.annotation;
  * @see ComponentScan#includeFilters()
  * @see ComponentScan#excludeFilters()
  * @see org.springframework.core.type.filter.TypeFilter
+ *
+ * 枚举的过滤类型，可以实现注解、正则等的精确匹配。
  */
 public enum FilterType {
 

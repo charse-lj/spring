@@ -44,6 +44,13 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * @author Keith Donald
  * @author David Syer
  * @since 3.1
+ *
+ * spring中配置WebMvc时有两种方法
+ * 1.继承WebMvcConfigurationSupport，重写里面相应的方法
+ * 2.实现WebMvcConfigurer接口，在配置类上添加@EnableWebMvc注解-->why??
+ *   @EnableWebMvc注解类上导入了DelegatingWebMvcConfiguration类，是WebMvcConfigurationSupport的子类，
+ *   该类除了实例化WebMvcConfigurationSupport实例以外
+ *   另一个作用就是收集BeanFactory中所有WebMvcConfigurer的实现，汇集到WebMvcConfigurerComposite中
  */
 public interface WebMvcConfigurer {
 

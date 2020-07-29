@@ -136,6 +136,10 @@ public @interface ComponentScan {
 	 * even if it does not match the default filters (i.e. is not annotated with {@code @Component}).
 	 * @see #resourcePattern()
 	 * @see #useDefaultFilters()
+	 * 
+	 *  useDefaultFilters默认为true,表示默认情况下@Component、@Repository、@Service、@Controller都会扫描
+	 *  useDefaultFilters=false,加上includeFilters我们就可以只扫描指定的组件了
+	 *  web子容器只扫描Controller组件excludeFilters的时候，就不需要去设置useDefaultFilters=false,直接排除掉即可
 	 */
 	Filter[] includeFilters() default {};
 

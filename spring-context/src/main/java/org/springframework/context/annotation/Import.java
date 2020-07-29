@@ -49,6 +49,8 @@ import java.lang.annotation.Target;
  * @see ImportSelector
  * @see ImportBeanDefinitionRegistrar
  * @see ImportResource
+ *
+ * 快速导入一个组件
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -56,6 +58,7 @@ import java.lang.annotation.Target;
 public @interface Import {
 
 	/**
+	 * import除了导入具体的实体类外，还可以导入实现了指定接口的类
 	 * {@link Configuration @Configuration}, {@link ImportSelector},
 	 * {@link ImportBeanDefinitionRegistrar}, or regular component classes to import.
 	 * Abc
