@@ -49,6 +49,8 @@ public abstract class AbstractAnnotationConfigDispatcherServletInitializer
 	 * <p>This implementation creates an {@link AnnotationConfigWebApplicationContext},
 	 * providing it the annotated classes returned by {@link #getRootConfigClasses()}.
 	 * Returns {@code null} if {@link #getRootConfigClasses()} returns {@code null}.
+	 *
+	 * Spring告诉我们，这个是允许返回null的，也就是说是允许我们返回null的，后面会专门针对这里如果返回null，后面会是怎么样的流程的一个说明
 	 */
 	@Override
 	@Nullable
@@ -56,6 +58,7 @@ public abstract class AbstractAnnotationConfigDispatcherServletInitializer
 		Class<?>[] configClasses = getRootConfigClasses();
 		if (!ObjectUtils.isEmpty(configClasses)) {
 			AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+			//配置文件可以有多个  会以累加的形式添加进去
 			context.register(configClasses);
 			return context;
 		}

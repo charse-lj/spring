@@ -87,16 +87,16 @@ public abstract class AbstractRequestLoggingFilter extends OncePerRequestFilter 
 	 * processed.
 	 */
 	public static final String DEFAULT_AFTER_MESSAGE_SUFFIX = "]";
-
+	// 默认body体里只会打印出50个字符，自己可以自定义修改
 	private static final int DEFAULT_MAX_PAYLOAD_LENGTH = 50;
 
-
+	//true表示包含查询参数  形如：[  uri=xxx?a=xx&b=xxx  ]
 	private boolean includeQueryString = false;
-
+	//true表示包含客户端相关信息
 	private boolean includeClientInfo = false;
-
+	//true表示包含请求头信息
 	private boolean includeHeaders = false;
-
+	//true表示包含body体性息
 	private boolean includePayload = false;
 
 	@Nullable
@@ -224,6 +224,7 @@ public abstract class AbstractRequestLoggingFilter extends OncePerRequestFilter 
 	/**
 	 * Set the value that should be prepended to the log message written
 	 * <i>before</i> a request is processed.
+	 * 自定义请求前、后的前缀、后缀等等  这个其实是建议定制的  个性化点比较好
 	 */
 	public void setBeforeMessagePrefix(String beforeMessagePrefix) {
 		this.beforeMessagePrefix = beforeMessagePrefix;
@@ -258,6 +259,7 @@ public abstract class AbstractRequestLoggingFilter extends OncePerRequestFilter 
 	 * The default value is "false" so that the filter may log a "before" message
 	 * at the start of request processing and an "after" message at the end from
 	 * when the last asynchronously dispatched thread is exiting.
+	 * 是否过滤异步的请求  这里false表示要过滤
 	 */
 	@Override
 	protected boolean shouldNotFilterAsyncDispatch() {
@@ -298,6 +300,8 @@ public abstract class AbstractRequestLoggingFilter extends OncePerRequestFilter 
 	/**
 	 * Get the message to write to the log before the request.
 	 * @see #createMessage
+	 *
+	 * 生成日志消息的方法  这个强烈不建议调用者自己去做（当然，你要个性化，你随意）  getMessagePayload
 	 */
 	private String getBeforeMessage(HttpServletRequest request) {
 		return createMessage(request, this.beforeMessagePrefix, this.beforeMessageSuffix);
@@ -408,6 +412,9 @@ public abstract class AbstractRequestLoggingFilter extends OncePerRequestFilter 
 	 * @return {@code true} if the before/after method should get called;
 	 * {@code false} otherwise
 	 * @since 4.1.5
+	 *
+	 * 这个非常的重要，判断哪些请求输出日志，哪些不需要输出。比如get请求，我们一般都不需要输出日志的
+	 * (至于能够实现标注指定注解接口采取输出日志呢？这个就做不到了，因为还没有到方法呢，没有办法拿到方法元信息)  但是若通过HandlerInterceptor来拦截，是可以处理方法注解的
 	 */
 	protected boolean shouldLog(HttpServletRequest request) {
 		return true;
@@ -418,6 +425,9 @@ public abstract class AbstractRequestLoggingFilter extends OncePerRequestFilter 
 	 * <i>before</i> the request is processed.
 	 * @param request current HTTP request
 	 * @param message the message to log
+	 *
+	 * 在系统默认的message的基础上，你自己再去个性化吧。或者不用此message变量都成~
+	 * 比如自己可以计算出请求耗时~
 	 */
 	protected abstract void beforeRequest(HttpServletRequest request, String message);
 
