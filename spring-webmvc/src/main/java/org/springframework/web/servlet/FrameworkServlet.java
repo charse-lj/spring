@@ -1031,14 +1031,13 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		LocaleContext localeContext = buildLocaleContext(request);
 
 		RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
-		// 这里面build逻辑注意：previousAttributes若为null，或者就是ServletRequestAttributes类型，那就new ServletRequestAttributes(request, response);
 		// 若不为null，就保持之前的绑定结果，不再做重复绑定了（尊重原创）
 		ServletRequestAttributes requestAttributes = buildRequestAttributes(request, response, previousAttributes);
 		// 拿到异步管理器。这里是首次获取，会new WebAsyncManager(),然后放到request的attr里面
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 		//这里需要注意：给异步上下文恒定注册了RequestBindingInterceptor这个拦截器（作用：绑定当前的request、response、local等）
 		asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
-		//这句话很明显，就是吧request和Local上下文、RequestContext绑定
+		//这句话很明显，就是吧requestAttributes和localeContext与线程绑定
 		initContextHolders(request, localeContext, requestAttributes);
 
 		try {
@@ -1056,7 +1055,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 
 		finally {
 			//这个时候已经全部处理完成，视图已经渲染了
-			//doService()方法完成后，重置上下文，也就是解绑
+			//doService()方法完成后，重置上下文，也就是解绑（ThreadLocal经典应用）
 			resetContextHolders(request, previousLocaleContext, previousAttributes);
 			if (requestAttributes != null) {
 				requestAttributes.requestCompleted();
@@ -1094,6 +1093,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	protected ServletRequestAttributes buildRequestAttributes(HttpServletRequest request,
 			@Nullable HttpServletResponse response, @Nullable RequestAttributes previousAttributes) {
 
+		//previousAttributes若为null，或者就是ServletRequestAttributes类型，那就new ServletRequestAttributes(request, response);
 		if (previousAttributes == null || previousAttributes instanceof ServletRequestAttributes) {
 			return new ServletRequestAttributes(request, response);
 		}

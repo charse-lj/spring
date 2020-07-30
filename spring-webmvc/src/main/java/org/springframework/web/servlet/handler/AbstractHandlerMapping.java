@@ -491,7 +491,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	@Nullable
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
 		// 这个是留给子类去重写实现的：查找handler处理器的~ 比如根据URL去查找匹配等等
-		// 备注：获取hadnler的过程，非常的复杂，这个必须后面单独的专题再说吧
+		// 备注：获取handler的过程，非常的复杂，这个必须后面单独的专题再说吧
 		Object handler = getHandlerInternal(request);
 		if (handler == null) {
 			handler = getDefaultHandler();
@@ -504,7 +504,8 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 			String handlerName = (String) handler;
 			handler = obtainApplicationContext().getBean(handlerName);
 		}
-		//构建出一个处理器链   注意：和handler绑定了，并且内部还去拿到了所有的拦截器，然后添加到处理器连里面去   getHandlerExecutionChain() 方法自己去看，可以看明白
+		//构建出一个处理器链   注意：和handler绑定了，并且内部还去拿到了所有的拦截器，然后添加到处理器连里面去
+		// getHandlerExecutionChain() 方法自己去看，可以看明白
 		HandlerExecutionChain executionChain = getHandlerExecutionChain(handler, request);
 
 		if (logger.isTraceEnabled()) {

@@ -226,6 +226,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 	/**
 	 * Derive further bean definitions from the configuration classes in the registry.
+	 *
+	 * 处理@Configuration,@Import，@ImportResource和类内部的@Bean等注解
+	 * 通过BeanDefinitionRegistryPostProcessor可以创建一个特别后置处理器来将BeanDefinition添加到BeanDefinitionRegistry中,让我们在BeanDefinition中添加一些自定义操作
+	 * 在Mybatis与Spring的整合中，就利用到了BeanDefinitionRegistryPostProcessor来对Mapper的BeanDefinition进行了后置的自定义处理
 	 */
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
