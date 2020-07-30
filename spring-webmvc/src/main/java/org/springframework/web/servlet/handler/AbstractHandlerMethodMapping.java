@@ -209,6 +209,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 * @see #getCandidateBeanNames()
 	 * @see #processCandidateBean
 	 * @see #handlerMethodsInitialized
+	 *
+	 *  初始化处理器
 	 */
 	protected void initHandlerMethods() {
 		for (String beanName : getCandidateBeanNames()) {
@@ -224,6 +226,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 * @since 5.1
 	 * @see #setDetectHandlerMethodsInAncestorContexts
 	 * @see BeanFactoryUtils#beanNamesForTypeIncludingAncestors
+	 *
+	 * 拿到所有的beanNames
 	 */
 	protected String[] getCandidateBeanNames() {
 		return (this.detectHandlerMethodsInAncestorContexts ?
@@ -253,6 +257,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				logger.trace("Could not resolve type for bean '" + beanName + "'", ex);
 			}
 		}
+		//这里很关键，这里表面 只处理标注了注解@Controller或者@RequestMapping的  就认为才是处理器  然后拿到里面的方法，每一个方法就是一个处理器
 		if (beanType != null && isHandler(beanType)) {
 			detectHandlerMethods(beanName);
 		}

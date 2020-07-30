@@ -32,6 +32,10 @@ import org.springframework.web.util.WebUtils;
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
  * @since 3.1.1
+ *
+ * 抽象类采用模板模式定义整个流程,SessionFlashMapManager通过模板方法提供了具体操作FlashMap的功能
+ * 实际的Session中保存的FlashMap是List类型，也就是说一个Session可以保存多个FlashMap，一个FlashMap保存着一套Redirect转发所传递的参数
+ * FlashMap继承自HashMap，除了用于HashMap的功能和设置有效期，还可以保存Redirect后的目标路径和通过url传递的参数，这两项内容主要用来从Session保存的多个FlashMap中查找当前的FlashMap
  */
 public class SessionFlashMapManager extends AbstractFlashMapManager {
 

@@ -51,6 +51,10 @@ public interface ViewResolver {
 	 * (optional, to allow for ViewResolver chaining)
 	 * @throws Exception if the view cannot be resolved
 	 * (typically in case of problems creating an actual View object)
+	 *
+	 * View是用来渲染页面的，也就是将程序返回的参数填入模板里，生成html（也可能是其它类型）文件。
+	 * 这里就有两个关键问题：使用哪个模板？用什么技术（规则）填入参数？这其实是ViewResolver主要要做的工作
+	 * ViewResolver需要找到渲染所用的模板和所用的技术（也就是视图的类型）进行渲染，具体的渲染过程则交由不同的视图自己完成。
 	 */
 	@Nullable
 	View resolveViewName(String viewName, Locale locale) throws Exception;

@@ -84,6 +84,8 @@ import org.springframework.web.servlet.View;
  * @see AbstractUrlBasedView
  * @see InternalResourceView
  * @see org.springframework.web.servlet.view.freemarker.FreeMarkerView
+ *
+ * 实现了缓存 提供了prefix suffix拼接的url视图解析器。
  */
 public class UrlBasedViewResolver extends AbstractCachingViewResolver implements Ordered {
 

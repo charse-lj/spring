@@ -45,6 +45,8 @@ import org.springframework.util.ClassUtils;
  * @see #setRequestContextAttribute
  * @see InternalResourceView
  * @see JstlView
+ *
+ * 基于url 的内部资源视图解析器。
  */
 public class InternalResourceViewResolver extends UrlBasedViewResolver {
 

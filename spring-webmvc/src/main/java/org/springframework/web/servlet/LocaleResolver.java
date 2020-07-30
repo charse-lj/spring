@@ -50,6 +50,11 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.context.i18n.LocaleContextHolder
  * @see org.springframework.web.servlet.support.RequestContext#getLocale
  * @see org.springframework.web.servlet.support.RequestContextUtils#getLocale
+ *
+ * 	FixedLocaleResolver：在声明该resolver时，需要指定一个默认的Locale，在进行Locale获取时，始终返回该Locale，并且调用其setLocale()方法也无法改变其Locale
+ * 	CookieLocaleResolver：其读取Locale的方式是在session中通过Cookie来获取其指定的Locale的，如果修改了Cookie的值，页面视图也会同步切换
+ * 	SessionLocaleResolver：其会将Locale信息存储在session中，如果用户想要修改Locale信息，可以通过修改session中对应属性的值即可
+ *  AcceptHeaderLocaleResolver：其会通过用户请求中名称为Accept-Language的header来获取Locale信息，如果想要修改展示的视图，只需要修改该header信息即可
  */
 public interface LocaleResolver {
 
@@ -58,6 +63,8 @@ public interface LocaleResolver {
 	 * Can return a default locale as fallback in any case.
 	 * @param request the request to resolve the locale for
 	 * @return the current locale (never {@code null})
+	 *
+	 * 根据request对象根据指定的方式获取一个Locale，如果没有获取到，则使用用户指定的默认的Locale
 	 */
 	Locale resolveLocale(HttpServletRequest request);
 
@@ -68,6 +75,9 @@ public interface LocaleResolver {
 	 * @param locale the new locale, or {@code null} to clear the locale
 	 * @throws UnsupportedOperationException if the LocaleResolver
 	 * implementation does not support dynamic changing of the locale
+	 *
+	 * 用于实现Locale的切换。比如SessionLocaleResolver获取Locale的方式是从session中读取
+	 * 但如果户想要切换其展示的样式(由英文切换为中文)，那么这里的setLocale()方法就提供了这样一种可能
 	 */
 	void setLocale(HttpServletRequest request, @Nullable HttpServletResponse response, @Nullable Locale locale);
 

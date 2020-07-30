@@ -33,6 +33,9 @@ import javax.servlet.ServletContextListener;
  * @since 17.02.2003
  * @see #setContextInitializers
  * @see org.springframework.web.WebApplicationInitializer
+ *
+ * 当ContextLoaderListener和DispatcherServlet一起使用时, ContextLoaderListener 接收一个 root applicationContext，
+ * 然后DispatcherSerlvet创建一个子applicationContext并且绑定到 root applicationContext
  */
 public class ContextLoaderListener extends ContextLoader implements ServletContextListener {
 

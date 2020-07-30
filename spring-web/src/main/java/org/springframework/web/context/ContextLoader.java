@@ -89,6 +89,8 @@ public class ContextLoader {
 	/**
 	 * Config param for the root WebApplicationContext id,
 	 * to be used as serialization id for the underlying BeanFactory: {@value}.
+	 *
+	 * init-param定义root根容器id的key
 	 */
 	public static final String CONTEXT_ID_PARAM = "contextId";
 
@@ -97,12 +99,16 @@ public class ContextLoader {
 	 * config location for the root context, falling back to the implementation's
 	 * default otherwise.
 	 * @see org.springframework.web.context.support.XmlWebApplicationContext#DEFAULT_CONFIG_LOCATION
+	 *
+	 * init-param 定义root根容器的配置文件的路径地址的key
 	 */
 	public static final String CONFIG_LOCATION_PARAM = "contextConfigLocation";
 
 	/**
 	 * Config param for the root WebApplicationContext implementation class to use: {@value}.
 	 * @see #determineContextClass(ServletContext)
+	 *
+	 * init-param 自己可以指定一个WebApplicationContext的实现类（一般都不需要~）
 	 */
 	public static final String CONTEXT_CLASS_PARAM = "contextClass";
 
@@ -110,6 +116,8 @@ public class ContextLoader {
 	 * Config param for {@link ApplicationContextInitializer} classes to use
 	 * for initializing the root web application context: {@value}.
 	 * @see #customizeContext(ServletContext, ConfigurableWebApplicationContext)
+	 *
+	 * init-param 可以伴随着容器初始化的时候，我们自己做一些工作的类们。注意需要实现对应接口哦~ key
 	 */
 	public static final String CONTEXT_INITIALIZER_CLASSES_PARAM = "contextInitializerClasses";
 
@@ -123,12 +131,17 @@ public class ContextLoader {
 	/**
 	 * Any number of these characters are considered delimiters between
 	 * multiple values in a single init-param String value.
+	 *
+	 * 多值分隔符号
 	 */
 	private static final String INIT_PARAM_DELIMITERS = ",; \t\n";
 
 	/**
 	 * Name of the class path resource (relative to the ContextLoader class)
 	 * that defines ContextLoader's default strategy names.
+	 *
+	 * 默认的配置文件  里面内容只有一句话： org.springframework.web.context.WebApplicationContext=org.springframework.web.context.support.XmlWebApplicationContext
+	 * 由此课件，它默认是采用XmlWebApplicationContext来初始化上下文的
 	 */
 	private static final String DEFAULT_STRATEGIES_PATH = "ContextLoader.properties";
 
@@ -136,6 +149,7 @@ public class ContextLoader {
 	private static final Properties defaultStrategies;
 
 	static {
+		//ContextLoader在被实例化的时候，会执行下面的这个静态代码块。做了一件事：把默认的配置文件加载进来而已
 		// Load default strategy implementations from properties file.
 		// This is currently strictly internal and not meant to be customized
 		// by application developers.
@@ -151,6 +165,8 @@ public class ContextLoader {
 
 	/**
 	 * Map from (thread context) ClassLoader to corresponding 'current' WebApplicationContext.
+	 *
+	 * 下面这两个属性主要拿到当前的容器上下文。其中static的工具方法ContextLoader.getCurrentWebApplicationContext是基于此的
 	 */
 	private static final Map<ClassLoader, WebApplicationContext> currentContextPerThread =
 			new ConcurrentHashMap<>(1);
@@ -337,11 +353,14 @@ public class ContextLoader {
 	 * @see ConfigurableWebApplicationContext
 	 */
 	protected WebApplicationContext createWebApplicationContext(ServletContext sc) {
+		// 找到上下文类型。若自己没有配置实现类，那就是XmlApplicationContext
 		Class<?> contextClass = determineContextClass(sc);
+		// 由此看出  用户自定义的也必须是ConfigurableWebApplicationContext的子类才行
 		if (!ConfigurableWebApplicationContext.class.isAssignableFrom(contextClass)) {
 			throw new ApplicationContextException("Custom context class [" + contextClass.getName() +
 					"] is not of type [" + ConfigurableWebApplicationContext.class.getName() + "]");
 		}
+		// 使用无参构造实例化一个实例
 		return (ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
 	}
 
@@ -354,6 +373,7 @@ public class ContextLoader {
 	 * @see org.springframework.web.context.support.XmlWebApplicationContext
 	 */
 	protected Class<?> determineContextClass(ServletContext servletContext) {
+		// 显然，一般情况下我们都不会自己配置一个容器类，自己去实现~ 所有走false
 		String contextClassName = servletContext.getInitParameter(CONTEXT_CLASS_PARAM);
 		if (contextClassName != null) {
 			try {
@@ -365,6 +385,7 @@ public class ContextLoader {
 			}
 		}
 		else {
+			// 采用默认配置文件里的XmlApplicationContext来初始化上下文
 			contextClassName = defaultStrategies.getProperty(WebApplicationContext.class.getName());
 			try {
 				return ClassUtils.forName(contextClassName, ContextLoader.class.getClassLoader());
@@ -560,6 +581,8 @@ public class ContextLoader {
 	 * @return the current root web application context, or {@code null}
 	 * if none found
 	 * @see org.springframework.web.context.support.SpringBeanAutowiringSupport
+	 *
+	 * 可以在任何地方都获取到Spring容器（根容器）
 	 */
 	@Nullable
 	public static WebApplicationContext getCurrentWebApplicationContext() {

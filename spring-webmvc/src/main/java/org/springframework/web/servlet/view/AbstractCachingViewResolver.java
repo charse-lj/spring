@@ -42,6 +42,8 @@ import org.springframework.web.servlet.ViewResolver;
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @see #loadView
+ *
+ * 基于缓存的抽象视图解析器
  */
 public abstract class AbstractCachingViewResolver extends WebApplicationObjectSupport implements ViewResolver {
 

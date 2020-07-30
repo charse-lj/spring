@@ -43,20 +43,21 @@ import org.springframework.util.ClassUtils;
  * @see org.springframework.web.servlet.DispatcherServlet
  *
  * 在实际开发中：有不少小伙伴想在Service层或者某个工具类层里获取HttpServletRequest对象，甚至response的都有。
- * 其中一种方式是，把request当作入参，一层一层的传递下去。不过这种有点费劲，且做起来很不优雅。这里介绍另外一种方案：RequestContextHolder，任意地方使用如下代码：
+ * 1：把request当作入参，一层一层的传递下去。不过这种有点费劲，且做起来很不优雅
+ * 2：RequestContextHolder，任意地方使用如下代码：
  * HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
  * 类似的，LocaleContextHolder是用来处理Local的上下文容器
  *
  * DispatcherServlet在处理请求的时候，父类FrameworkServlet#processRequest就有向RequestContextHolder初始化绑定一些通用参数的操作，这样子使用者可以在任意地方，拿到这些公用参数了，可谓特别的方便
  */
 public abstract class RequestContextHolder  {
-	// jsf是JSR-127标准的一种用户界面框架  过时的技术，所以此处不再做讨论
+	/** jsf是JSR-127标准的一种用户界面框架  过时的技术，所以此处不再做讨论*/
 	private static final boolean jsfPresent =
 			ClassUtils.isPresent("javax.faces.context.FacesContext", RequestContextHolder.class.getClassLoader());
-	//现成和request绑定的容器
+	/**现成和request绑定的容器*/
 	private static final ThreadLocal<RequestAttributes> requestAttributesHolder =
 			new NamedThreadLocal<>("Request attributes");
-	// 和上面比较，它是被子线程继承的request,Inheritable:可继承的
+	 /** 和上面比较，它是被子线程继承的request,Inheritable:可继承的 */
 	private static final ThreadLocal<RequestAttributes> inheritableRequestAttributesHolder =
 			new NamedInheritableThreadLocal<>("Request context");
 
@@ -109,7 +110,7 @@ public abstract class RequestContextHolder  {
 	 * @return the RequestAttributes currently bound to the thread,
 	 * or {@code null} if none bound
 	 *
-	 * //兼容继承和非继承  只要得到了就成
+	 * 兼容继承和非继承  只要得到了就成
 	 */
 	@Nullable
 	public static RequestAttributes getRequestAttributes() {

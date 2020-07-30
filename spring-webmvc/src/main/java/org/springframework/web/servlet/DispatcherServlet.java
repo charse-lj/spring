@@ -161,6 +161,17 @@ import org.springframework.web.util.WebUtils;
  * @see org.springframework.web.HttpRequestHandler
  * @see org.springframework.web.servlet.mvc.Controller
  * @see org.springframework.web.context.ContextLoaderListener
+ *
+ * SpringMVC中的Servlet的三个层次
+ * 1.HttpServletBean直接继承自java的HttpServlet，其作用是将Servlet中配置的参数设置到相应的Bean属性上
+ * 2.FrameworkServlet初始化了WebApplicationContext
+ * 3.DispatcherServlet初始化了自身的9个组件（本文重点）
+ *
+ * 若使用web.xml配置Spring容器，是先执行ContextLoaderListener#contextInitialized启动Spring容器，再初始化DispatcherServlet来启动web容器的
+ *
+ * DispatcherServlet的默认配置文件DispatcherServlet.properties里都有定义这九大组件的默认值
+ *
+ * onRefresh(wac) / initStrategies(wac)
  */
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {
@@ -483,6 +494,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 	/**
 	 * This implementation calls {@link #initStrategies}.
+	 * 初始化Spring MVC的9大组件(至此，才算全部初始化完成了~不容器啊)
 	 */
 	@Override
 	protected void onRefresh(ApplicationContext context) {
@@ -492,16 +504,37 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * Initialize the strategy objects that this servlet uses.
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
+	 *
+	 * 子类若有需要，还可以复写此方法，去初始化自己的其余组件（比如要和它集成等等）
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		//MultipartResolver -->impl-->CommonsMultipartResolver/StandardServletMultipartResolver 
 		initMultipartResolver(context);
+		//主要作用在于根据不同的用户区域展示不同的视图,实现一种国际化的目的
+		//解析视图需要两个参数：一是视图名，另一个是Locale。视图名是处理器返回的，Locale是从哪里来的？这就是LocaleResolver要做的事情
+		//对于Locale的切换，Spring是通过拦截器来实现的，其提供了一个 LocaleChangeInterceptor，若要生效，这个Bean需要自己配置
 		initLocaleResolver(context);
+
+		//ThemeResolver 主题就是系统的整体样式或风格,SpringMVC中一个主题对应一个properties文件，里面存放着跟当前主题相关的所有资源、如图片、css样式等
 		initThemeResolver(context);
+
+		//  注意，下面是复数，有s。注意区别哦~
+		//用来查找Handler的。在SpringMVC中会有很多请求，每个请求都需要一个Handler处理，具体接收到一个请求之后使用哪个Handler进行处理呢？这就是HandlerMapping需要做的事
+		//开启了@EnableMvc,拿到5个,不开启默认2个
 		initHandlerMappings(context);
+		//因为SpringMVC中的Handler可以是任意的形式，只要能处理请求就ok，但是Servlet需要的处理方法的结构却是固定的，都是以request和response为参数的方法。
+		// 如何让固定的Servlet处理方法调用灵活的Handler来进行处理呢？这就是HandlerAdapter要做的事情
+		//Handler是用来干活的工具；HandlerMapping用于根据需要干的活找到相应的工具；HandlerAdapter是使用工具干活的人
 		initHandlerAdapters(context);
+		//其它组件都是用来干活的。在干活的过程中难免会出现问题，出问题后怎么办呢？这就需要有一个专门的角色对异常情况进行处理，在SpringMVC中就是HandlerExceptionResolver。
+		// 具体来说，此组件的作用是根据异常设置ModelAndView，之后再交给render方法进行渲染
 		initHandlerExceptionResolvers(context);
+		//Spring MVC是通过ViewName来找到对应的视图的，而此接口的作用就是从request中获取viewName。
 		initRequestToViewNameTranslator(context);
+		//ViewResolver用来将String类型的视图名和Locale解析为View类型的视图
+		//ViewResolverComposite 简单来说就是使用简单的List来保存你配置使用的视图解析器。
 		initViewResolvers(context);
+		 //用来管理FlashMap的，FlashMap主要用在redirect中传递参数。
 		initFlashMapManager(context);
 	}
 
@@ -509,6 +542,11 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the MultipartResolver used by this class.
 	 * <p>If no bean is defined with the given name in the BeanFactory for this namespace,
 	 * no multipart handling is provided.
+	 *
+	 * MultipartResolver 用于处理文件上传
+	 * 当收到请求时,DispatcherServlet#checkMultipart(),方法会调用 MultipartResolver#isMultipart() 方法判断请求中是否包含文件。
+	 * 如果请求数据中包含文件，则调用 MultipartResolver#resolveMultipart() 方法对请求的数据进行解析。
+	 * 然后将文件数据解析成 MultipartFile 并封装在 MultipartHttpServletRequest(继承了 HttpServletRequest) 对象中，最后传递给 Controller
 	 */
 	private void initMultipartResolver(ApplicationContext context) {
 		try {
@@ -739,17 +777,20 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		if (this.detectAllViewResolvers) {
 			// Find all ViewResolvers in the ApplicationContext, including ancestor contexts.
+			// 如果detectAllViewResolvers为true，那么就会去容器里找所有的（包含所有祖先上下文）容器里的所有的此接口下的此类的bean，最后都放进去（可以有多个嘛）
+			//@EnableWebMvc注解时，有值
 			Map<String, ViewResolver> matchingBeans =
 					BeanFactoryUtils.beansOfTypeIncludingAncestors(context, ViewResolver.class, true, false);
 			if (!matchingBeans.isEmpty()) {
 				this.viewResolvers = new ArrayList<>(matchingBeans.values());
-				// We keep ViewResolvers in sorted order.
+				// We keep ViewResolvers in sorted order.  保持排序性
 				AnnotationAwareOrderComparator.sort(this.viewResolvers);
 			}
 		}
 		else {
 			try {
 				ViewResolver vr = context.getBean(VIEW_RESOLVER_BEAN_NAME, ViewResolver.class);
+				// 这一步，使用了singletonList，是为了性能考虑，节约内存
 				this.viewResolvers = Collections.singletonList(vr);
 			}
 			catch (NoSuchBeanDefinitionException ex) {
@@ -759,6 +800,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Ensure we have at least one ViewResolver, by registering
 		// a default ViewResolver if no other resolvers are found.
+		// 若还为null，就采用默认配置的视图解析器InternalResourceViewResolver
 		if (this.viewResolvers == null) {
 			this.viewResolvers = getDefaultStrategies(context, ViewResolver.class);
 			if (logger.isTraceEnabled()) {
@@ -941,7 +983,8 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		// Make framework objects available to handlers and view objects.
-		// 说得很清楚，把一些常用对象放进请求域  方便Handler里面可以随意获取
+		// 把一些常用对象放进请求域  方便Handler里面可以随意获取
+		//方便我们非常方便获取到一些参数，比如web子容器等等
 		request.setAttribute(WEB_APPLICATION_CONTEXT_ATTRIBUTE, getWebApplicationContext());
 		request.setAttribute(LOCALE_RESOLVER_ATTRIBUTE, this.localeResolver);
 		request.setAttribute(THEME_RESOLVER_ATTRIBUTE, this.themeResolver);

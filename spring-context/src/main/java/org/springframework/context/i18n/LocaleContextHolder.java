@@ -52,13 +52,17 @@ public final class LocaleContextHolder {
 	private static final ThreadLocal<LocaleContext> inheritableLocaleContextHolder =
 			new NamedInheritableThreadLocal<>("LocaleContext");
 
-	// Shared default locale at the framework level
-	//没有手动调用setDefaultLocale,取值为  Locale#getDefault()
+	/**
+	 *  Shared default locale at the framework level
+	 * 没有手动调用setDefaultLocale,取值为  Locale#getDefault()
+	 */
 	@Nullable
 	private static Locale defaultLocale;
 
-	// Shared default time zone at the framework level
-	//同上 默认取值为TimeZone.getDefault()
+	/**
+	 * Shared default time zone at the framework level
+	 * 同上 默认取值为TimeZone.getDefault()
+	 */
 	@Nullable
 	private static TimeZone defaultTimeZone;
 

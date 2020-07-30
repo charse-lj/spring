@@ -41,6 +41,8 @@ import org.springframework.web.servlet.ViewResolver;
  * @author Juergen Hoeller
  * @since 18.06.2003
  * @see UrlBasedViewResolver
+ *
+ * beanName来自容器，并且不支持缓存
  */
 public class BeanNameViewResolver extends WebApplicationObjectSupport implements ViewResolver, Ordered {
 

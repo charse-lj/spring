@@ -144,12 +144,28 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	 * invoke subclass initialization.
 	 * @throws ServletException if bean properties are invalid (or required
 	 * properties are missing), or if subclass initialization fails.
+	 *
+	 * 由于设置了registration.setLoadOnStartup(1); 在容器启动完成后就调用servlet的init()
+	 * 科普一下Servlet初始化的四大步骤
+	 * 1.Servlet容器加载Servlet类，把类的.class文件中的数据读到内存中；
+	 * 2.Servlet容器中创建一个ServletConfig对象。该对象中包含了Servlet的初始化配置信息；
+	 * 3.Servlet容器创建一个Servlet对象（我们也可以手动new，然后手动添加进去）；
+	 * 4.Servlet容器调用Servlet对象的init()方法进行初始化。
 	 */
 	@Override
 	public final void init() throws ServletException {
 
 		// Set bean properties from init parameters.
+		// 把servlet的初始化参数封装进来ServletConfig...
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
+		/*
+		*这里面我们并没有给此Servlet初始化的一些参数，所以此处为空，为false
+		*若进来了，可以看到里面会做一些处理：将这个DispatcherServlet转换成一个BeanWrapper对象，从而能够以spring的方式来对初始化参数的值进行注入。这些属性如contextConfigLocation、namespace等等。
+		*同时注册一个属性编辑器，一旦在属性注入的时候遇到Resource类型的属性就会使用ResourceEditor去解析。再留一个initBeanWrapper(bw)方法给子类覆盖，让子类处真正执行BeanWrapper的属性注入工作。
+		*但是HttpServletBean的子类FrameworkServlet和DispatcherServlet都没有覆盖其initBeanWrapper(bw)方法，所以创建的BeanWrapper对象没有任何作用。
+		*/
+
+		//备注：此部分把当前Servlet封装成一个BeanWrapper,再把它交给Spring管理部分非常重要，比如后续我们讲到SpringBoot源码的时候，会看出来这部分代码的重要性了。。。
 		if (!pvs.isEmpty()) {
 			try {
 				BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
@@ -167,6 +183,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// Let subclasses do whatever initialization they like.
+		// 从官方注解也能读懂。它把这个init方法给final掉了，然后开了这个口，子类可以根据自己的需要，在初始化的的时候可以复写这个方法，而不再是init方法了~
 		initServletBean();
 	}
 

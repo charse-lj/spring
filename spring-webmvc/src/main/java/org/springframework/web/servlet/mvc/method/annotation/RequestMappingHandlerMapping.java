@@ -72,6 +72,17 @@ import org.springframework.web.util.pattern.PathPatternParser;
  * @author Rossen Stoyanchev
  * @author Sam Brannen
  * @since 3.1
+ *
+ *  RequestMappingHandlerMapping和RequestMappingHandlerAdapter
+ *  <!-- 注解的处理器映射器，他来解析RequestMapping，然后和处理器对应起来 -->
+ * <bean   class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"></bean>
+ * <!-- 注解的处理器适配器 结合上面一起协作-->
+ * <bean   class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"></bean>
+ *  两个Bean很重要，在初始化的时候能吧url和Controller里的handler对应起来
+ *  Spring3.0以后
+ *  <!-- 备注：此句只写在Spring MVC的配置文件里，否则出问题  Handler映射不上 -->
+ * <mvc:annotation-driven></mvc:annotation-driven>
+ * 效果同@EnableWebMvc注解
  */
 public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMapping
 		implements MatchableHandlerMapping, EmbeddedValueResolverAware {

@@ -32,6 +32,8 @@ import org.springframework.lang.Nullable;
  *
  * @author Juergen Hoeller
  * @since 22.11.2003
+ *
+ * 这个接口捕获的是所有异常，而官方推荐的是使用@ExceptionHandler注解去捕获固定的异常
  */
 public interface HandlerExceptionResolver {
 
