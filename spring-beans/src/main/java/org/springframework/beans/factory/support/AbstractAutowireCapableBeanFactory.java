@@ -181,6 +181,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	public AbstractAutowireCapableBeanFactory() {
 		super();
+		// 这里是重点。忽略自动装配。这里指定的都是接口。什么意思呢？
+		// ignoreDependencyInterface的真正意思是在自动装配时忽略指定接口的实现类中，对外的依赖。（这里面注意：@Autowired和它的关系，其实是有坑的，后续会专门讲解这个坑）
+		// eg.A中有属性B,Spring在获取A的bean时,若B未初始化,Spring会自动初始化B,这是Spring重要的一个特性
+		// 但在某些情况下不会,B实现下面三个接口,Aware接口典型应用是通过其他方式解析ApplicationContext上下文,注册依赖
 		ignoreDependencyInterface(BeanNameAware.class);
 		ignoreDependencyInterface(BeanFactoryAware.class);
 		ignoreDependencyInterface(BeanClassLoaderAware.class);

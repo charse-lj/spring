@@ -72,6 +72,10 @@ import org.springframework.util.StringUtils;
  * @author Sebastien Deleuze
  * @since 3.0
  * @see ConfigurationClassParser
+ *
+ * 读取一组已经被完整解析的配置类ConfigurationClass，基于它们所携带的信息向给定bean容器BeanDefinitionRegistry注册其中所有的bean定义
+ * ConfigurationClassParser负责去找到所有的配置类。（包括做加强操作）
+ * 然后交给ConfigurationClassBeanDefinitionReader将这些配置类中的bean定义注册到容器
  */
 class ConfigurationClassBeanDefinitionReader {
 
@@ -124,7 +128,14 @@ class ConfigurationClassBeanDefinitionReader {
 	 * with the registry based on its contents.
 	 */
 	public void loadBeanDefinitions(Set<ConfigurationClass> configurationModel) {
+		// 对每个@Configuration 类文件做遍历（所以 Config配置文件的顺序还是挺重要的）
+		//TrackedConditionEvaluator是个内部类：是去解析@Conditional相关注解的。借助了conditionEvaluator去计算处理  主要是看看要不要shouldSkip()
 		TrackedConditionEvaluator trackedConditionEvaluator = new TrackedConditionEvaluator();
+
+		// 遍历处理参数configurationModel中的每个配置类
+		// 这里需要特别注意的是，此环境下，这里size不是1，而是2（rootConfig和helloServiceImpl）
+		// 因为对于parser来说，只要是@Component都是一个组件（配置文件），只是是Lite模式而已
+		// 因此我们也是可以在任意一个@Component标注的类上使用@Bean向里面注册Bean的，相当于采用的Lite模式。只是我们一般不会去这么干而已，毕竟要职责单一
 		for (ConfigurationClass configClass : configurationModel) {
 			loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);
 		}
@@ -133,10 +144,16 @@ class ConfigurationClassBeanDefinitionReader {
 	/**
 	 * Read a particular {@link ConfigurationClass}, registering bean definitions
 	 * for the class itself and all of its {@link Bean} methods.
+	 *
+	 * 从指定的一个配置类ConfigurationClass中提取bean定义信息并注册bean定义到bean容器 :
+	 * 	1. 配置类本身要注册为bean定义
+	 * 	2. 配置类中的@Bean注解方法要注册为配置类
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
-
+		     //private 方法来解析每一个已经解析好的@Configuration配置文件~~~
+		// 判断是否需要跳过，与之前解析@Configuration判断是否跳过的逻辑是相同的 借助了conditionEvaluator。如果需要
+		// 显然这里，哪怕是helloServiceImpl都不会被跳过
 		if (trackedConditionEvaluator.shouldSkip(configClass)) {
 			String beanName = configClass.getBeanName();
 			if (StringUtils.hasLength(beanName) && this.registry.containsBeanDefinition(beanName)) {
@@ -146,14 +163,21 @@ class ConfigurationClassBeanDefinitionReader {
 			return;
 		}
 
+		// 如果这个类是@Import进来的  那就注册为一个BeanDefinition   比如这种@Import(Child.class)  这里就会是true
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+
+		// 这里处理的是所有标注有@Bean注解的方法们，然后注册成BeanDefinition
+		// 同时会解析一系列的@Bean内的属性，以及可以标注的其余注解
+		// 备注：方法访问权限无所谓，private都行。然后static的也行
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
+		//注册importedResources进来的bean们
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+		// 调用自定义的ImportBeanDefinitionRegistrar的registerBeanDefinitions方法注册BeanDefinition
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 

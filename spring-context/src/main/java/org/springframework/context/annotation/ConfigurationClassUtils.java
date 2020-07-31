@@ -47,6 +47,8 @@ import org.springframework.stereotype.Component;
  * @author Chris Beams
  * @author Juergen Hoeller
  * @since 3.1
+ *
+ * Full模式和Lite模式的唯一区别：Full模式的配置组件会被enhance（加强/代理），而Liter模式不会。其余使用方式都一样，比如@Bean、@Import等等
  */
 abstract class ConfigurationClassUtils {
 
@@ -80,6 +82,8 @@ abstract class ConfigurationClassUtils {
 	 * @param beanDef the bean definition to check
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
+	 * 
+	 * 判断Bean定义信息，是否是配置类，至于Bean定义里这个属性啥时候放进去的，请参考
 	 */
 	public static boolean checkConfigurationClassCandidate(
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
@@ -121,10 +125,12 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//如果类上有@Configuration注解,並且@Configuration中的proxyBeanMethods为true,说明是一个完全（Full）的配置类
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//如果类上有@Configuration注解,並且@Configuration中的proxyBeanMethods为false,或类上有@Component、@ComponentScan、@Import、@ImportResource或者有@Bean修饰的方法,说明是一个简化（lite）的配置类
 		else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
@@ -147,14 +153,17 @@ abstract class ConfigurationClassUtils {
 	 * @param metadata the metadata of the annotated class
 	 * @return {@code true} if the given class is to be registered for
 	 * configuration class processing; {@code false} otherwise
+	 *
 	 */
 	public static boolean isConfigurationCandidate(AnnotationMetadata metadata) {
 		// Do not consider an interface or an annotation...
+		//不能是接口
 		if (metadata.isInterface()) {
 			return false;
 		}
 
 		// Any of the typical annotations found?
+		// 但凡只有标注了一个下面注解，都算lite模式：@Component @ComponentScan @Import @ImportResource
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {
 				return true;
@@ -162,6 +171,7 @@ abstract class ConfigurationClassUtils {
 		}
 
 		// Finally, let's look for @Bean methods...
+		// 只有存在有一个方法标注了@Bean注解，那就是lite模式
 		try {
 			return metadata.hasAnnotatedMethods(Bean.class.getName());
 		}

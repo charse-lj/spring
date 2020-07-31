@@ -538,10 +538,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			// Tell the subclass to refresh the internal bean factory.
 			// 获取新的beanFactory，销毁原有beanFactory、为每个bean生成BeanDefinition等  注意，此处是获取新的，销毁旧的，这就是刷新的意义
+			// 现在BeanFactory已经创建了,Config配置文件的Bean定义已经注册完成了
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
-			//配置标准的beanFactory，设置ClassLoader，设置SpEL表达式解析器等
+			// 设置EL表达式解析器（Bean初始化完成后填充属性时会用到）
+			// spring3增加了表达式语言的支持，默认可以使用#{bean.xxx}的形式来调用相关属性值
 			prepareBeanFactory(beanFactory);
 
 			try {

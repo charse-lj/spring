@@ -57,11 +57,16 @@ final class ConfigurationClass {
 
 	private final Set<ConfigurationClass> importedBy = new LinkedHashSet<>(1);
 
+	/**
+	 * 存储该配置类里所有标注@Bean注解的方法~~~~
+	 */
 	private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
 
 	private final Map<String, Class<? extends BeanDefinitionReader>> importedResources =
 			new LinkedHashMap<>();
-
+	/**
+	 * 用Map保存着@ImportResource 导入进来的资源们~
+	 */
 	private final Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> importBeanDefinitionRegistrars =
 			new LinkedHashMap<>();
 
@@ -162,6 +167,7 @@ final class ConfigurationClass {
 	 * automatically registered due to being nested within another configuration class.
 	 * @since 3.1.1
 	 * @see #getImportedBy()
+	 * 这句话的意思是说@Import或者内部类或者通过别的配置类放进来的都是被导入进来的~~~~
 	 */
 	public boolean isImported() {
 		return !this.importedBy.isEmpty();

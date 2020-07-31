@@ -417,11 +417,37 @@ import org.springframework.stereotype.Component;
  * @see ConfigurationClassPostProcessor
  * @see org.springframework.core.env.Environment
  * @see org.springframework.test.context.ContextConfiguration
+ *
+ * 是Spring3.0推出来的注解，用来代替xml配置文件。
+ * 若一个Class类被标注了这个注解，我们就认为这个类就是一个配置类，然后在这个类里面就可以写相应的其它配置了，比如@Bean等等
+ * @Configuration
+ * public class AppConfig {
+ *
+ *        @Bean
+ *    public Foo foo() {
+ * 		return new Foo(bar()); // 这里调用的bar()方法
+ *    }
+ *    @Bean
+ *    public Bar bar() {
+ * 		return new Bar();
+ *    }
+ * }
+ * 换成@Component,直接报错.
+ *
+ * 在@Component或其他组件中使用@Bean好处是不会启动CGLIB这种重量级工具（不过在Spring中即使这里不使用，其他很多地方也在使用）
+ * 并且@Component及其相关的Stereotype组件自身就有模块级别的功能，在这里使用@Bean注解能很好的表明一个Bean的从属和结构关系
+ * 建议如果没什么特别的要求就使用@Configuration，引入CGLIB并不会影响多少性能
+ * spring官网将用@Configuration创建的@Bean称呼为"Full"模式、将@Component创建的@Bean称呼为"'lite"模式，从字面上也能略知他们的差异
+ *
+ * 限定
+ * @Configuration不可以是final类型
+ * @Configuration不可以是匿名类
+ * 嵌套的@Configuration必须是静态类
  */
-@Target(ElementType.TYPE)
+@Target(ElementType.TYPE)    // 它只能标注在类上
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Component
+@Component  // 它也是个Spring的组件，会被扫描
 public @interface Configuration {
 
 	/**
