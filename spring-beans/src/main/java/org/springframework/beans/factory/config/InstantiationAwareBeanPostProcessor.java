@@ -43,7 +43,27 @@ import org.springframework.lang.Nullable;
  * @since 1.2
  * @see org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#setCustomTargetSourceCreators
  * @see org.springframework.aop.framework.autoproxy.target.LazyInitTargetSourceCreator
- * 实例化Bean
+ *
+ * 代表了Spring的另外一段生命周期：实例化。先区别一下Spring Bean的实例化和初始化两个阶段的主要作用：
+ * 实例化：实例化的过程是一个创建Bean的过程，即调用Bean的构造函数，单例的Bean放入单例池中
+ * 初始化：初始化的过程是一个赋值的过程，即调用Bean的setter，设置Bean的属性
+ *
+ * InstantiationAwareBeanPostProcessor是作用于 实例化 前后,所以是先执行的
+ * BeanPostProcessor是作用于 初始化，给Bean各个属性赋值的时候执行的（比如我们的属性依赖注入，都是这个时候生效的）
+ * BeanPostProcessor中的方法是初始化类时候的处理器（实例化早于初始化）在spring中初始化指的一般是在调用init-method属性前后
+ *
+ *  咋一看，以为方法名都一样？哈哈  其实你区分出来两个单词的意思，就明白了
+ *  Instantiation：[ɪnstænʃɪ'eɪʃən] 实例化，例示
+ *  Initialization：[ɪˌnɪʃəlaɪ'zeɪʃn] 初始化，设定初始值
+ *
+ * 总结
+ *  InstantiationAwareBeanPostProcessor接口的主要作用在于目标对象的实例化过程中需要处理的事情，包括实例化对象的前后过程以及实例的属性设置
+ *  postProcessBeforeInstantiation方法是最先执行的方法，它在目标对象实例化之前调用，该方法的返回值类型是Object，我们可以返回任何类型的值。由于这个时候目标对象还未实例化，所以这个返回值可以用来代替原本该生成的目标对象的实例(比如代理对象)。如果该方法的返回值代替原本该生成的目标对象，后续只有postProcessAfterInitialization方法会调用，其它方法不再调用；否则按照正常的流程走
+ *  postProcessAfterInstantiation方法在目标对象实例化之后调用，这个时候对象已经被实例化，但是该实例的属性还未被设置，都是null。因为它的返回值是决定要不要调用postProcessPropertyValues方法的其中一个因素（因为还有一个因素是mbd.getDependencyCheck()）；如果该方法返回false,并且不需要check，那么postProcessPropertyValues就会被忽略不执行；如果返回true，postProcessPropertyValues就会被执行
+ *  postProcessPropertyValues方法对属性值进行修改(这个时候属性值还未被设置，但是我们可以修改原本该设置进去的属性值)。如果postProcessAfterInstantiation方法返回false，该方法可能不会被调用。可以在该方法内对属性值进行修改
+ *  父接口BeanPostProcessor的2个方法postProcessBeforeInitialization和postProcessAfterInitialization都是在目标对象被实例化之后，并且属性也被设置之后调用的
+ *
+ *  Instantiation表示实例化，Initialization表示初始化。实例化的意思在对象还未生成，初始化的意思在对象已经生成
  */
 public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
 

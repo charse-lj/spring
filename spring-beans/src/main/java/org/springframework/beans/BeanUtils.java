@@ -687,10 +687,10 @@ public abstract class BeanUtils {
 	 * source bean exposes but the target bean does not will silently be ignored.
 	 * <p>As of Spring Framework 5.3, this method honors generic type information
 	 * when matching properties in the source and target objects.
-	 * @param source the source bean
-	 * @param target the target bean
-	 * @param editable the class (or interface) to restrict property setting to
-	 * @param ignoreProperties array of property names to ignore
+	 * @param source the source bean 源对象
+	 * @param target the target bean 目标对象
+	 * @param editable the class (or interface) to restrict property setting to 用于验证目标对象是不是editable类型的
+	 * @param ignoreProperties array of property names to ignore 需要忽视的属性名
 	 * @throws BeansException if the copying failed
 	 * @see BeanWrapper
 	 */

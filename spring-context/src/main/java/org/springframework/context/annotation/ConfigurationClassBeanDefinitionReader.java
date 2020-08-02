@@ -137,6 +137,7 @@ class ConfigurationClassBeanDefinitionReader {
 		// 因为对于parser来说，只要是@Component都是一个组件（配置文件），只是是Lite模式而已
 		// 因此我们也是可以在任意一个@Component标注的类上使用@Bean向里面注册Bean的，相当于采用的Lite模式。只是我们一般不会去这么干而已，毕竟要职责单一
 		for (ConfigurationClass configClass : configurationModel) {
+			//importBeanDefinitionRegistrars是记录着了我们前面add进去的ImportBeanDefinitionRegistrar的，因此它会在此处开始执行了
 			loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);
 		}
 	}
@@ -148,12 +149,14 @@ class ConfigurationClassBeanDefinitionReader {
 	 * 从指定的一个配置类ConfigurationClass中提取bean定义信息并注册bean定义到bean容器 :
 	 * 	1. 配置类本身要注册为bean定义
 	 * 	2. 配置类中的@Bean注解方法要注册为配置类
+	 * 	 这个方法很重要：它处理了多种方式（@Bean、实现接口类注册等等）完成向容器里注册Bean定义信息
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
 		     //private 方法来解析每一个已经解析好的@Configuration配置文件~~~
 		// 判断是否需要跳过，与之前解析@Configuration判断是否跳过的逻辑是相同的 借助了conditionEvaluator。如果需要
 		// 显然这里，哪怕是helloServiceImpl都不会被跳过
+		// 如果这咯Config不需要被解析，做一些清理、移除的操作~~~~
 		if (trackedConditionEvaluator.shouldSkip(configClass)) {
 			String beanName = configClass.getBeanName();
 			if (StringUtils.hasLength(beanName) && this.registry.containsBeanDefinition(beanName)) {
@@ -163,11 +166,17 @@ class ConfigurationClassBeanDefinitionReader {
 			return;
 		}
 
+		//稍微注意一下Spring处理这些Bean定义的顺序，在某些判断逻辑中或许能用到
+		//如果是被单纯@Import进来的，这个值是true的，默认值是false哦
 		// 如果这个类是@Import进来的  那就注册为一个BeanDefinition   比如这种@Import(Child.class)  这里就会是true
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
 
+		//处理方法上的@Bean 解析@Bean上面各种属性值。也处理上面提到的那些通用注解@Lazy等等吧
+		//这里面只说一个内部比较重要的方法isOverriddenByExistingDefinition(beanMethod, beanName)
+		// 该方法目的主要是去重。其实如果是@Configuration里面Bean重名了，IDEA类似工具发现，但是无法判断xml是否也存在（注意，发现归发现，但并不是编译报错哦~~~）
+		// 它的处理策略为：若来自同一个@Configuration配置类，那就保留之前的。若来自不同配置类，那就覆盖
 		// 这里处理的是所有标注有@Bean注解的方法们，然后注册成BeanDefinition
 		// 同时会解析一系列的@Bean内的属性，以及可以标注的其余注解
 		// 备注：方法访问权限无所谓，private都行。然后static的也行
@@ -175,9 +184,12 @@ class ConfigurationClassBeanDefinitionReader {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
-		//注册importedResources进来的bean们
+		//处理@ImportResource，里面解析xml就是上面说到的解析xml的XmlBeanDefinitionReader
+		//所以，咱们@Configuration和xml是可以并行使用的
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
 		// 调用自定义的ImportBeanDefinitionRegistrar的registerBeanDefinitions方法注册BeanDefinition
+		// 最后，这里就是咱们今天的主菜了：解析咱们的ImportBeanDefinitionRegistrars
+		// configClass.getImportBeanDefinitionRegistrars()：就是我们上面异步add进去的那些注册器们
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 
@@ -415,6 +427,8 @@ class ConfigurationClassBeanDefinitionReader {
 		});
 	}
 
+	// 没什么多余的代码  所有的注册逻辑（哪些Bean需要注册，哪些不需要之类的，全部交给子类去实现）
+    // 用处：上面有提到，比如@MapperScan这种批量扫描的===
 	private void loadBeanDefinitionsFromRegistrars(Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> registrars) {
 		registrars.forEach((registrar, metadata) ->
 				registrar.registerBeanDefinitions(metadata, this.registry, this.importBeanNameGenerator));

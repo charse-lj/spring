@@ -47,6 +47,10 @@ import org.springframework.util.StringValueResolver;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.beans.factory.ListableBeanFactory
  * @see ConfigurableListableBeanFactory
+ *
+ * 三级接口：ConfigurableBeanFactory 配置Bean工厂【巨大的工厂接口】
+ * 对二级接口HierarchicalBeanFactory进行了再次增强，它还继承了另一个外来的接口SingletonBeanRegistry（因此它也具有分层、注册单例Bean的能力了）
+ * SingletonBeanRegistry：Spring容器对单例bean实例的登记管理主要通过接口SingletonBeanRegistry建模抽象，我们可以称之为"单例bean实例注册表"
  */
 public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, SingletonBeanRegistry {
 

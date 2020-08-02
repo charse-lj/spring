@@ -57,14 +57,22 @@ import org.springframework.lang.Nullable;
  * @see Import
  * @see ImportBeanDefinitionRegistrar
  * @see Configuration
+ *
+ *  虽然不能@Autowired，但是实现了这些接口是可以感知到的，下面看源码会发现，Spring会给他注入进去
+ *  这样我们就可以根据特定的条件，来决定某些Bean能注入
+ *  有些Bean不能注入了,BeanClassLoaderAware,BeanFactoryAware,EnvironmentAware,ResourceLoaderAware
+ *  实现该类的内部,各种@Autowired的注入都是不生效的，都是null,Spring容器刷新过程的时候就知道，这个时候还没有开始解析@Autowired，所以肯定是不生效的
  */
 public interface ImportSelector {
 
 	/**
 	 * Select and return the names of which class(es) should be imported based on
 	 * the {@link AnnotationMetadata} of the importing @{@link Configuration} class.
-	 * @return the class names, or an empty array if none
-	 * 当前标注@Import注解的类的所有注解信息
+	 * @return the class names, or an empty array if none,都必须是类的全类名，才会被注册进去的（若你返回的全类名不存在该类，容器会抛错）
+	 * @param importingClassMetadata 包含配置类上面所有的注解信息，以及该配置类本身;若有需要，可以根据这些其它注解信息，来判断哪些Bean应该注册进去，哪些不需要
+	 * 容器在会在特定的时机，帮我们调用这个方法，向容器里注入Bean信息
+	 *
+	 * {@link AdviceModeImportSelector}
 	 */
 	String[] selectImports(AnnotationMetadata importingClassMetadata);
 

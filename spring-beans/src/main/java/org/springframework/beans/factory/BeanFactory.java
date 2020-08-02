@@ -113,6 +113,27 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization
  * @see DisposableBean#destroy
  * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
+ *
+ * BeanFacotry是Spring中最原始的Factory，里面最低层的接口，提供了最简单的容器的功能，只提供了实例化对象和拿对象的功能。它没有AOP功能、Web应用功能等等
+ * ApplicationContext：应用上下文，继承BeanFactory接口（因而提供BeanFactory所有的功能），ApplicationContext以一种更向面向框架的方式工作以及对上下文进行分层和实现继承。它是Spring的一各更高级的容器，提供了更多的有用的功能：
+ * 1.国际化（MessageSource）（ApplicationContext.getMessage()拿到国际化消息）
+ * 2.访问资源，如URL和文件（ResourceLoader） （ApplicationContext acxt =new ClassPathXmlApplicationContext("/applicationContext.xml");能直接读取文件内容）
+ * 3.载入多个（有继承关系）上下文 ，使得每一个上下文都专注于一个特定的层次，比如应用的web层
+ * 4.消息发送、响应机制（ApplicationEventPublisher）
+ * 5.AOP（拦截器）
+ * 相同点：BeanFactory和ApplicationContext都支持BeanPostProcessor、BeanFactoryPostProcessor的使用
+ * 区别是：BeanFactory需要手动注册，而ApplicationContext则是自动注册
+ *
+ * 两者装载bean的区别
+ * BeanFactory在启动的时候不会去实例化Bean，只有从容器中拿Bean的时候才会去实例化；（它只去加载Bean的定义信息，显示调用getBean()才会真正去实例化），这样懒加载的优点是：启动快，启动时占用资源少，但具有第一次惩罚的特点
+ * ApplicationContext在启动的时候就把所有的Bean全部实例化了。它还可以为Bean配置lazy-init=true来让Bean延迟实例化（所有的单例、非懒加载的Bean都会容器启动时候立马实例化）
+ *
+ * 立马加载好的优点
+ * 1.启动时都初始化完成了，所以运行时会更快。
+ * 2、我们就能在系统启动的时候，尽早的发现系统中的配置问题 （因为启动时就得实例化处理）
+ * 3、可以（建议）把费时的操作放到系统启动中完成（比如初始化本地缓存、获取连接池的链接等等操作）
+ *
+ * IOC的始祖
  */
 public interface BeanFactory {
 
@@ -171,6 +192,11 @@ public interface BeanFactory {
 	 * the affected bean isn't a prototype
 	 * @throws BeansException if the bean could not be created
 	 * @since 2.5
+	 *
+	 * getBean()内部不仅仅是get，如果get不到还可能去实例化一个Bean的（默认根据空构造函数进行实例化），因此本处的args其实就是为了匹配构造函数而提供的扩展功能~
+	 * 使用前提：
+	 * 1、传入的参数必须有相对应的构造函数入参与之匹配
+	 * 2、bean的scope必须设置成prototype,因为动态传参话bean不可以是单例的
 	 */
 	Object getBean(String name, Object... args) throws BeansException;
 
@@ -217,6 +243,8 @@ public interface BeanFactory {
 	 * @return a corresponding provider handle
 	 * @since 5.1
 	 * @see #getBeanProvider(ResolvableType)
+	 *
+	 *  返回指定bean的提供程序（Provider），允许延迟(这是重点)按需检索实例，包括可用性和唯一性选项
 	 */
 	<T> ObjectProvider<T> getBeanProvider(Class<T> requiredType);
 
@@ -250,7 +278,8 @@ public interface BeanFactory {
 	 * will be able to obtain an instance for the same name.
 	 * @param name the name of the bean to query
 	 * @return whether a bean with the given name is present
-	 * //判断是否包含Bean。此处有个陷阱：这边不管类是否抽象类,懒加载,是否在容器范围内,只要符合都返回true,所以这边true,**不一定能从getBean获取实例**
+	 *
+	 * 判断是否包含Bean。此处有个陷阱：这边不管类是否抽象类,懒加载,是否在容器范围内,只要符合都返回true,所以这边true,**不一定能从getBean获取实例**
 	 */
 	boolean containsBean(String name);
 
@@ -303,6 +332,8 @@ public interface BeanFactory {
 	 * @since 4.2
 	 * @see #getBean
 	 * @see #getType
+	 *
+	 * 名称为name的Bean的类型，是否和给定的类型匹配（4.2新增的重载接口，传的是ResolvableType ，更加强大了）
 	 */
 	boolean isTypeMatch(String name, ResolvableType typeToMatch) throws NoSuchBeanDefinitionException;
 
@@ -372,6 +403,8 @@ public interface BeanFactory {
 	 * @param name the bean name to check for aliases
 	 * @return the aliases, or an empty array if none
 	 * @see #getBean
+	 *
+	 *  name对应的Bean的别名们（通过别名也可以依赖注入哦~~~）  通过alia别名，也可以getBean()
 	 */
 	String[] getAliases(String name);
 

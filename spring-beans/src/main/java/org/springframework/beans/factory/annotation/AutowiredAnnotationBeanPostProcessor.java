@@ -399,8 +399,10 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 
 	@Override
 	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
+		// 找到所有的@Autowired元数据
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);
 		try {
+			// 所以我们看InjectionMetadata 的inject即可，见下
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (BeanCreationException ex) {
@@ -613,6 +615,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 
 	/**
 	 * Class representing injection information about an annotated field.
+	 * AutowiredFieldElement是AutowiredAnnotationBeanPostProcessor的一个私有普通内部类，高内聚~
 	 */
 	private class AutowiredFieldElement extends InjectionMetadata.InjectedElement {
 
@@ -628,6 +631,13 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			this.required = required;
 		}
 
+		/**
+		 * // 这段代码虽然长，其实核心逻辑还并不在这里，而是在beanFactory Bean工厂的resolveDependency处理依赖实现里
+		 * @param bean
+		 * @param beanName
+		 * @param pvs
+		 * @throws Throwable
+		 */
 		@Override
 		protected void inject(Object bean, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 			Field field = (Field) this.member;
@@ -636,12 +646,18 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 				value = resolvedCachedArgument(beanName, this.cachedFieldValue);
 			}
 			else {
+				// 把field和required属性，包装成desc描述类
 				DependencyDescriptor desc = new DependencyDescriptor(field, this.required);
 				desc.setContainingClass(bean.getClass());
+
+				// 装载注入的名称，最最最后会被注册（缓存）起来
 				Set<String> autowiredBeanNames = new LinkedHashSet<>(1);
 				Assert.state(beanFactory != null, "No BeanFactory available");
 				TypeConverter typeConverter = beanFactory.getTypeConverter();
 				try {
+					// 把desc传进去，里面还有注解信息、元信息等等，这个方法是根据注解信息寻找到依赖的Bean的核心逻辑
+					// 备注：此部分处理依赖逻辑交给Bean工厂，其实也没毛病。毕竟它处理的相当于是Field
+					// 那么接下里，重点分析resolveDependency这个方法
 					value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
 				}
 				catch (BeansException ex) {

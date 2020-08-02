@@ -35,6 +35,23 @@ import org.springframework.lang.Nullable;
  * @since 2.0.3
  * @see InstantiationAwareBeanPostProcessorAdapter
  * 智能实例化Bean
+ * 比如AutowiredAnnotationBeanPostProcessor：依赖注入时的泛型依赖注入，就通过这个能智能判断类型来注入。
+ * 泛型依赖注入的优点：允许我们在使用spring进行依赖注入的同时，利用泛型的优点对代码进行精简，将可重复使用的代码全部放到一个类之中，方便以后的维护和修改。比如常用的Base设计。。。（属于Spring 4.0的新特性）
+ *
+ * @Configuration
+ * public class MyConfiguration {
+ *        @Bean
+ *    public BaseRepository<Student> studentRepository() {
+ * 		return new BaseRepository<Student>() {};
+ *    }
+ *
+ *    @Bean
+ *    public BaseRepository<Faculty> facultyRepository() {
+ * 		return new BaseRepository<Faculty>() {};
+ *    }
+ * }
+ *  注意，这里能够正确注入到正确的Bean，虽然他们都是BaseRepository类型。但是在Spring4.0之后，泛型里面的东西
+ *  也可以作为一种分类Qualifier，随意这里虽然都是BaseRepositor类型，但是在容器中还是被分开了的
  */
 public interface SmartInstantiationAwareBeanPostProcessor extends InstantiationAwareBeanPostProcessor {
 

@@ -178,7 +178,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+		// 此处是先从已经缓存好了的singletonObjects的Map中，查看有木有（至于当前已经有哪些了，下面有个截图，相信什么时候进来的都应该有些印象吧）
 		Object singletonObject = this.singletonObjects.get(beanName);
+		// 若缓存里没有。并且，并且，并且这个Bean必须在创建中，才会进来。
+		// singletonsCurrentlyInCreation字段含义：会缓存下来所有的正在创建中的Bean
+		// 如果有Bean是循环引用的  会把这种Bean先放进去，这里才会有值
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
 				singletonObject = this.earlySingletonObjects.get(beanName);
@@ -202,13 +206,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param singletonFactory the ObjectFactory to lazily create the singleton
 	 * with, if necessary
 	 * @return the registered singleton object
+	 *
+	 * 根据ObjectFactory结合Scope来创建合适的对象
 	 */
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
+		// 从缓存中获取（上面获取过一次的，这里是双从判定）
 		synchronized (this.singletonObjects) {
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
+					// 如果这个Bean正在被销毁，就抛异常了
 					throw new BeanCreationNotAllowedException(beanName,
 							"Singleton bean creation not allowed while singletons of this factory are in destruction " +
 							"(Do not request a bean from a BeanFactory in a destroy method implementation!)");
@@ -216,25 +224,34 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				// 创建前置检查：
+				// 1、若在inCreationCheckExclusions面校验名单里，是ok的
+				//2、singletonsCurrentlyInCreation把它添加进去，证明这个Bean正在创建中
 				beforeSingletonCreation(beanName);
+				// 此处先打标记为false
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					// 把这个实例生成出来，并且标志位设为true
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
 				catch (IllegalStateException ex) {
 					// Has the singleton object implicitly appeared in the meantime ->
 					// if yes, proceed with it since the exception indicates that state.
+					// in the meantime再次旗舰，若有人已经把这个Bean放进去了，那就抛出这个异常吧
 					singletonObject = this.singletonObjects.get(beanName);
 					if (singletonObject == null) {
 						throw ex;
 					}
 				}
 				catch (BeanCreationException ex) {
+					// 处理异常
+					// 比如我们经常遇到的UnsatisfiedDependencyException异常：@Autowired的时候找不到依赖的Bean就是这个异常(一般由NoSuchBeanDefinitionException这个异常导致)
+					// 这里会吧异常链接拼接起来，然后一起打印出来~~~~非常方便查找问题
 					if (recordSuppressedExceptions) {
 						for (Exception suppressedException : this.suppressedExceptions) {
 							ex.addRelatedCause(suppressedException);
@@ -246,8 +263,14 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					// 创建完成后再检查一遍。做的操作为：从正在创建缓存中移除
 					afterSingletonCreation(beanName);
 				}
+				// 这里也非常重要：若是新的Bean，那就执行addSingleton这个方法，这个方法做了什么，就下面4步操作：
+				//this.singletonObjects.put(beanName, singletonObject); //缓存起来
+				//this.singletonFactories.remove(beanName); //把对应ObjectFactory的缓存移除
+				//this.earlySingletonObjects.remove(beanName);
+				//this.registeredSingletons.add(beanName);
 				if (newSingleton) {
 					addSingleton(beanName, singletonObject);
 				}

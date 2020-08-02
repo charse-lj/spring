@@ -51,6 +51,7 @@ import java.lang.annotation.Target;
  * @see ImportResource
  *
  * 快速导入一个组件
+ * 导入Jar包里面的类（因为我们的@ComponentScan是不会扫描jar包的）
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

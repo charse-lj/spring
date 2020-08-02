@@ -45,6 +45,18 @@ import java.beans.PropertyDescriptor;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.validation.BeanPropertyBindingResult
  * @see org.springframework.validation.DataBinder#initBeanPropertyAccess()
+ *
+ * BeanWrapper 是Spring提供的一个用来操作javaBean属性的工具，使用它可以直接修改一个对象的属性
+ * 过BeanWrapper,spring ioc容器可以用统一的方式来访问bean的属性
+ * bean属性的操作
+ * Apache的BeanUtils和PropertyUtils
+ * cglib的BeanMap和BeanCopier
+ * spring的BeanUtils
+ *
+ * 特点
+ * 1.支持设置嵌套属性
+ * 2. 支持属性值的类型转换（设置ConversionService）
+ * 3. 提供分析和操作标准JavaBean的操作：获取和设置属性值（单独或批量），获取属性描述符以及查询属性的可读性/可写性的能力
  */
 public interface BeanWrapper extends ConfigurablePropertyAccessor {
 
@@ -52,22 +64,29 @@ public interface BeanWrapper extends ConfigurablePropertyAccessor {
 	 * Specify a limit for array and collection auto-growing.
 	 * <p>Default is unlimited on a plain BeanWrapper.
 	 * @since 4.1
+	 * 为数组和集合自动增长指定一个限制。在普通的BeanWrapper上默认是无限的。
 	 */
 	void setAutoGrowCollectionLimit(int autoGrowCollectionLimit);
 
 	/**
 	 * Return the limit for array and collection auto-growing.
 	 * @since 4.1
+	 *
+	 * 返回数组和集合自动增长的限制。
 	 */
 	int getAutoGrowCollectionLimit();
 
 	/**
 	 * Return the bean instance wrapped by this object.
+	 *
+	 * 果有的话,返回由此对象包装的bean实例
 	 */
 	Object getWrappedInstance();
 
 	/**
 	 * Return the type of the wrapped bean instance.
+	 *
+	 * 返回被包装的JavaBean对象的类型。
 	 */
 	Class<?> getWrappedClass();
 
@@ -75,6 +94,8 @@ public interface BeanWrapper extends ConfigurablePropertyAccessor {
 	 * Obtain the PropertyDescriptors for the wrapped object
 	 * (as determined by standard JavaBeans introspection).
 	 * @return the PropertyDescriptors for the wrapped object
+	 *
+	 * 获取包装对象的PropertyDescriptors（由标准JavaBeans自省确定）
 	 */
 	PropertyDescriptor[] getPropertyDescriptors();
 
@@ -85,6 +106,8 @@ public interface BeanWrapper extends ConfigurablePropertyAccessor {
 	 * (may be a nested path, but no indexed/mapped property)
 	 * @return the property descriptor for the specified property
 	 * @throws InvalidPropertyException if there is no such property
+	 *
+	 * 获取包装对象的特定属性的属性描述符。
 	 */
 	PropertyDescriptor getPropertyDescriptor(String propertyName) throws InvalidPropertyException;
 

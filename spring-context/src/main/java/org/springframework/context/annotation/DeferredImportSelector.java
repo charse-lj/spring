@@ -34,6 +34,18 @@ import org.springframework.lang.Nullable;
  * @author Phillip Webb
  * @author Stephane Nicoll
  * @since 4.0
+ *
+ * 从现象已经和名字中，我们能够更加直观的看出来：DeferredImportSelector显然是属于延迟加载、靠后加载的，那到底有多延迟，他们执行时机都是啥时候呢
+ *
+ * DeferredImportSelector是ImportSelector的一个扩展
+ * ImportSelector实例的selectImports方法的执行时机，是在@Configguration注解中的其他逻辑被处理**之前**，所谓的其他逻辑，包括对@ImportResource、@Bean这些注解的处理（注意，这里只是对@Bean修饰的方法的处理，并不是立即调用@Bean修饰的方法，这个区别很重要！）
+ * DeferredImportSelector实例的selectImports方法的执行时机，是在@Configguration注解中的其他逻辑被处理**完毕之后**
+ * DeferredImportSelector的实现类可以用Order注解，或者实现Ordered接口来对selectImports的执行顺序排序（ImportSelector不支持）
+ * Spring Boot的自动配置功能就是通过DeferredImportSelector接口的实现类EnableAutoConfigurationImportSelector做到的（因为自动配置必须在我们自定义配置后执行才行）
+ *
+ * ImportSelector 被设计成其实和@Import注解的类同样的导入效果，但是实现 ImportSelector的类可以条件性地决定导入哪些配置。
+ * DeferredImportSelector 的设计目的是在所有其他的配置类被处理后才处理。这也正是该语句被放到本函数最后一行的原因
+ *
  */
 public interface DeferredImportSelector extends ImportSelector {
 
@@ -52,6 +64,7 @@ public interface DeferredImportSelector extends ImportSelector {
 	/**
 	 * Interface used to group results from different import selectors.
 	 * @since 5.0
+	 *
 	 */
 	interface Group {
 
@@ -64,6 +77,8 @@ public interface DeferredImportSelector extends ImportSelector {
 		/**
 		 * Return the {@link Entry entries} of which class(es) should be imported
 		 * for this group.
+		 *
+		 * 内部接口
 		 */
 		Iterable<Entry> selectImports();
 
@@ -71,6 +86,7 @@ public interface DeferredImportSelector extends ImportSelector {
 		/**
 		 * An entry that holds the {@link AnnotationMetadata} of the importing
 		 * {@link Configuration} class and the class name to import.
+		 *  内部的内部类
 		 */
 		class Entry {
 

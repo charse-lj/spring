@@ -57,6 +57,13 @@ import org.springframework.core.type.AnnotationMetadata;
  * @see Import
  * @see ImportSelector
  * @see Configuration
+ *
+ * 该接口功能非常强大，能够实现快速的、批量的、扫描式的注册。比如我们熟悉的ServletComponentScanRegistrar就是去解析注解@ServletComponentScan实现批量注册Bean定义
+ * MapperScannerRegistrar就是MyBatis用来解析@MapperScan注解，来扫描的 等等还有很多类似的设计方式
+ * 向工厂里注册Bean的定义信息（当然也可以拿出来Bean定义信息，做出对应的修改）~
+ *
+ * {@link AspectJAutoProxyRegistrar}它能解析注解的时候，从BeanFactory拿出指定的Bean，设置一些参数值等等
+ * {@link AutoProxyRegistrar}自动代理的注册器。它和上面的区别在于它和代理的类型无关（它可以指定mode类型），而上面是表示就是用AspectJ来做切面代理。
  */
 public interface ImportBeanDefinitionRegistrar {
 

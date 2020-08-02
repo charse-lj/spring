@@ -54,6 +54,10 @@ public interface SingletonBeanRegistry {
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
 	 * @see org.springframework.beans.factory.DisposableBean#destroy
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#registerBeanDefinition
+	 *
+	 *  以指定的名字将给定Object注册到BeanFactory中。
+	 * 	此接口相当于直接把Bean注册，所以都是准备好了的Bean。（动态的向容器里直接放置一个Bean）
+	 * 	什么BeanPostProcessor、InitializingBean、afterPropertiesSet等都不会被执行的，销毁的时候也不会收到destroy的信息
 	 */
 	void registerSingleton(String beanName, Object singletonObject);
 
@@ -69,6 +73,9 @@ public interface SingletonBeanRegistry {
 	 * @param beanName the name of the bean to look for
 	 * @return the registered singleton object, or {@code null} if none found
 	 * @see ConfigurableListableBeanFactory#getBeanDefinition
+	 *
+	 *  以Object的形式返回指定名字的Bean，如果仅仅还是只有Bean定义信息，这里不会反悔
+	 * 	需要注意的是：此方法不能直接通过别名获取Bean。若是别名，请通过BeanFactory的方法先获取到id
 	 */
 	@Nullable
 	Object getSingleton(String beanName);
@@ -94,6 +101,8 @@ public interface SingletonBeanRegistry {
 	 * @see #registerSingleton
 	 * @see org.springframework.beans.factory.ListableBeanFactory#containsBeanDefinition
 	 * @see org.springframework.beans.factory.BeanFactory#containsBean
+	 *
+	 * 是否包含此单例Bean（不支持通过别名查找）
 	 */
 	boolean containsSingleton(String beanName);
 
@@ -108,6 +117,8 @@ public interface SingletonBeanRegistry {
 	 * @see #registerSingleton
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#getBeanDefinitionNames
 	 * @see org.springframework.beans.factory.ListableBeanFactory#getBeanDefinitionNames
+	 *
+	 * 得到容器内所有的单例Bean的名字们
 	 */
 	String[] getSingletonNames();
 
@@ -129,6 +140,9 @@ public interface SingletonBeanRegistry {
 	 * Return the singleton mutex used by this registry (for external collaborators).
 	 * @return the mutex object (never {@code null})
 	 * @since 4.2
+	 *
+	 *  获取当前这个注册表的互斥量(mutex),使用者通过该互斥量协同访问当前注册表
+	 *  实现类DefaultSingletonBeanRegistry就一句话：return this.singletonObjects; 返回当前所有的单例Bean
 	 */
 	Object getSingletonMutex();
 

@@ -80,6 +80,23 @@ public interface BeanPostProcessor {
 	 * 1. BeanValidationPostProcessor 完成JSR-303 @Valid注解Bean验证
 	 * 2. InitDestroyAnnotationBeanPostProcessor 完成@PostConstruct注解的初始化方法调用(所以它是在@Bean指定初始化方法调用之前执行的)
 	 * 3. ApplicationContextAwareProcessor 完成一些Aware接口的注入（如EnvironmentAware、ResourceLoaderAware、ApplicationContextAware）
+	 *
+	 * 接口中两个方法不能返回null，如果返回null那么在后续初始化方法将报空指针异常或者通过getBean()方法获取不到bena实例对象 ，因为后置处理器从Spring IoC容器中取出bean实例对象没有再次放回IoC容器中
+	 *
+	 * BeanFactory和ApplicationContext注册Bean的后置处理器不通点：
+	 * ApplicationContext直接使用@Bean注解，就能向容器注册一个后置处理器。
+	 * 原因：它注册Bean的时候，会先检测是否实现了BeanPostProcessor接口，并自动把它们注册为后置处理器。所在在它这部署一个后置处理器和注册一个普通的Bean，是没有区别的
+	 * BeanFactory必须显示的调用：void addBeanPostProcessor(BeanPostProcessor beanPostProcessor才能注册进去。
+	 * Spring 可以注册多个Bean的后置处理器，是按照注册的顺序进行调用的。若想定制顺序，可以实现@Order或者实现Order接口~
+	 */
+
+	/**
+	 *  在Bean实例化/依赖注入完毕以及自定义的初始化方法之前调用。
+	 *  什么叫自定义初始化方法：比如init-method、比如@PostConstruct标、比如实现InitailztingBean接口的方法等等
+	 * @param bean
+	 * @param beanName 这个Bean实例  beanName：bean名称
+	 * @return
+	 * @throws BeansException
 	 */
 	@Nullable
 	default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
@@ -112,6 +129,8 @@ public interface BeanPostProcessor {
 	 * 整个bean初始化都完全完毕了。做一些事情
 	 * 1. AspectJAwareAdvisorAutoProxyCreator 完成xml风格的AOP配置(aop:config)的目标对象包装到AOP代理对象
 	 * 2. AnnotationAwareAspectJAutoProxyCreator 完成@Aspectj注解风格（aop:aspectj-autoproxy @Aspect）的AOP配置的目标对象包装到AOP代理对象
+	 *
+	 * 在上面基础上，初始化方法之后调用
 	 */
 	@Nullable
 	default Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {

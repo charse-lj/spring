@@ -51,6 +51,8 @@ import org.springframework.core.type.filter.TypeFilter;
  * @author Sam Brannen
  * @since 3.1
  * @see Configuration
+ *
+ * @ComponentScan是不会扫描jar包的
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

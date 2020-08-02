@@ -91,6 +91,9 @@ public interface SmartLifecycle extends Lifecycle, Phased {
 	 * @see #getPhase()
 	 * @see LifecycleProcessor#onRefresh()
 	 * @see ConfigurableApplicationContext#refresh()
+	 *
+	 *  是否伴随这容器的启动而启动  true表示容器refreshed它就会启动了
+	 *  false：必须显示的执行了它的start()才行
 	 */
 	default boolean isAutoStartup() {
 		return true;
@@ -112,6 +115,8 @@ public interface SmartLifecycle extends Lifecycle, Phased {
 	 * want to put the same steps within their common lifecycle monitor (if any).
 	 * @see #stop()
 	 * @see #getPhase()
+	 *
+	 *  相比于Lifecycle 的stop，增加了回调函数
 	 */
 	default void stop(Runnable callback) {
 		stop();
@@ -127,6 +132,8 @@ public interface SmartLifecycle extends Lifecycle, Phased {
 	 * @see #start()
 	 * @see #stop(Runnable)
 	 * @see org.springframework.context.support.DefaultLifecycleProcessor#getPhase(Lifecycle)
+	 *
+	 * 权重值
 	 */
 	@Override
 	default int getPhase() {
