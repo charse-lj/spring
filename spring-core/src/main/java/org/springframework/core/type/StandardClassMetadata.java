@@ -29,9 +29,12 @@ import org.springframework.util.StringUtils;
  *
  * @author Juergen Hoeller
  * @since 2.5
+ *
+ * 基于Java标准的（Standard）反射实现元数据的获取。
  */
 public class StandardClassMetadata implements ClassMetadata {
 
+	//用于内省的Class类
 	private final Class<?> introspectedClass;
 
 
@@ -39,6 +42,7 @@ public class StandardClassMetadata implements ClassMetadata {
 	 * Create a new StandardClassMetadata wrapper for the given Class.
 	 * @param introspectedClass the Class to introspect
 	 * @deprecated since 5.2 in favor of {@link StandardAnnotationMetadata}
+	 * 唯一构造函数：传进来的Class，作为内部的内省对象
 	 */
 	@Deprecated
 	public StandardClassMetadata(Class<?> introspectedClass) {

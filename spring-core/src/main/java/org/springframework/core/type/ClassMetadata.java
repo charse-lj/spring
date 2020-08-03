@@ -27,11 +27,16 @@ import org.springframework.lang.Nullable;
  * @see StandardClassMetadata
  * @see org.springframework.core.type.classreading.MetadataReader#getClassMetadata()
  * @see AnnotationMetadata
+ *
+ * 注解上的注解，Spring将其定义为元注解(meta-annotation),如 @Component标注在 @Service上，@Component就被称作为元注解。后面我们就将注解的注解称为元注解。
+ *
+ * ClassMetadata：对Class的抽象和适配
  */
 public interface ClassMetadata {
 
 	/**
 	 * Return the name of the underlying class.
+	 * 返回类名（注意返回的是最原始的那个className）
 	 */
 	String getClassName();
 
@@ -43,6 +48,7 @@ public interface ClassMetadata {
 	/**
 	 * Return whether the underlying class represents an annotation.
 	 * @since 4.1
+	 * 是否是注解
 	 */
 	boolean isAnnotation();
 
@@ -54,6 +60,7 @@ public interface ClassMetadata {
 	/**
 	 * Return whether the underlying class represents a concrete class,
 	 * i.e. neither an interface nor an abstract class.
+	 * 是否允许创建  不是接口且不是抽象类  这里就返回true了
 	 */
 	default boolean isConcrete() {
 		return !(isInterface() || isAbstract());
@@ -68,6 +75,7 @@ public interface ClassMetadata {
 	 * Determine whether the underlying class is independent, i.e. whether
 	 * it is a top-level class or a nested class (static inner class) that
 	 * can be constructed independently from an enclosing class.
+	 * 是否是独立的(能够创建对象的)  比如是Class、或者内部类、静态内部类
 	 */
 	boolean isIndependent();
 
@@ -77,6 +85,7 @@ public interface ClassMetadata {
 	 * local class within a method).
 	 * <p>If this method returns {@code false}, then the underlying
 	 * class is a top-level class.
+	 * 是否有内部类之类的东东
 	 */
 	default boolean hasEnclosingClass() {
 		return (getEnclosingClassName() != null);
@@ -106,6 +115,7 @@ public interface ClassMetadata {
 	/**
 	 * Return the names of all interfaces that the underlying class
 	 * implements, or an empty array if there are none.
+	 * 会把实现的所有接口名称都返回  具体依赖于Class#getSuperclass
 	 */
 	String[] getInterfaceNames();
 
@@ -116,6 +126,7 @@ public interface ClassMetadata {
 	 * inherited classes and interfaces. An empty array is returned if no member classes
 	 * or interfaces exist.
 	 * @since 3.1
+	 * Class#getDeclaredClasses  返回类中定义的公共、私有、保护的内部类
 	 */
 	String[] getMemberClassNames();
 

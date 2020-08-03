@@ -34,6 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @author Costin Leau
  * @since 2.5
+ * 就是提供了缓存能力private Map<Resource, MetadataReader> metadataReaderCache，提高访问效率。
  */
 public class CachingMetadataReaderFactory extends SimpleMetadataReaderFactory {
 

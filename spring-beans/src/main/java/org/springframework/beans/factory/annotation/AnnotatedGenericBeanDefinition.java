@@ -39,6 +39,9 @@ import org.springframework.util.Assert;
  * @since 2.5
  * @see AnnotatedBeanDefinition#getMetadata()
  * @see org.springframework.core.type.StandardAnnotationMetadata
+ *
+ * 在基于注解驱动的Spring应用着，它使用得非常的多。因为获取注解信息非常的方便~
+ * AnnotatedGenericBeanDefinition只能用于已经被注册或被扫描到的类（否则你手动new一个，它就不在容器里了，那就脱离管理了）
  */
 @SuppressWarnings("serial")
 public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
@@ -51,7 +54,7 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 
 	/**
 	 * Create a new AnnotatedGenericBeanDefinition for the given bean class.
-	 * @param beanClass the loaded bean class
+	 * @param beanClass the loaded bean class 已经加载进来了的Bean的Class
 	 */
 	public AnnotatedGenericBeanDefinition(Class<?> beanClass) {
 		setBeanClass(beanClass);
@@ -67,6 +70,7 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 	 * bean was discovered specifically via component-scanning as opposed to other means.
 	 * @param metadata the annotation metadata for the bean class in question
 	 * @since 3.1.1
+	 * 此处传入AnnotationMetadata ，也得保证对应的class已经被loaded
 	 */
 	public AnnotatedGenericBeanDefinition(AnnotationMetadata metadata) {
 		Assert.notNull(metadata, "AnnotationMetadata must not be null");
@@ -85,6 +89,8 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 	 * @param metadata the annotation metadata for the bean class in question
 	 * @param factoryMethodMetadata metadata for the selected factory method
 	 * @since 4.1.1
+	 *
+	 * 可以由指定的工厂方法产生这个Bean
 	 */
 	public AnnotatedGenericBeanDefinition(AnnotationMetadata metadata, MethodMetadata factoryMethodMetadata) {
 		this(metadata);

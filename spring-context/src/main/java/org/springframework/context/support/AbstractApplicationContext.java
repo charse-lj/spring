@@ -1536,6 +1536,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @throws BeansException if initialization of the bean factory failed
 	 * @throws IllegalStateException if already initialized and multiple refresh
 	 * attempts are not supported
+	 * 子类必须实现这个方法：子类可以创建一个新的BeanFactory，或者直接指向自己一个已经hold的引用（GenericApplicationContext就是指向自己已经持有的）
 	 */
 	protected abstract void refreshBeanFactory() throws BeansException, IllegalStateException;
 

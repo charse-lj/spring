@@ -33,6 +33,7 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @author Costin Leau
  * @since 2.5
+ * 它是基于ASM的org.springframework.asm.ClassReader的简单实现
  */
 final class SimpleMetadataReader implements MetadataReader {
 
@@ -44,8 +45,15 @@ final class SimpleMetadataReader implements MetadataReader {
 	private final AnnotationMetadata annotationMetadata;
 
 
+	/**
+	 * 给上面三个私有属性赋值，下面就只需提供get方法即可 .
+	 * @param resource
+	 * @param classLoader
+	 * @throws IOException
+	 */
 	SimpleMetadataReader(Resource resource, @Nullable ClassLoader classLoader) throws IOException {
 		SimpleAnnotationMetadataReadingVisitor visitor = new SimpleAnnotationMetadataReadingVisitor(classLoader);
+		//通过流构建出一个AnnotationMetadataReadingVisitor，咀咒读取从而获取到各种信息,它实现了ClassVisitor，所以可以作为入参传给ClassReader ASM去解析
 		getClassReader(resource).accept(visitor, PARSING_OPTIONS);
 		this.resource = resource;
 		this.annotationMetadata = visitor.getMetadata();

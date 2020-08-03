@@ -74,6 +74,37 @@ import org.springframework.lang.Nullable;
  *
  * 此接口主要是针对框架之外，没有向Spring托管Bean的应用。通过暴露此功能，Spring框架之外的程序，y也能具有自动装配的能力（此接口赋予它的）。
  * 可以使用这个接口集成其它框架。捆绑并填充（注入）并不由Spring管理生命周期并已存在的实例.像集成WebWork的Actions 和Tapestry Page就很实用
+ *
+ * 就Spring框架本身而言。它的强大的依赖注入，不仅仅能给自家的Bean使用，还能赋能给容器之外的Bean，快速的把需要注入的对象给它装配好
+ *
+ * 	@Data
+ * 	public class Child {
+ *
+ * 	// 注意：这里并没有@Autowired注解的
+ *     private HelloService helloService;
+ *
+ *     private String name;
+ *     private Integer age;
+ *
+ * 	}
+ *
+ *
+ *     public static void main(String[] args) {
+ *         ApplicationContext applicationContext = new AnnotationConfigApplicationContext(RootConfig.class);
+ *         // ApplicationContext里面是持久AutowireCapableBeanFactory这个工具的，它真实的实现类一般都是：DefaultListableBeanFactory
+ *         AutowireCapableBeanFactory autowireCapableBeanFactory = applicationContext.getAutowireCapableBeanFactory();
+ *
+ *         // 我们吧Child的创建过程都交给Bean工厂去帮我们处理，自己连new都不需要了 （createBean方法执行多次，就会创建多个child实例）
+ *         Child child = (Child) autowireCapableBeanFactory.createBean(Child.class, AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE, false);
+ *
+ *         //简直残暴，没有@Autowired注解都给注入进来了~~~  至于为什么，看看下面的分析，你就知道了
+ *         System.out.println(child.getHelloService()); //com.fsx.service.HelloServiceImpl@6a78afa0
+ *
+ *         // 抛出异常 No qualifying bean of type 'com.fsx.bean.Child' available
+ *         // 能佐证：我们的Bean并没交给Spring容器管理，它只是帮我们创建好了，并把对应属性注入进去了
+ *         Child bean = applicationContext.getBean(Child.class);
+ *         System.out.println(bean);
+ *     }
  */
 public interface AutowireCapableBeanFactory extends BeanFactory {
 

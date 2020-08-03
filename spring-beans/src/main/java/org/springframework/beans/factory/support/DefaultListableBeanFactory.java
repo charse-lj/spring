@@ -116,6 +116,20 @@ import org.springframework.util.StringUtils;
  * @see #addBeanPostProcessor
  * @see #getBean
  * @see #resolveDependency
+ *
+ * Spring内部的唯一使用的工厂实现（XmlBeanFactory已废弃）基于bean definition对象，是一个成熟的bean factroy
+ * 默认实现了ListableBeanFactory和BeanDefinitionRegistry接口，基于bean definition对象，**是一个成熟的bean factroy。**它是整个bean加载的核心部分，也是spring注册加载bean的默认实现
+ * DefaultListableBeanFactory既可以作为一个单独的beanFactory，也可以作为自定义beanFactory的父类
+ * 至于特定格式的Bean定义信息（比如常见的有xml、注解等）的解析器可以自己实现，也可以使用原有的解析器，如： PropertiesBeanDefinitionReader和XmLBeanDefinitionReader、AnnotatedBeanDefinitionReader
+ *
+ *  extends：相当于继承了抽象类所有的实现，并且是已经具有注入功能了（含有ListableBeanFactory、ConfigurableListableBeanFactory的所有接口）
+ *  implements：直接实现ConfigurableListableBeanFactory，表示它具有了批量处理Bean、配置Bean等等功能
+ *  BeanDefinitionRegistry：该接口目前还仅有这个类实现（它父接口为：AliasRegistry	）
+ *
+ *  为什么要拆成这么多的类和接口呢。这里面可能基于几点考虑
+ *  1.功能的不同维度，分不同的接口，方便以后的维护和其他人的阅读。（代码的可读性异常的重要，特别像Spring这种持久性的项目）
+ *  2.不同接口的实现，分布在不同的之类里，方便以后不同接口多种实现的扩展（单一职责，才好扩展。否则造成臃肿后，后面无法发展）
+ *  3.从整个类图的分布，可以看出spring在这块是面向接口编程，后面类的实现，他们认为只是接口功能实现的一种，随时可以拓展成多种实现 （面向接口编程，能极大的解耦各模块之间的互相影响）
  */
 @SuppressWarnings("serial")
 public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory

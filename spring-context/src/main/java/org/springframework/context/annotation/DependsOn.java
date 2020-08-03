@@ -45,6 +45,17 @@ import java.lang.annotation.Target;
  *
  * @author Juergen Hoeller
  * @since 3.0
+ *
+ * 为什么要控制Bean的加载顺序？
+ * @Order注解等并不能控制Bean的加载顺序的~~因为你如果熟悉原理了就知道Spring在解析Bean的时候，根本就没有参考这个注解
+ * 另外@Configuration配置类的加载，也不会受到@Order注解的影响。因为之前源码解释过，它拿到配置的数组，仅仅就是一个for循环遍历去解析了
+ * 但是但Spring能保证如果A依赖B(如beanA中有@Autowired B的变量)，那么B将先于A被加载（这属于Spring容器内部就自动识别处理了）。但如果beanA不直接依赖B，我们如何让B仍先加载?
+ *
+ * 需要的场景距离如下
+ * 1.bean A 间接（并不是直接@Autowired）依赖 bean B。如bean A有一个属性，需要在初始化的时候对其进行赋值（需要在初始化的时候做，是因为这个属性其实是包装了其它的几个Bean的，比如说代理了Bean B），所以这就形成了Bean A间接的依赖Bean B了
+ * 2.bean A是事件发布者（或JMS发布者），bean B (或一些) 负责监听这些事件，典型的如观察者模式。我们不想B 错过任何事件，那么B需要首先被初始化。
+ *
+ * 
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

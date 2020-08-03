@@ -440,6 +440,11 @@ class ConfigurationClassBeanDefinitionReader {
 	 * was created from a configuration class as opposed to any other configuration source.
 	 * Used in bean overriding cases where it's necessary to determine whether the bean
 	 * definition was created externally.
+	 * 首先需要注意的是，它是ConfigurationClassBeanDefinitionReader的一个私有的静态内部类：这个类负责将@Bean注解的方法转换为对应的ConfigurationClassBeanDefinition类（非常的重要）
+	 * 如果@Bean注解没有指定bean的名字，默认会用方法的名字命名bean
+	 * @Configuration注解的类会成为一个工厂类，而所有的@Bean注解的方法会成为工厂方法，通过工厂方法实例化Bean，而不是直接通过构造函数初始化（所以我们方法体里面可以很方便的书写逻辑。。。）
+	 *
+	 * Spring初始化时，会用GenericBeanDefinition或是ConfigurationClassBeanDefinition（用@Bean注解注释的类）存储用户自定义的Bean，在初始化Bean时，又会将其转换为RootBeanDefinition
 	 */
 	@SuppressWarnings("serial")
 	private static class ConfigurationClassBeanDefinition extends RootBeanDefinition implements AnnotatedBeanDefinition {

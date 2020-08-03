@@ -41,6 +41,8 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @since January 19, 2001
  * @see ServletContextAware#setServletContext
+ *
+ * web环境的Context,该容器是read-only 的
  */
 public interface WebApplicationContext extends ApplicationContext {
 

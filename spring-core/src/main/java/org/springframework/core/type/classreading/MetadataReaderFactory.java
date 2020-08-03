@@ -28,6 +28,12 @@ import org.springframework.core.io.Resource;
  * @since 2.5
  * @see SimpleMetadataReaderFactory
  * @see CachingMetadataReaderFactory
+ *
+ * 对于MetadataReaderFactory的应用主要体现在几个地方
+ * 1.ConfigurationClassPostProcessor：该属性值最终会传给ConfigurationClassParser，用于@EnableXXX / @Import等注解的解析上
+ * 2.ClassPathScanningCandidateComponentProvider：它用于@ComponentScan的时候解析，拿到元数据判断是否是@Component的派生注解
+ * 3.Mybatis的SqlSessionFactoryBean：它在使用上非常简单，只是为了从Resouece里拿到ClassName而已。classMetadata.getClassName()
+ * 4.SourceClass：它是对source对象一个轻量级的包装，持有AnnotationMetadata 元数据，如下一般实际为一个StandardAnnotationMetadata，比如@EnableTransactionManagement用的就是它
  */
 public interface MetadataReaderFactory {
 

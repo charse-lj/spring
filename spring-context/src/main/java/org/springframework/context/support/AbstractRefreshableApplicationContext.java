@@ -116,6 +116,13 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * This implementation performs an actual refresh of this context's underlying
 	 * bean factory, shutting down the previous bean factory (if any) and
 	 * initializing a fresh bean factory for the next phase of the context's lifecycle.
+	 *
+	 * 1、如果当前上下文持有一个已经刷新过的bean工厂，需要先销毁此上下文所管理的所有的bean,再关闭bean工厂
+	 * 2、创建一个bean工厂：org.springframework.beans.factory.support.DefaultListableBeanFactory,并且把旧工厂的属性赋值给新的（若有的话）
+	 * 3、加载xml配置文件中的bean(或者是@Configuration的定义信息)  总之就是loadBeanDefinitions(beanFactory);
+	 *
+	 *  此处需要注意的是：loadBeanDefinitions()是个抽象方法，因为当前的并不知道去哪加载（可能是xml，可能是Config类，可能都有。因此交给子类共同去完成这个方案即可）
+	 * 	所以看下面的实现~~~~AbstractRefreshableConfigApplicationContext
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {

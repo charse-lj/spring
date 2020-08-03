@@ -115,6 +115,10 @@ import org.springframework.util.StringValueResolver;
  * @see #createBean
  * @see AbstractAutowireCapableBeanFactory#createBean
  * @see DefaultListableBeanFactory#getBeanDefinition
+ *
+ * 抽象类工厂（一级）：AbstractBeanFactory
+ * AbstractBeanFactory作为一个抽象类，实现了三级接口ConfigurableBeanFactory(方法50+的接口)大部分功能。
+ * 而且继承自FactoryBeanRegistrySupport，所以它也具备了SingletonBeanRegistry和SimpleAliasRegistry的能力
  */
 public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
 
@@ -197,6 +201,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	//---------------------------------------------------------------------
 	// Implementation of BeanFactory interface
+	//实现了大部分的方法，其中最终的实现为getBean()/doGetBean()方法的实现，提供了模版。其实createBean抽象方法，还是子类去实现的
+	//isSingleton(String name) / isPrototype(String name) / containsBean(String name) 也能实现精准的判断了
 	//---------------------------------------------------------------------
 
 	@Override
@@ -1973,6 +1979,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @return if this bean factory contains a bean definition with the given name
 	 * @see #containsBean
 	 * @see org.springframework.beans.factory.ListableBeanFactory#containsBeanDefinition
+	 *
+	 * 效果同：ListableBeanFactory#containsBeanDefinition  实现类：DefaultListableBeanFactory
+	 * 此处Spring其实用了一个小技巧：采用抽象方法和接口方法签名一模一样。
+	 * 比如这里的containsBeanDefinition和getBeanDefinition等。这样的好处是，子类若同时实现对应接口、抽象类等，能够达到类似：跨级实现的效果~~~
+	 * (我明明没有实现它这个接口，但我却复写了这个接口的方法…)
 	 */
 	protected abstract boolean containsBeanDefinition(String beanName);
 
@@ -1994,6 +2005,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @see RootBeanDefinition
 	 * @see ChildBeanDefinition
 	 * @see org.springframework.beans.factory.config.ConfigurableListableBeanFactory#getBeanDefinition
+	 *
+	 * 效果同：ConfigurableListableBeanFactory#getBeanDefinition  实现类：DefaultListableBeanFactory
 	 */
 	protected abstract BeanDefinition getBeanDefinition(String beanName) throws BeansException;
 
@@ -2007,6 +2020,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param args explicit arguments to use for constructor or factory method invocation
 	 * @return a new instance of the bean
 	 * @throws BeanCreationException if the bean could not be created
+	 *
+	 * 创建Bean的复杂逻辑，子类去实现。(子类：AbstractAutowireCapableBeanFactory)
 	 */
 	protected abstract Object createBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException;

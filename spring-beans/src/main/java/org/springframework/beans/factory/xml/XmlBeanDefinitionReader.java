@@ -75,6 +75,9 @@ import org.springframework.util.xml.XmlValidationModeDetector;
  * @see BeanDefinitionRegistry
  * @see org.springframework.beans.factory.support.DefaultListableBeanFactory
  * @see org.springframework.context.support.GenericApplicationContext
+ *
+ * 我们注解配置中@Configuration上也可以加上@ImportResource导入外置的xml配置文件。
+ * 它由此方法ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsFromImportedResources处理，内部借助的就是XmlBeanDefinitionReader去解析它的
  */
 public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 

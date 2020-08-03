@@ -28,6 +28,9 @@ package org.springframework.core.type;
  * @see StandardMethodMetadata
  * @see AnnotationMetadata#getAnnotatedMethods
  * @see AnnotatedTypeMetadata
+ *
+ * 新增访问方法元数据的接口
+ * 它是子接口，主要增加了从Class里获取到MethodMetadata们的方法：
  */
 public interface MethodMetadata extends AnnotatedTypeMetadata {
 

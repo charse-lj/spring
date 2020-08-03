@@ -39,6 +39,9 @@ import org.springframework.util.StringUtils;
 public abstract class AbstractRefreshableConfigApplicationContext extends AbstractRefreshableApplicationContext
 		implements BeanNameAware, InitializingBean {
 
+	/**
+	 *  配置文件的位置（可能是xml，可能是config哦~ 目前还是不确定的  这里只是提供的抽象存储）
+	 */
 	@Nullable
 	private String[] configLocations;
 

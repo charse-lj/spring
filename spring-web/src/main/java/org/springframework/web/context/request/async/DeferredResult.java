@@ -50,6 +50,55 @@ import org.springframework.web.context.request.NativeWebRequest;
  * @author Rob Winch
  * @since 3.2
  * @param <T> the result type
+ *
+ * 先明细两个概念：
+ *
+ * 请求处理线程：处理线程 属于 web 服务器线程，负责 处理用户请求，采用 线程池 管理。
+ * 异步线程：异步线程 属于 用户自定义的线程，可采用 线程池管理。
+ *
+ * 异步模式处理步骤概述如下
+ * 1.当Controller返回值是Callable的时候
+ * 2.Spring就会将Callable交给TaskExecutor去处理（一个隔离的线程池）
+ * 3.与此同时将DispatcherServlet里的拦截器、Filter等等都马上退出主线程，但是response仍然保持打开的状态
+ * 4.Callable线程处理完成后，Spring MVC讲请求重新派发给容器**（注意这里的重新派发，和后面讲的拦截器密切相关）**
+ * 5.根据Callabel返回结果，继续处理（比如参数绑定、视图解析等等就和之前一样了）~~~~
+ *
+ * DeferredResult使用方式与Callable类似，但在返回结果上不一样，它返回的时候实际结果可能没有生成，实际的结果可能会在另外的线程里面设置到DeferredResult中去
+ * 这个特性非常非常的重要，对后面实现复杂的功能（比如服务端推技术、订单过期时间处理、长轮询、模拟MQ的功能等等高级应用）
+ *
+ * @Controller
+ * @RequestMapping("/async/controller")
+ * public class AsyncHelloController {
+ *
+ *     private List<DeferredResult<String>> deferredResultList = new ArrayList<>();
+ *
+ *     @ResponseBody
+ *     @GetMapping("/hello")
+ *     public DeferredResult<String> helloGet() throws Exception {
+ *         DeferredResult<String> deferredResult = new DeferredResult<>();
+ *
+ *         //先存起来，等待触发
+ *         deferredResultList.add(deferredResult);
+ *         return deferredResult;
+ *     }
+ *
+ *     @ResponseBody
+ *     @GetMapping("/setHelloToAll")
+ *     public void helloSet() throws Exception {
+ *         // 让所有hold住的请求给与响应
+ *         deferredResultList.forEach(d -> d.setResult("say hello to all"));
+ *     }
+ * }
+ * 我们第一个请求/hello，会先deferredResult存起来，然后前端页面是一直等待（转圈状态）的。知道我发第二个请求：setHelloToAll，所有的相关页面才会有响应~~
+ *
+ * 执行过程
+ * 1.controller 返回一个DeferredResult，我们把它保存到内存里或者List里面（供后续访问）
+ * 2.Spring MVC调用request.startAsync()，开启异步处理
+ * 3.与此同时将DispatcherServlet里的拦截器、Filter等等都马上退出主线程，但是response仍然保持打开的状态
+ * 4.应用通过另外一个线程（可能是MQ消息、定时任务等）给DeferredResult set值。然后Spring MVC会把这个请求再次派发给servlet容器
+ * 5.DispatcherServlet再次被调用，然后处理后续的标准流程
+ *
+ * DeferredResult的超时处理，采用委托机制，也就是在实例DeferredResult时给予一个超时时长（毫秒），同时在onTimeout中委托（传入）一个新的处理线程（我们可以认为是超时线程）；当超时时间到来，DeferredResult启动超时线程，超时线程处理业务，封装返回数据，给DeferredResult赋值（正确返回的或错误返回的）
  */
 public class DeferredResult<T> {
 
@@ -57,18 +106,21 @@ public class DeferredResult<T> {
 
 	private static final Log logger = LogFactory.getLog(DeferredResult.class);
 
-
+	//超时时间（ms） 可以不配置
 	@Nullable
 	private final Long timeoutValue;
 
+	// 相当于超时的话的，传给回调函数的值
 	private final Supplier<?> timeoutResult;
 
+	// 这三种回调也都是支持的
 	private Runnable timeoutCallback;
 
 	private Consumer<Throwable> errorCallback;
 
 	private Runnable completionCallback;
 
+	// 这个比较强大，就是能把我们结果再交给这个自定义的函数处理了 他是个@FunctionalInterface
 	private DeferredResultHandler resultHandler;
 
 	private volatile Object result = RESULT_NONE;
@@ -125,6 +177,10 @@ public class DeferredResult<T> {
 	 * or {@link #setErrorResult(Object)}, or as a result of a timeout, if a
 	 * timeout result was provided to the constructor. The request may also
 	 * expire due to a timeout or network error.
+	 *
+	 *  判断这个DeferredResult是否已经被set过了（被set过的对象，就可以移除了嘛）
+	 * 	如果expired表示已经过期了你还没set，也是返回false的
+	 * 	Spring4.0之后提供的
 	 */
 	public final boolean isSetOrExpired() {
 		return (this.result != RESULT_NONE || this.expired);
@@ -133,6 +189,7 @@ public class DeferredResult<T> {
 	/**
 	 * Return {@code true} if the DeferredResult has been set.
 	 * @since 4.0
+	 * 没有isSetOrExpired 强大，建议使用上面那个
 	 */
 	public boolean hasResult() {
 		return (this.result != RESULT_NONE);
@@ -143,6 +200,7 @@ public class DeferredResult<T> {
 	 * can also be {@code null}, it is recommended to use {@link #hasResult()} first
 	 * to check if there is a result prior to calling this method.
 	 * @since 4.0
+	 *  还可以获得set进去的结果
 	 */
 	@Nullable
 	public Object getResult() {
@@ -196,6 +254,8 @@ public class DeferredResult<T> {
 	 * Provide a handler to use to handle the result value.
 	 * @param resultHandler the handler
 	 * @see DeferredResultProcessingInterceptor
+	 *
+	 * 如果你的result还需要处理，可以这是一个resultHandler，会对你设置进去的结果进行处理
 	 */
 	public final void setResultHandler(DeferredResultHandler resultHandler) {
 		Assert.notNull(resultHandler, "DeferredResultHandler is required");
@@ -233,6 +293,10 @@ public class DeferredResult<T> {
 	 * @return {@code true} if the result was set and passed on for handling;
 	 * {@code false} if the result was already set or the async request expired
 	 * @see #isSetOrExpired()
+	 *
+	 * 我们发现，这里调用是private方法setResultInternal，我们设置进来的结果result，会经过它的处理
+	 * 而它的处理逻辑也很简单，如果我们提供了resultHandler，它会把这个值进一步的交给我们的resultHandler处理
+	 * 若我们没有提供此resultHandler，那就保存下这个result即可
 	 */
 	public boolean setResult(T result) {
 		return setResultInternal(result);
@@ -277,12 +341,21 @@ public class DeferredResult<T> {
 	 * for handling; {@code false} if the result was already set or the async
 	 * request expired
 	 * @see #isSetOrExpired()
+	 *
+	 * 发生错误了，也可以设置一个值。这个result会被记下来，当作result
+	 * 注意这个和setResult的唯一区别，这里入参是Object类型，而setResult只能set规定的指定类型
+	 * 定义成Obj是有原因的：因为我们一般会把Exception等异常对象放进来。。。
 	 */
 	public boolean setErrorResult(Object result) {
 		return setResultInternal(result);
 	}
 
 
+	/**
+	 * 拦截器 注意最终finally里面，都可能会调用我们的自己的处理器resultHandler(若存在的话)
+	 * afterCompletion不会调用resultHandler~~~~~~~~~~~~~
+	 * @return
+	 */
 	final DeferredResultProcessingInterceptor getInterceptor() {
 		return new DeferredResultProcessingInterceptor() {
 			@Override
@@ -337,6 +410,7 @@ public class DeferredResult<T> {
 
 	/**
 	 * Handles a DeferredResult value when set.
+	 * 内部函数式接口 DeferredResultHandler
 	 */
 	@FunctionalInterface
 	public interface DeferredResultHandler {

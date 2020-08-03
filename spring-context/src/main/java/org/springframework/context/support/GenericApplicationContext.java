@@ -90,6 +90,34 @@ import org.springframework.util.Assert;
  * @see #refresh()
  * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
  * @see org.springframework.beans.factory.support.PropertiesBeanDefinitionReader
+ *
+ * 通用的应用上下文（请注意：它已经不是抽象类，可以直接使用了）
+ * GenericApplicationContext 持有一个DefaultListableBeanFactory实例，并且没有假设一个特定的bean definition 的format。
+ * 实现了BeanDefinitionRegistry接口以允许配置任何bean definition reader（也可以不是XmlBeanDefinitionReader）。
+ * Generic：表现出它的通用
+ *
+ * GenericApplicationContext ctx = new GenericApplicationContext();
+ * //使用XmlBeanDefinitionReader
+ * XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(ctx);
+ * //加载ClassPathResource
+ * xmlReader.loadBeanDefinitions(new ClassPathResource("applicationContext.xml"));
+ * PropertiesBeanDefinitionReader propReader = new PropertiesBeanDefinitionReader(ctx);
+ * propReader.loadBeanDefinitions(new ClassPathResource("otherBeans.properties"));
+ * //调用Refresh方法
+ * ctx.refresh();
+ *
+ * //和其他ApplicationContext方法一样的使用方式
+ * MyBean myBean = (MyBean) ctx.getBean("myBean");
+ *
+ * 缺点：几乎是手动档的，什么解析Bean之类的，都得自己手动调用对应的Reader去处理
+ * 一般情况下使用ClassPathXmlApplicationContext或者FileSystemXmlApplicationContext会比这个GenericApplicationContext更方便，但是但是相应地缺少灵活性，因为只能使用特定Bean definition 格式和加载路径
+ *
+ * 继承它做一些扩展，进行一些步骤的简单封装处理亦可。比如
+ * 1.GenericXmlApplicationContext：比较重要，内部使用XmlBeanDefinitionReader去解析，根据传进来的xml路径解析然后把Bean定义信息注册好，然后自动调用refresh()方法
+ * 2.StaticApplicationContext：它能让你编程注册。而不是从配置文件中读取，一般用于测试环境（忽略）
+ * 3.GenericWebApplicationContext：对web环境的支持。重点是也实现了接口：ConfigurableWebApplicationContext配置的context
+ * 4.AnnotationConfigApplicationContext：这个非常的重要，内部使用AnnotatedBeanDefinitionReader或者ClassPathBeanDefinitionScanner去装载Bean的定义信息。然后其余的没啥了。这个我们经常使用，因为不用再需要xml文件了，使用@Configuration配置类即可，更加的方便。
+ * 
  */
 public class GenericApplicationContext extends AbstractApplicationContext implements BeanDefinitionRegistry {
 

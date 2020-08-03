@@ -52,6 +52,8 @@ import org.springframework.util.MultiValueMap;
  * {@link SimpleAnnotationMetadataReadingVisitor} for internal use within the
  * framework, but there is no public replacement for
  * {@code AnnotationMetadataReadingVisitor}.
+ *
+ * 使用的ASM的ClassVisitor模式读取元数据
  */
 @Deprecated
 public class AnnotationMetadataReadingVisitor extends ClassMetadataReadingVisitor implements AnnotationMetadata {

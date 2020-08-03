@@ -47,6 +47,8 @@ import org.springframework.util.MultiValueMap;
  * @deprecated As of Spring Framework 5.2, this class and related classes in this
  * package have been replaced by {@link SimpleAnnotationMetadataReadingVisitor}
  * and related classes for internal use within the framework.
+ *
+ * 基于ASM的实现的，继承自ASM``的org.springframework.asm.MethodVisitor采用Visitor的方式读取到元数据
  */
 @Deprecated
 public class MethodMetadataReadingVisitor extends MethodVisitor implements MethodMetadata {

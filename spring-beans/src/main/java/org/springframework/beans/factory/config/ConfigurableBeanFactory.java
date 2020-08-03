@@ -58,6 +58,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Scope identifier for the standard singleton scope: {@value}.
 	 * <p>Custom scopes can be added via {@code registerScope}.
 	 * @see #registerScope
+	 *
+	 * 定义了两个作用域: 单例和原型.可以通过registerScope来添加.
 	 */
 	String SCOPE_SINGLETON = "singleton";
 
@@ -77,6 +79,9 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @throws IllegalStateException if this factory is already associated with
 	 * a parent BeanFactory
 	 * @see #getParentBeanFactory()
+	 *
+	 * 父容器设置.而且一旦设置了就不让修改（改就抛错）
+	 * 配合父接口HierarchicalBeanFactory的getParentBeanFactory方法
 	 */
 	void setParentBeanFactory(BeanFactory parentBeanFactory) throws IllegalStateException;
 
@@ -89,6 +94,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * to be resolved once the factory processes the bean definition.
 	 * @param beanClassLoader the class loader to use,
 	 * or {@code null} to suggest the default class loader
+	 *
+	 * 类加载器设置与获取.默认使用当前线程中的类加载器
 	 */
 	void setBeanClassLoader(@Nullable ClassLoader beanClassLoader);
 
@@ -108,6 +115,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * classes are loaded as lazily as possible. The temporary loader is
 	 * then removed once the BeanFactory completes its bootstrap phase.
 	 * @since 2.5
+	 *
+	 * 为了类型匹配,搞个临时类加载器.好在一般情况为null,使用上面定义的标准加载器
 	 */
 	void setTempClassLoader(@Nullable ClassLoader tempClassLoader);
 
@@ -125,6 +134,9 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * <p>Turn this flag off to enable hot-refreshing of bean definition objects
 	 * and in particular bean classes. If this flag is off, any creation of a bean
 	 * instance will re-query the bean class loader for newly resolved classes.
+	 *
+	 * 设置、是否缓存元数据，如果false，那么每次请求实例，都会从类加载器重新加载（热加载）
+	 * 在字段mergedBeanDefinitions里存着，和getMergedBeanDefinition方法有关
 	 */
 	void setCacheBeanMetadata(boolean cacheBeanMetadata);
 
@@ -140,6 +152,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * An ApplicationContext will typically set a standard expression strategy
 	 * here, supporting "#{...}" expressions in a Unified EL compatible style.
 	 * @since 3.0
+	 *
+	 * 定义用于解析bean definition的表达式解析器
 	 */
 	void setBeanExpressionResolver(@Nullable BeanExpressionResolver resolver);
 
@@ -154,6 +168,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Specify a Spring 3.0 ConversionService to use for converting
 	 * property values, as an alternative to JavaBeans PropertyEditors.
 	 * @since 3.0
+	 * 类型转化器
 	 */
 	void setConversionService(@Nullable ConversionService conversionService);
 
@@ -171,6 +186,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * the need for synchronization on custom editors; hence, it is generally
 	 * preferable to use this method instead of {@link #registerCustomEditor}.
 	 * @param registrar the PropertyEditorRegistrar to register
+	 *
+	 * 添加一个属性编辑器的登记员：Registrar
 	 */
 	void addPropertyEditorRegistrar(PropertyEditorRegistrar registrar);
 
@@ -183,6 +200,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * of this method, to avoid for the need for synchronization on custom editors.
 	 * @param requiredType type of the property
 	 * @param propertyEditorClass the {@link PropertyEditor} class to register
+	 *
+	 * 注册常用属性编辑器
 	 */
 	void registerCustomEditor(Class<?> requiredType, Class<? extends PropertyEditor> propertyEditorClass);
 
@@ -201,6 +220,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @since 2.5
 	 * @see #addPropertyEditorRegistrar
 	 * @see #registerCustomEditor
+	 *
+	 * BeanFactory用来转换bean属性值或者参数值的自定义转换器
 	 */
 	void setTypeConverter(TypeConverter typeConverter);
 
@@ -217,6 +238,9 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Add a String resolver for embedded values such as annotation attributes.
 	 * @param valueResolver the String resolver to apply to embedded values
 	 * @since 3.0
+	 *
+	 * string值解析器(想起mvc中的ArgumentResolver了)
+	 * 增加一个嵌入式的StringValueResolver
 	 */
 	void addEmbeddedValueResolver(StringValueResolver valueResolver);
 
@@ -224,6 +248,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Determine whether an embedded value resolver has been registered with this
 	 * bean factory, to be applied through {@link #resolveEmbeddedValue(String)}.
 	 * @since 4.3
+	 * 上面增加过，这里就是true嘛
 	 */
 	boolean hasEmbeddedValueResolver();
 
@@ -232,6 +257,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param value the value to resolve
 	 * @return the resolved value (may be the original value as-is)
 	 * @since 3.0
+	 *
+	 * 用注册的值解析器，依次解析这个value(注意是依次解析)。谁先解析出为null了，后面就不再解析了
 	 */
 	@Nullable
 	String resolveEmbeddedValue(String value);
@@ -245,6 +272,9 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * that autodetected post-processors (e.g. as beans in an ApplicationContext)
 	 * will always be applied after programmatically registered ones.
 	 * @param beanPostProcessor the post-processor to register
+	 *
+	 *  向工厂里添加Bean的后置处理器BeanPostProcessor
+	 *  需要注意的是：内部实现是先执行remove，再add的设计技巧
 	 */
 	void addBeanPostProcessor(BeanPostProcessor beanPostProcessor);
 
@@ -257,6 +287,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Register the given scope, backed by the given Scope implementation.
 	 * @param scopeName the scope identifier
 	 * @param scope the backing Scope implementation
+	 *
+	 * 作用域定义：注册范围
 	 */
 	void registerScope(String scopeName, Scope scope);
 
@@ -284,6 +316,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Provides a security access control context relevant to this factory.
 	 * @return the applicable AccessControlContext (never {@code null})
 	 * @since 3.0
+	 *
+	 * 访问权限控制：返回本工厂的一个安全访问上下文  和java.security有关的
 	 */
 	AccessControlContext getAccessControlContext();
 
@@ -294,6 +328,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Should not include any metadata of actual bean definitions,
 	 * such as BeanDefinition objects and bean name aliases.
 	 * @param otherFactory the other BeanFactory to copy from
+	 *
+	 * 从其他的工厂复制相关的所有配置
 	 */
 	void copyConfigurationFrom(ConfigurableBeanFactory otherFactory);
 
@@ -306,6 +342,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param beanName the canonical name of the target bean
 	 * @param alias the alias to be registered for the bean
 	 * @throws BeanDefinitionStoreException if the alias is already in use
+	 *
+	 * 给指定的Bean注册别名  内部还会checkForAliasCircle(name, alias);
 	 */
 	void registerAlias(String beanName, String alias) throws BeanDefinitionStoreException;
 
@@ -327,6 +365,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @return a (potentially merged) BeanDefinition for the given bean
 	 * @throws NoSuchBeanDefinitionException if there is no bean definition with the given name
 	 * @since 2.5
+	 *
+	 * 合并bean定义,包括父容器的 返回合并后的Bean定义信息
 	 */
 	BeanDefinition getMergedBeanDefinition(String beanName) throws NoSuchBeanDefinitionException;
 
@@ -337,6 +377,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * ({@code false} means the bean exists but is not a FactoryBean)
 	 * @throws NoSuchBeanDefinitionException if there is no bean with the given name
 	 * @since 2.5
+	 *
+	 * 是否是FactoryBean类型  判断指定Bean是否为一个工厂Bean
 	 */
 	boolean isFactoryBean(String name) throws NoSuchBeanDefinitionException;
 
@@ -346,6 +388,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param beanName the name of the bean
 	 * @param inCreation whether the bean is currently in creation
 	 * @since 3.1
+	 *
+	 * bean创建状态控制.在解决循环依赖时有使用   设置一个Bean是否正在创建
 	 */
 	void setCurrentlyInCreation(String beanName, boolean inCreation);
 
@@ -363,6 +407,9 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param beanName the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
 	 * @since 2.5
+	 *
+	 * 处理bean依赖问题
+	 * 	注册一个依赖于指定bean的Bean
 	 */
 	void registerDependentBean(String beanName, String dependentBeanName);
 
@@ -371,6 +418,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param beanName the name of the bean
 	 * @return the array of dependent bean names, or an empty array if none
 	 * @since 2.5
+	 *
+	 * 返回依赖于指定Bean的所有Bean名
 	 */
 	String[] getDependentBeans(String beanName);
 
@@ -380,6 +429,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @return the array of names of beans which the bean depends on,
 	 * or an empty array if none
 	 * @since 2.5
+	 *
+	 * 返回指定Bean依赖的所有Bean名（注意和上面的区别，是反过来的）
 	 */
 	String[] getDependenciesForBean(String beanName);
 
@@ -390,6 +441,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * and logged instead of propagated to the caller of this method.
 	 * @param beanName the name of the bean definition
 	 * @param beanInstance the bean instance to destroy
+	 *
+	 * 销毁的相关方法
 	 */
 	void destroyBean(String beanName, Object beanInstance);
 
@@ -406,6 +459,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * been registered as disposable. To be called on shutdown of a factory.
 	 * <p>Any exception that arises during destruction should be caught
 	 * and logged instead of propagated to the caller of this method.
+	 *
+	 * //销毁所有的单例们
 	 */
 	void destroySingletons();
 

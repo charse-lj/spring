@@ -34,6 +34,8 @@ import org.springframework.util.ObjectUtils;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @since 2.0
+ *
+ * 快速创建一个Bean定义,链式编程，没有特殊指明，创建的都是GenericBeanDefinition
  */
 public final class BeanDefinitionBuilder {
 

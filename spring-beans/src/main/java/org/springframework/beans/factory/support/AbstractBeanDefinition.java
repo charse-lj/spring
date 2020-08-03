@@ -62,6 +62,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Constant for the default scope name: {@code ""}, equivalent to singleton
 	 * status unless overridden from a parent bean definition (if applicable).
+	 * 默认的SCOPE，默认是单例
 	 */
 	public static final String SCOPE_DEFAULT = "";
 
@@ -99,15 +100,18 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Deprecated
 	public static final int AUTOWIRE_AUTODETECT = AutowireCapableBeanFactory.AUTOWIRE_AUTODETECT;
 
+	//检查依赖是否合法，在本类中，默认不进行依赖检查
 	/**
 	 * Constant that indicates no dependency check at all.
 	 * @see #setDependencyCheck
+	 * 不进行检查
 	 */
 	public static final int DEPENDENCY_CHECK_NONE = 0;
 
 	/**
 	 * Constant that indicates dependency checking for object references.
 	 * @see #setDependencyCheck
+	 * 如果依赖类型为对象引用，则需要检查
 	 */
 	public static final int DEPENDENCY_CHECK_OBJECTS = 1;
 
@@ -115,6 +119,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Constant that indicates dependency checking for "simple" properties.
 	 * @see #setDependencyCheck
 	 * @see org.springframework.beans.BeanUtils#isSimpleProperty
+	 *
+	 * 对简单属性的依赖进行检查
 	 */
 	public static final int DEPENDENCY_CHECK_SIMPLE = 2;
 
@@ -122,6 +128,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Constant that indicates dependency checking for all properties
 	 * (object references as well as "simple" properties).
 	 * @see #setDependencyCheck
+	 *
+	 * 对所有属性的依赖进行检查
 	 */
 	public static final int DEPENDENCY_CHECK_ALL = 3;
 
@@ -134,72 +142,84 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * name.
 	 * <p>Currently, the method names detected during destroy method inference
 	 * are "close" and "shutdown", if present on the specific bean class.
+	 *  若Bean未指定销毁方法，容器应该尝试推断Bean的销毁方法的名字，目前来说，推断的销毁方法的名字一般为close或是shutdown
+	 * 	（即未指定Bean的销毁方法，但是内部定义了名为close或是shutdown的方法，则容器推断其为销毁方法）
 	 */
 	public static final String INFER_METHOD = "(inferred)";
 
-
+	 /**Bean的class对象或是类的全限定名*/
 	@Nullable
 	private volatile Object beanClass;
-
+	/**默认的scope是单例*/
 	@Nullable
 	private String scope = SCOPE_DEFAULT;
-
+	/**默认不为抽象类*/
 	private boolean abstractFlag = false;
-
+	/**默认不进行自动装配 */
 	@Nullable
 	private Boolean lazyInit;
-
+	/**默认不是懒加载*/
 	private int autowireMode = AUTOWIRE_NO;
-
+	 /**默认不进行依赖检查*/
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
-
+	/**@DependsOn 默认没有*/
 	@Nullable
 	private String[] dependsOn;
 
+	/**autowire-candidate属性设置为false，这样容器在查找自动装配对象时，将不考虑该bean，备注：并不影响本身注入其它的Bean*/
 	private boolean autowireCandidate = true;
-
+	/**默认不是首选的*/
 	private boolean primary = false;
-
+	/**
+	 * 用于记录Qualifier，对应子元素qualifier=======这个字段有必要解释一下
+	  唯一向这个字段放值的方法为本类的：public void addQualifier(AutowireCandidateQualifier qualifier)    copyQualifiersFrom这个不算，那属于拷贝
+	  调用处：AnnotatedBeanDefinitionReader#doRegisterBean  但是Spring所有调用处，qualifiers字段传的都是null~~~~~~~~~尴尬
+	  通过我多放跟踪发现，此处这个字段目前【永远】不会被赋值（除非我们手动调用对应方法为其赋值）   但是有可能我才疏学浅，若有知道的  请告知，非常非常感谢  我考虑到它可能是预留字段~~~~
+	  我起初以为这样可以赋值：
+	 @Qualifier("aaa")
+	 @Service
+	 public class HelloServiceImpl   没想到，也是不好使的，Bean定义里面也不会有值
+	  因此对应的方法getQualifier和getQualifiers 目前应该基本上都返回null或者[]*/
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
-
+	/**我理解为通过这个函数的逻辑初始化Bean，而不是构造函数或是工厂方法（相当于自己去实例化，而不是交给Bean工厂）*/
 	@Nullable
 	private Supplier<?> instanceSupplier;
-
+	/**是否允许访问非public方法和属性，应用于构造函数、工厂方法、init、destroy方法的解析 默认是true，表示啥都可以访问*/
 	private boolean nonPublicAccessAllowed = true;
-
+	/**是否以一种宽松的模式解析构造函数，默认为true（宽松和严格体现在类型匹配上）*/
 	private boolean lenientConstructorResolution = true;
-
+	/**工厂类名（注意是String类型，不是Class类型） 对应bean属性factory-method*/
 	@Nullable
 	private String factoryBeanName;
-
+	/**工厂方法名（注意是String类型，不是Method类型）*/
 	@Nullable
 	private String factoryMethodName;
-
+	/**记录构造函数注入属性，对应bean属性constructor-arg*/
 	@Nullable
 	private ConstructorArgumentValues constructorArgumentValues;
-
+	/**Bean属性的名称以及对应的值，这里不会存放构造函数相关的参数值，只会存放通过setter注入的依赖*/
 	@Nullable
 	private MutablePropertyValues propertyValues;
-
+	/**方法重写的持有者，记录lookup-method、replaced-method元素  @Lookup等*/
 	private MethodOverrides methodOverrides = new MethodOverrides();
-
+	/**init函数的名字*/
 	@Nullable
 	private String initMethodName;
-
+	/**destroy函数的名字*/
 	@Nullable
 	private String destroyMethodName;
-
+	/**是否执行init-method，程序设置*/
 	private boolean enforceInitMethod = true;
-
+	/**是否执行destroy-method，程序设置*/
 	private boolean enforceDestroyMethod = true;
-
+	/**是否是合成类（是不是应用自定义的，例如生成AOP代理时，会用到某些辅助类，这些辅助类不是应用自定义的，这个就是合成类）;创建AOP时候为true*/
 	private boolean synthetic = false;
-
+	/**destroy函数的名字*/
 	private int role = BeanDefinition.ROLE_APPLICATION;
-
+	/**Bean的描述信息*/
 	@Nullable
 	private String description;
-
+	/**这个Bean哪儿来的*/
 	@Nullable
 	private Resource resource;
 
@@ -1090,6 +1110,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Set the originating (e.g. decorated) BeanDefinition, if any.
+	 *  其实就是给resource赋值了，使用了BeanDefinitionResource
 	 */
 	public void setOriginatingBeanDefinition(BeanDefinition originatingBd) {
 		this.resource = new BeanDefinitionResource(originatingBd);
@@ -1100,6 +1121,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Allows for retrieving the decorated bean definition, if any.
 	 * <p>Note that this method returns the immediate originator. Iterate through the
 	 * originator chain to find the original BeanDefinition as defined by the user.
+	 *
+	 * 上面有赋值，所以get的时候就是返回上面set进来的值
 	 */
 	@Override
 	@Nullable

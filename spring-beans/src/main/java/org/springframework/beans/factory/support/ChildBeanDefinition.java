@@ -42,6 +42,8 @@ import org.springframework.util.ObjectUtils;
  * @author Juergen Hoeller
  * @see GenericBeanDefinition
  * @see RootBeanDefinition
+ *
+ * ChildBeanDefinition：子Bean定义信息，依赖于父类RootBeanDefinition
  */
 @SuppressWarnings("serial")
 public class ChildBeanDefinition extends AbstractBeanDefinition {

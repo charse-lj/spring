@@ -26,6 +26,10 @@ import org.springframework.core.type.ClassMetadata;
  *
  * @author Juergen Hoeller
  * @since 2.5
+ *
+ * 为何Spring要提供一个标准实现和一个ASM的实现呢？这里就能给你答案
+ * 此接口是一个访问ClassMetadata等的简单门面，实现是委托给org.springframework.asm.ClassReader、ClassVisitor来处理的，
+ * 它不用把Class加载进JVM就可以拿到元数据，因为它读取的是资源：Resource，这是它最大的优势所在
  */
 public interface MetadataReader {
 

@@ -32,23 +32,30 @@ import org.springframework.web.context.request.NativeWebRequest;
  * @author Juergen Hoeller
  * @since 3.2
  * @param <V> the value type
+ *
+ * 如果我们需要超时处理的回调或者错误处理的回调，我们可以使用WebAsyncTask代替Callable
+ * 实际使用中，我并不建议直接使用Callable ，而是使用Spring提供的WebAsyncTask 代替，它包装了Callable，功能更强大些
+ *
+ * WebAsyncTask 的异步编程 API。相比于 @Async 注解，WebAsyncTask 提供更加健全的 超时处理 和 异常处理 支持。但是@Async也有更优秀的地方，就是他不仅仅能用于controller中~~~~（任意地方）
  */
 public class WebAsyncTask<V> implements BeanFactoryAware {
 
+	// 正常执行的函数（通过WebAsyncTask的构造函数可以传进来）
 	private final Callable<V> callable;
-
+	// 处理超时时间（ms），可通过构造函数指定，也可以不指定（不会有超时处理）
 	private Long timeout;
-
+	// 执行任务的执行器。可以构造函数设置进来，手动指定。
 	private AsyncTaskExecutor executor;
-
+	// 若设置了，会根据此名称去IoC容器里找这个Bean （和上面二选一）  
+	// 若传了executorName,请务必调用set方法设置beanFactory
 	private String executorName;
 
 	private BeanFactory beanFactory;
-
+	// 超时的回调
 	private Callable<V> timeoutCallback;
-
+	// 发生错误的回调
 	private Callable<V> errorCallback;
-
+	// 完成的回调（不管超时还是错误都会执行）
 	private Runnable completionCallback;
 
 
@@ -177,6 +184,10 @@ public class WebAsyncTask<V> implements BeanFactoryAware {
 		this.completionCallback = callback;
 	}
 
+	/**
+	 * 最终执行超时回调、错误回调、完成回调都是通过这个拦截器实现的
+	 * @return .
+	 */
 	CallableProcessingInterceptor getInterceptor() {
 		return new CallableProcessingInterceptor() {
 			@Override

@@ -119,6 +119,18 @@ import org.springframework.util.StringUtils;
  * @see RootBeanDefinition
  * @see DefaultListableBeanFactory
  * @see BeanDefinitionRegistry
+ *
+ * 抽象类工厂（二级）：AbstractAutowireCapableBeanFactory
+ * 实例化bean和依赖注入是在AbstractBeanFactory的入口，但是实际还是在AbstractAutowireCapableBeanFactory这个类中实现。（入口是getBean()方法）
+ *
+ * 最重要的是实现了
+ * @see #doCreateBean 的创建逻辑，然后执行队形的BeanPostProcessor
+ * @see #applyPropertyValues：这里做的大部分工作就是依赖的准备工作
+ * 然后对bean实例化、初始化、并完成了它的依赖注入入口(具体逻辑由子类DefaultListableBeanFactory具体去实现)
+ * 它实现了对Bean的实例化、
+ * @see #populateBean 以及
+ * @see #initializeBean，会对Bean进行注入等操作
+ * 当然也管理了一些ignoredDependencyTypes,忽略的依赖等等
  */
 public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory
 		implements AutowireCapableBeanFactory {
@@ -131,12 +143,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	private static final boolean IN_NATIVE_IMAGE = (System.getProperty("org.graalvm.nativeimage.imagecode") != null);
 
 
-	/** Strategy for creating bean instances. */
+	/** Strategy for creating bean instances.
+	    它有很多属性，我觉得还是很有意义的
+	     Bean的实例化需要借助它，策略接口
+	 * */
 	private InstantiationStrategy instantiationStrategy;
 
-	/** Resolver strategy for method parameter names. */
+	/** Resolver strategy for method parameter names. 解析方法参数的名字*/
 	@Nullable
 	private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+
 
 	/** Whether to automatically try to resolve circular references between beans. */
 	private boolean allowCircularReferences = true;
@@ -147,6 +163,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	private boolean allowRawInjectionDespiteWrapping = false;
 
+	//这两个保存的类型，是ignore on dependency check and autowire（字段装配时，如果在这里面的类型將被忽略）
+	// 使用：我们可以自己忽略类型：beanFactory.ignoreDependencyType(ArrayList.class); 比如在BeanFactoryPostProcessor 这里可以这么做
 	/**
 	 * Dependency types to ignore on dependency check and autowire, as Set of
 	 * Class objects: for example, String. Default is none.
@@ -367,7 +385,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	public Object createBean(Class<?> beanClass, int autowireMode, boolean dependencyCheck) throws BeansException {
 		// Use non-singleton bean definition, to avoid registering bean as dependent bean.
 		RootBeanDefinition bd = new RootBeanDefinition(beanClass, autowireMode, dependencyCheck);
+		//这里看到了，采用的不是单例，而是prototype
 		bd.setScope(SCOPE_PROTOTYPE);
+		// doc说得很明白，这里返回值永远不可能为null。除非调用者强制return null
+		// 注意的是:这里BeanName就是beanClass.getName()
 		return createBean(beanClass.getName(), bd, null);
 	}
 
@@ -491,6 +512,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * Central method of this class: creates a bean instance,
 	 * populates the bean instance, applies post-processors, etc.
 	 * @see #doCreateBean
+	 *
+	 * 最终都调用到了下面这个createBean方法。它也是AbstractBeanFactory提供的一个抽象方法
+	 * 最终也由AbstractAutowireCapableBeanFactory去实现的。 我们熟悉的doGetBean()方法，最终也是调用它来创建实例对象  只是doGetBean()把单例对象都缓存起来了
+	 * 这个方法很单纯：创建一个实例，然后初始化他（给属性们赋值），然后return出去即可
 	 */
 	@Override
 	protected Object createBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
@@ -534,6 +559,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 这个方法也非常的重要，后续有详细讲解
 			// 容器里所有的InstantiationAwareBeanPostProcessors实例，都会在此处生效，进行前置处理~~~~~~~~~~
 			// 下面有解释：BeanPostProcessor和InstantiationAwareBeanPostProcessor的区别，可以分清楚他们执行的时机
+			//这个之前都解释过了，就不解释了。若BeanPostProcessors 产生了一个代理对象，就不需要我去创建了，就不继续往下走了（AOP都走这里）
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			// 如果不为空，说明提前生成了实例，直接返回
 			if (bean != null) {
@@ -545,6 +571,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					"BeanPostProcessor before instantiation of bean failed", ex);
 		}
 		// 这里又是一个核心逻辑：doCreateBean 创建Bean
+		//重点来了。它是本类的一个protected方法，专门用于处理创建Bean的过程（包括属性赋值之类的）
 		try {
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
@@ -577,6 +604,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #instantiateBean
 	 * @see #instantiateUsingFactoryMethod
 	 * @see #autowireConstructor
+	 *
+	 * 最重要的是实现了doCreateBean()的创建逻辑，然后执行队形的BeanPostProcessor
 	 */
 	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException {
@@ -638,6 +667,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		try {
 			// 这又是非常非常重要的一步：给已经初始化的属性们赋值===================对bean进行填充，在这里面完成依赖注入的相关内容
 			// 啥都不说了，看下面的详解吧
+			// 给Bean实例的各个属性进行赋值 比如调用InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation、给属性注入值（并不依赖于@Autowired注解）
+			// 执行InstantiationAwareBeanPostProcessor#postProcessPropertyValues等等
 			populateBean(beanName, mbd, instanceWrapper);
 			//完成属性依赖注入后，进一步初始化Bean  具体进行了以下操作：
 			//若实现了BeanNameAware， BeanClassLoaderAware，BeanFactoryAwareAware等接口，则注入相关对象
@@ -1458,6 +1489,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Give any InstantiationAwareBeanPostProcessors the opportunity to modify the
 		// state of the bean before properties are set. This can be used, for example,
 		// to support styles of field injection.
+		// 因为已经实例化了，对象已经创建了，所以这里立马执行了InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation方法
+		// 单反只有其中一个返回了false，相当于告诉容器我都处理好了，那么后面的赋值操作就Spring容器就不再处理了
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (InstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().instantiationAware) {
 				if (!bp.postProcessAfterInstantiation(bw.getWrappedInstance(), beanName)) {
@@ -1466,8 +1499,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		//以对象的方式存储健值对,比存储在map会更加灵活
+		//PropertyValues  是用来管理PropertyValue的  一般情况下为null
 		PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
+		// 那么接下来，就开始干正事了~~~~
+		// 这里需要注意的是：我们知道上面我们自己传进来的是byType，所以这个的if是能够进来的,最终能够定位autowireByType让它去实现注入功能。
+		//所以我们的helloService字段要不要@Autowired要不要无所谓(要了也只是重复操作而已，但是我建议显示的指明吧)
 
+		//但是被Spring扫描Scan管理的Bean们（或者其余Bean），如果你想要给他字段注入属性值，必须必须使用@Autowired注解，从而交给后置处理器AutowiredAnnotationBeanPostProcessor#postProcessPropertyValues这个方法去处理
 		int resolvedAutowireMode = mbd.getResolvedAutowireMode();
 		if (resolvedAutowireMode == AUTOWIRE_BY_NAME || resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
 			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
@@ -1476,7 +1515,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				autowireByName(beanName, mbd, bw, newPvs);
 			}
 			// Add property values based on autowire by type if applicable.
+			// 按类型自动装配。一般都会走这里，通过类型的匹配，来给属性赋值，实现注入
 			if (resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
+				// 它的步骤相对简单：显示BeanUtils.getWriteMethodParameter(pd)拿到set方法（所以，这里需要注意，若没有set方法，这里是注入不进去的，这个没@Autowired强大）
+				// 然后去解析去容器里面找对应的依赖，也是resolveDependency方法（最终由DefaultListableBeanFactory去实现的）
+
+
+				// 这里需要注意：注入的时候isSimpleProperty不会被注入的（包括基本数据类型、Integer、Long。。。
+				//甚至还包括Enum、CharSequence(显然就包含了Spring)、Number、Date、URI、URL、Locale、Class等等）
+				// 但是，但是，但是标注@Autowired是能够注入的哦，哪怕是String、Integer等等
+				// 标注了@Autowired，没有找到反倒为报错 No qualifying bean of type 'java.lang.String' 。。。注意这些区别
 				autowireByType(beanName, mbd, bw, newPvs);
 			}
 			pvs = newPvs;
@@ -1490,6 +1538,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (pvs == null) {
 				pvs = mbd.getPropertyValues();
 			}
+			// 开始执行InstantiationAwareBeanPostProcessor#postProcessPropertyValues
+			// 这里主要施工的又是我们大名鼎鼎的AutowiredAnnotationBeanPostProcessor它了，他会根据所有标注有@Autpwired注解地方，执行注入（非常重要）
 			for (InstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().instantiationAware) {
 				PropertyValues pvsToUse = bp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 				if (pvsToUse == null) {
@@ -1511,6 +1561,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			checkDependencies(beanName, mbd, filteredPds, pvs);
 		}
 
+		//applyPropertyValues和PropertyValues密切相关，在后面相关专题在详细讲解  会回到这里的，持续关注~
+		// 作用：Apply the given property values, resolving any runtime references
 		if (pvs != null) {
 			applyPropertyValues(beanName, mbd, bw, pvs);
 		}
@@ -1712,6 +1764,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param mbd the merged bean definition
 	 * @param bw the BeanWrapper wrapping the target object
 	 * @param pvs the new property values
+	 *
+	 * 这里做的大部分工作就是依赖的准备工作， 然后对bean实例化、初始化、并完成了它的依赖注入入口(具体逻辑由子类DefaultListableBeanFactory具体去实现)
 	 */
 	protected void applyPropertyValues(String beanName, BeanDefinition mbd, BeanWrapper bw, PropertyValues pvs) {
 		if (pvs.isEmpty()) {
@@ -1842,6 +1896,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #applyBeanPostProcessorsBeforeInitialization
 	 * @see #invokeInitMethods
 	 * @see #applyBeanPostProcessorsAfterInitialization
+	 *
+	 * initializeBean： 初始化Bean（调用一些初始化方法）
+	 * 1.invokeAwareMethods：执行一些感知接口Aware的注入
+	 * 2. postProcessBeforeInitialization：执行后置处理器的此方法。基本上也是执行一些Aware的注入。
+	 * —>1. InitDestroyAnnotationBeanPostProcessor在这里会执行@PostConstruct标记的方法
+	 * —>2. ApplicationContextAwareProcessor/ServletContextAwareProcessor会实现感知接口的注入
+	 * 4. invokeInitMethods：先执行InitializingBean#afterPropertiesSet方法，再执行init-method。
+	 * 5. postProcessAfterInitialization：执行后置处理器此方法。这里面有不少干实事的：
+	 * —>1. AbstractAdvisingBeanPostProcessor,AbstractAutoProxyCreator：会把所有的切面保存下来（AOP包下的）
+	 * —>2. ApplicationListenerDetector：会把所有的ApplicationListener子类保存起来
+	 * —>3. ScheduledAnnotationBeanPostProcessor：会把所有的标注了@Scheduled的方法保存起来
+	 * —>4. SimpleServletPostProcessor：会调用Servlet#init的init方法
+	 *
+	 * 至于对应的@EventListener注解是什么时候解析的。是它：EventListenerMethodProcessor，它是一个SmartInitializingSingleton，所以它是在preInstantiateSingletons()方法的最后一步去调用的（比如getBean()方法还晚）
+	 * 由此，我们是可以得出结论的：Spring之外的Bean，SmartInitializingSingleton接口对他是不起作用的。但是，其余的处理器、注解等等都是有用的哦：@PostConstruct、@Autowired等等注解
 	 */
 	protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
 		if (System.getSecurityManager() != null) {
