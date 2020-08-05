@@ -29,6 +29,8 @@ package org.springframework.context;
  * @see org.springframework.context.ApplicationEvent
  * @see org.springframework.context.event.ApplicationEventMulticaster
  * @see org.springframework.context.event.EventPublicationInterceptor
+ *
+ * Spring提供了ApplicationEventPublisher接口作为事件发布者(ApplicationContext接口继承了该接口，担当着事件发布者的角色)
  */
 @FunctionalInterface
 public interface ApplicationEventPublisher {
@@ -65,6 +67,9 @@ public interface ApplicationEventPublisher {
 	 * @since 4.2
 	 * @see #publishEvent(ApplicationEvent)
 	 * @see PayloadApplicationEvent
+	 *
+	 * 当这个对象不是一个ApplicationEvent,我们会使用PayloadApplicationEvent来包装一下再发送
+	 * 比如后面会建讲到的@EventListener注解标注的放 就是使用的它
 	 */
 	void publishEvent(Object event);
 

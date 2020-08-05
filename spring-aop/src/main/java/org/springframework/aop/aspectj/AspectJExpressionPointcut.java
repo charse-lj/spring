@@ -80,6 +80,9 @@ import org.springframework.util.StringUtils;
  * @author Ramnivas Laddad
  * @author Dave Syer
  * @since 2.0
+ *
+ * 用AspectJExpressionPointcut实现的切点比JdkRegexpMethodPointcut实现切点的好处就是，在设置切点的时候可以用切点语言来更加精确的表示拦截哪个方法。（可以精确到返回参数，参数类型，方法名,当然，也可以模糊匹配）
+ * AspectJExpressionPointcut支持的表达式 一共有11种（也就是Spring全部支持的切点表达式类型）
  */
 @SuppressWarnings("serial")
 public class AspectJExpressionPointcut extends AbstractExpressionPointcut
@@ -87,6 +90,8 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 	private static final Set<PointcutPrimitive> SUPPORTED_PRIMITIVES = new HashSet<>();
 
+	// 从此处可以看出，Spring支持的AspectJ的切点语言表达式一共有10中（加上后面的自己的Bean方式一共11种）
+	// AspectJ框架本省支持的非常非常多，详解枚举类：org.aspectj.weaver.tools.PointcutPrimitive
 	static {
 		SUPPORTED_PRIMITIVES.add(PointcutPrimitive.EXECUTION);
 		SUPPORTED_PRIMITIVES.add(PointcutPrimitive.ARGS);
@@ -110,12 +115,15 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 	private Class<?>[] pointcutParameterTypes = new Class<?>[0];
 
+	// 它持有BeanFactory 的引用，但是是可以为null的，也就是说它脱离容器也能够正常work
 	@Nullable
 	private BeanFactory beanFactory;
 
 	@Nullable
 	private transient ClassLoader pointcutClassLoader;
 
+	// PointcutExpression是org.aspectj.weaver.tools.PointcutExpression是AspectJ的类
+	// 它最终通过一系列操作，由org.aspectj.weaver.tools.PointcutParser#parsePointcutExpression从字符串表达式解析出来
 	@Nullable
 	private transient PointcutExpression pointcutExpression;
 
@@ -236,6 +244,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 
 	/**
 	 * Initialize the underlying AspectJ pointcut parser.
+	 *  初始化一个Pointcut的解析器。我们发现最后一行，新注册了一个BeanPointcutDesignatorHandler  它是准们处理Spring自己支持的bean() 的切点表达式的
 	 */
 	private PointcutParser initializePointcutParser(@Nullable ClassLoader classLoader) {
 		PointcutParser parser = PointcutParser
@@ -251,6 +260,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 	 * write {@code and} as "&&" (though &amp;&amp; will work).
 	 * We also allow {@code and} between two pointcut sub-expressions.
 	 * <p>This method converts back to {@code &&} for the AspectJ pointcut parser.
+	 *  由此可见，我们不仅仅可议写&& ||  !这种。也支持 and or not这种哦~~
 	 */
 	private String replaceBooleanOperators(String pcExpr) {
 		String result = StringUtils.replace(pcExpr, " and ", " && ");
@@ -267,6 +277,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		return obtainPointcutExpression();
 	}
 
+	// 这是ClassFilter 匹配类。借助的PointcutExpression#couldMatchJoinPointsInType 去匹配
 	@Override
 	public boolean matches(Class<?> targetClass) {
 		PointcutExpression pointcutExpression = obtainPointcutExpression();
@@ -288,7 +299,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		}
 		return false;
 	}
-
+	// MethodMatcher 匹配方法，借助的PointcutExpression和ShadowMatch去匹配的
 	@Override
 	public boolean matches(Method method, Class<?> targetClass, boolean hasIntroductions) {
 		obtainPointcutExpression();
@@ -317,16 +328,25 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		}
 	}
 
+	// 这个称为静态匹配：在匹配条件不是太严格时使用，可以满足大部分场景的使用
 	@Override
 	public boolean matches(Method method, Class<?> targetClass) {
 		return matches(method, targetClass, false);
 	}
 
+	//两个方法的分界线就是boolean isRuntime()方法，步骤如下
+	// 1、先调用静态匹配，若返回true。此时就会继续去检查isRuntime()的返回值
+	// 2、若isRuntime()还返回true，那就继续调用动态匹配
+	// (若静态匹配都匹配上，动态匹配那铁定更匹配不上得~~~~)
+
+	// 是否需要执行动态匹配
 	@Override
 	public boolean isRuntime() {
+		//mayNeedDynamicTest 相当于由AspectJ框架去判断的（是否有动态内容）
 		return obtainPointcutExpression().mayNeedDynamicTest();
 	}
 
+	// 这个称为动态匹配（运行时匹配）: 它是严格的匹配。在运行时动态的对参数的类型进行匹配
 	@Override
 	public boolean matches(Method method, Class<?> targetClass, Object... args) {
 		obtainPointcutExpression();
@@ -584,6 +604,7 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 	 * handle the {@code bean()} PCD. Matching context is obtained
 	 * automatically by examining a thread local variable and therefore a matching
 	 * context need not be set on the pointcut.
+	 * 真正的解析，依赖于Spring自己实现的这个内部类（主要是ContextBasedMatcher 这个类，就会使用到BeanFactory了）
 	 */
 	private class BeanPointcutDesignatorHandler implements PointcutDesignatorHandler {
 

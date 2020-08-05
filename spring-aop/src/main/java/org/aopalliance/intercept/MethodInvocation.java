@@ -29,6 +29,8 @@ import javax.annotation.Nonnull;
  *
  * @author Rod Johnson
  * @see MethodInterceptor
+ *
+ * 方法调用时，对这部分进行描述
  */
 public interface MethodInvocation extends Invocation {
 
@@ -37,6 +39,9 @@ public interface MethodInvocation extends Invocation {
 	 * <p>This method is a friendly implementation of the
 	 * {@link Joinpoint#getStaticPart()} method (same result).
 	 * @return the method being called
+	 *
+	 * 返回正在被调用得方法~~~  返回的是当前Method对象。\
+	 * 此时，效果同父类的AccessibleObject getStaticPart() 这个方法
 	 */
 	@Nonnull
 	Method getMethod();

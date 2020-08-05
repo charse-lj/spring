@@ -79,6 +79,10 @@ import org.springframework.util.ReflectionUtils;
  * @see org.springframework.cglib.proxy.Enhancer
  * @see AdvisedSupport#setProxyTargetClass
  * @see DefaultAopProxyFactory
+ *
+ * 和JDK的一样，Object的方法，只有toString()会被拦截（执行通知）
+ * 生成出来的代理对象，Spring默认都给你实现了接口：SpringProxy、DecoratingProxy、Advised
+ * 它和JDK不同的是，比如equals和hashCode等方法根本就不会进入intecept方法，而是在getCallbacks()那里就给特殊处理掉了
  */
 @SuppressWarnings("serial")
 class CglibAopProxy implements AopProxy, Serializable {
@@ -149,7 +153,9 @@ class CglibAopProxy implements AopProxy, Serializable {
 		this.constructorArgTypes = constructorArgTypes;
 	}
 
-
+	// 它的两个getProxy()相对来说比较简单，就是使用CGLIB的方式，利用Enhancer创建了一个增强的实例
+	// 这里面比较复杂的地方在：getCallbacks()这步是比较繁琐的
+	// setCallbackFilter就是看看哪些方法需要拦截、哪些不需要~~~~
 	@Override
 	public Object getProxy() {
 		return getProxy(null);
@@ -349,7 +355,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 		return callbacks;
 	}
 
-
+	// CGLIB重写的这两个方法
 	@Override
 	public boolean equals(@Nullable Object other) {
 		return (this == other || (other instanceof CglibAopProxy &&
@@ -645,7 +651,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 	}
 
-
+	// 最后，所有的被代理得类的所有的方法调用，都会进入DynamicAdvisedInterceptor#intercept这个方法里面来（相当于JDK动态代理得invoke方法）
+	// 它实现了MethodInterceptor接口
 	/**
 	 * General purpose AOP callback. Used when the target is dynamic or when the
 	 * proxy is not frozen.
@@ -664,6 +671,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			Object oldProxy = null;
 			boolean setProxyContext = false;
 			Object target = null;
+			// 目标对象源
 			TargetSource targetSource = this.advised.getTargetSource();
 			try {
 				if (this.advised.exposeProxy) {
@@ -672,12 +680,16 @@ class CglibAopProxy implements AopProxy, Serializable {
 					setProxyContext = true;
 				}
 				// Get as late as possible to minimize the time we "own" the target, in case it comes from a pool...
+				// 拿到目标对象   这里就是使用targetSource的意义，它提供多个实现类，从而实现了更多的可能性
+				// 比如：SingletonTargetSource  HotSwappableTargetSource  PrototypeTargetSource  ThreadLocalTargetSource等等
 				target = targetSource.getTarget();
 				Class<?> targetClass = (target != null ? target.getClass() : null);
+				// 一样的，也是拿到和这个方法匹配的 所有的增强器、通知们 和JDK Proxy中是一样的
 				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 				Object retVal;
 				// Check whether we only have one InvokerInterceptor: that is,
 				// no real advice, but just reflective invocation of the target.
+				// 没有增强器，同时该方法是public得  就直接调用目标方法（不拦截）
 				if (chain.isEmpty() && Modifier.isPublic(method.getModifiers())) {
 					// We can skip creating a MethodInvocation: just invoke the target directly.
 					// Note that the final invoker must be an InvokerInterceptor, so we know
@@ -688,6 +700,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 				}
 				else {
 					// We need to create a method invocation...
+					// CglibMethodInvocation这里采用的是CglibMethodInvocation，它是`ReflectiveMethodInvocation`的子类   到这里就和JDK Proxy保持一致勒 
 					retVal = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy).proceed();
 				}
 				retVal = processReturnType(proxy, target, method, retVal);
@@ -732,9 +745,14 @@ class CglibAopProxy implements AopProxy, Serializable {
 		public CglibMethodInvocation(Object proxy, @Nullable Object target, Method method,
 				Object[] arguments, @Nullable Class<?> targetClass,
 				List<Object> interceptorsAndDynamicMethodMatchers, MethodProxy methodProxy) {
-
+			// 调用父类的构造  完成基本参数得初始化
 			super(proxy, target, method, arguments, targetClass, interceptorsAndDynamicMethodMatchers);
+			// 自己的个性化参数：
 
+			// 这个参数是子类多传的，表示：它是CGLIb拦截的时候的类MethodProxy
+			//MethodProxy为生成的代理类对方法的代理引用。cglib生成用来代替Method对象的一个对象，使用MethodProxy比调用JDK自身的Method直接执行方法效率会有提升
+			// 它有两个重要的方法：invoke和invokeSuper
+			// 方法是否是public的  对应下面的invoke方法的处理 见下面
 			// Only use method proxy for public methods not derived from java.lang.Object
 			this.methodProxy = (Modifier.isPublic(method.getModifiers()) &&
 					method.getDeclaringClass() != Object.class && !AopUtils.isEqualsMethod(method) &&
@@ -767,7 +785,10 @@ class CglibAopProxy implements AopProxy, Serializable {
 		 */
 		@Override
 		protected Object invokeJoinpoint() throws Throwable {
+			// 如果是methodProxy不为null，调用methodProxy去执行目标方法
+			// 否则直接执行method即可
 			if (this.methodProxy != null) {
+				// 此处务必注意的是，传入的是target，而不能是proxy，否则进入死循环
 				return this.methodProxy.invoke(this.target, this.arguments);
 			}
 			else {

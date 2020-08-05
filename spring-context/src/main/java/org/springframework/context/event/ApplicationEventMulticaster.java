@@ -33,6 +33,8 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @author Stephane Nicoll
  * @see ApplicationListener
+ *
+ * Spring提供了ApplicationEventMulticaster接口，负责管理ApplicationListener和真正发布ApplicationEvent（ApplicationContext是委托给它完成的）
  */
 public interface ApplicationEventMulticaster {
 

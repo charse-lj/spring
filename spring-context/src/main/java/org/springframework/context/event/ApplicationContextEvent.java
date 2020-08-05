@@ -24,6 +24,12 @@ import org.springframework.context.ApplicationEvent;
  *
  * @author Juergen Hoeller
  * @since 2.5
+ *
+ * ContextRefreshedEvent：容器初始化完成刷新时触发。此时所有的Bean已经初始化完成、后置处理器等都已经完成
+ * ContextStartedEvent：AbstractApplicationContext#strart()被调用时。 需要手动调用，个人觉得没啥卵用
+ * ContextStoppedEvent：容器的stop方法被手动调用时。 也没啥卵用
+ * ContextClosedEvent：close() 关闭容器时候发布。一个已关闭的上下文到达生命周期末端；它不能被刷新或重启
+ * 
  */
 @SuppressWarnings("serial")
 public abstract class ApplicationContextEvent extends ApplicationEvent {

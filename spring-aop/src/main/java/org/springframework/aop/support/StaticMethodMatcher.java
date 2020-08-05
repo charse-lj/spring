@@ -25,14 +25,18 @@ import org.springframework.aop.MethodMatcher;
  * about arguments at runtime.
  *
  * @author Rod Johnson
+ *
+ * 它表示不会考虑具体 方法参数。因为不用每次都检查参数，那么对于同样的类型的方法匹配结果，就可以在框架内部缓存以提高性能。比如常用的实现类：AnnotationMethodMatcher
  */
 public abstract class StaticMethodMatcher implements MethodMatcher {
 
+	// 永远返回false表示只会去静态匹配
 	@Override
 	public final boolean isRuntime() {
 		return false;
 	}
 
+	// 三参数matches抛出异常，使其不被调用
 	@Override
 	public final boolean matches(Method method, Class<?> targetClass, Object... args) {
 		// should never be invoked because isRuntime() returns false

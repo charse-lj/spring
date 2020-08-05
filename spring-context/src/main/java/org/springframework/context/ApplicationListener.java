@@ -35,6 +35,8 @@ import java.util.EventListener;
  * @see org.springframework.context.ApplicationEvent
  * @see org.springframework.context.event.ApplicationEventMulticaster
  * @see org.springframework.context.event.EventListener
+ *
+ * ApplicationListener实现了JDK的EventListener，但它抽象出一个onApplicationEvent方法，使用更方便
  */
 @FunctionalInterface
 public interface ApplicationListener<E extends ApplicationEvent> extends EventListener {

@@ -28,6 +28,13 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 2.0.3
  * @see #createAopProxy()
+ *
+ * 继承AdvisedSupport，其帮助子类（ProxyFactoryBean、ProxyFactory、AspectJProxyFactory）创建JDK或者cglib的代理对象
+ * ProxyCreatorSupport用于设置和保存下面三大信息：
+ * 1.设置被代理对象target
+ * 2.设置代理接口
+ * 3.设置通知advice
+ *
  */
 @SuppressWarnings("serial")
 public class ProxyCreatorSupport extends AdvisedSupport {

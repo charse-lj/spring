@@ -54,11 +54,13 @@ public abstract class AbstractRegexpMethodPointcut extends StaticMethodMatcherPo
 
 	/**
 	 * Regular expressions to match.
+	 * 匹配的正则表达式。如find.*表示所有方法名以find开始的方法
 	 */
 	private String[] patterns = new String[0];
 
 	/**
 	 * Regular expressions <strong>not</strong> to match.
+	 * 排除的正则表达式们
 	 */
 	private String[] excludedPatterns = new String[0];
 

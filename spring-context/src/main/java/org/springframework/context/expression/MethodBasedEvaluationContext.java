@@ -77,6 +77,7 @@ public class MethodBasedEvaluationContext extends StandardEvaluationContext {
 
 	/**
 	 * Load the param information only when needed.
+	 *  .... 这里是按照变量名或者a0这种方式取值的核心处理~~~~
 	 */
 	protected void lazyLoadArguments() {
 		// Shortcut if no args need to be loaded
@@ -85,10 +86,12 @@ public class MethodBasedEvaluationContext extends StandardEvaluationContext {
 		}
 
 		// Expose indexed variables as well as parameter names (if discoverable)
+		// 支持根据参数名取值
 		String[] paramNames = this.parameterNameDiscoverer.getParameterNames(this.method);
 		int paramCount = (paramNames != null ? paramNames.length : this.method.getParameterCount());
 		int argsCount = this.arguments.length;
 
+		// variables是个Map<String, Object> variables
 		for (int i = 0; i < paramCount; i++) {
 			Object value = null;
 			if (argsCount > paramCount && i == paramCount - 1) {
@@ -99,8 +102,11 @@ public class MethodBasedEvaluationContext extends StandardEvaluationContext {
 				// Actual argument found - otherwise left as null
 				value = this.arguments[i];
 			}
+			// 支持a0、a1..方式取值
 			setVariable("a" + i, value);
+			// 支持p0、p1..方式取值
 			setVariable("p" + i, value);
+			// 根据参数列表的形参名字进行取值   如id、name或者obj对象都是ok的（如果是对象，也是支持Bean导航的，因为SpEL是支持的）
 			if (paramNames != null && paramNames[i] != null) {
 				setVariable(paramNames[i], value);
 			}

@@ -32,6 +32,8 @@ import org.springframework.lang.Nullable;
  * @see ServletRequestHandledEvent
  * @see org.springframework.web.servlet.FrameworkServlet
  * @see org.springframework.context.ApplicationContext#publishEvent
+ *
+ * Web相关事件，只能应用于使用DispatcherServlet的Web应用。在使用Spring作为前端的MVC控制器时，当Spring处理用户请求结束后，系统会自动触发该事件（即ServletRequestHandledEvent）
  */
 @SuppressWarnings("serial")
 public class RequestHandledEvent extends ApplicationEvent {

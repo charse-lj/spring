@@ -52,6 +52,8 @@ public interface Advisor {
 	 * @see BeforeAdvice
 	 * @see ThrowsAdvice
 	 * @see AfterReturningAdvice
+	 *
+	 * 该Advisor 持有的通知器
 	 */
 	Advice getAdvice();
 
@@ -64,6 +66,10 @@ public interface Advisor {
 	 * Use singleton/prototype bean definitions or appropriate programmatic
 	 * proxy creation to ensure that Advisors have the correct lifecycle model.
 	 * @return whether this advice is associated with a particular target instance
+	 *
+	 * 这个有点意思：Spring所有的实现类都是return true(官方说暂时还没有应用到)
+	 * 注意：生成的Advisor是单例还是多例不由isPerInstance()的返回结果决定，而由自己在定义bean的时候控制
+	 * 理解：和类共享（per-class）或基于实例（per-instance）相关  类共享：类比静态变量   实例共享：类比实例变量
 	 */
 	boolean isPerInstance();
 

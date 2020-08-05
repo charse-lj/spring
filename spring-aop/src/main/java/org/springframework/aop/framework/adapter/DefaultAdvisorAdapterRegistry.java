@@ -69,6 +69,12 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 			return new DefaultPointcutAdvisor(advice);
 		}
 		// 这一步很显然了，就是校验看看这个advice是否是我们支持的这些类型（系统默认给出3中，但是我们也可以自己往里添加注册的）
+		/**
+		 * adapters 包含.
+		 * {@link MethodBeforeAdviceAdapter#supportsAdvice(Advice)}
+		 * {@link AfterReturningAdviceAdapter#supportsAdvice(Advice)}
+		 * {@link ThrowsAdviceAdapter#supportsAdvice(Advice)}
+		 */
 		for (AdvisorAdapter adapter : this.adapters) {
 			// Check that it is supported.
 			if (adapter.supportsAdvice(advice)) {

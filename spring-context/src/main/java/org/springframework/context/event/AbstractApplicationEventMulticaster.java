@@ -59,12 +59,18 @@ import org.springframework.util.ObjectUtils;
  * @since 1.2.3
  * @see #getApplicationListeners(ApplicationEvent, ResolvableType)
  * @see SimpleApplicationEventMulticaster
+ *
+ *  提供基本的侦听器注册功能   比如处理代理对象类型~~~
  */
 public abstract class AbstractApplicationEventMulticaster
 		implements ApplicationEventMulticaster, BeanClassLoaderAware, BeanFactoryAware {
 
+	// Retriever：猎犬
+	// 它是一个内部类，内部持有applicationListeners和applicationListenerBeans的引用
+	// 是一个类似包装的类，详细可参加下面具体分析
 	private final ListenerRetriever defaultRetriever = new ListenerRetriever(false);
 
+	// 显然它是一个缓存：key由eventType, sourceType唯一确定~
 	final Map<ListenerCacheKey, ListenerRetriever> retrieverCache = new ConcurrentHashMap<>(64);
 
 	@Nullable
@@ -73,6 +79,7 @@ public abstract class AbstractApplicationEventMulticaster
 	@Nullable
 	private ConfigurableBeanFactory beanFactory;
 
+	// retrieval的互斥锁
 	private Object retrievalMutex = this.defaultRetriever;
 
 
@@ -90,6 +97,7 @@ public abstract class AbstractApplicationEventMulticaster
 		if (this.beanClassLoader == null) {
 			this.beanClassLoader = this.beanFactory.getBeanClassLoader();
 		}
+		// 互斥锁 用容器里面的互斥锁
 		this.retrievalMutex = this.beanFactory.getSingletonMutex();
 	}
 
@@ -101,14 +109,20 @@ public abstract class AbstractApplicationEventMulticaster
 		return this.beanFactory;
 	}
 
-
+	// 向容器内注册一个监听器~~~~
+	// 需要注意的是，添加进来的监听器都是保存到defaultRetriever里面的
+	// 最后getApplicationListeners就是从这里拿的（注册进来多少  最终返回多少~~~）
 	@Override
 	public void addApplicationListener(ApplicationListener<?> listener) {
 		synchronized (this.retrievalMutex) {
 			// Explicitly remove target for a proxy, if registered already,
 			// in order to avoid double invocations of the same listener.
+			// 这一步：若类型是SingletonTargetSource也给拿出来~~~
+			// 如果不是被代理的对象Advised，那就返回null
 			Object singletonTarget = AopProxyUtils.getSingletonTarget(listener);
 			if (singletonTarget instanceof ApplicationListener) {
+				// 从默认的持有的applicationListeners里把它移除~~
+				// 下面一句肯定又是会添加进来的，所以可议保证它在顶部~~~
 				this.defaultRetriever.applicationListeners.remove(singletonTarget);
 			}
 			this.defaultRetriever.applicationListeners.add(listener);
@@ -170,19 +184,26 @@ public abstract class AbstractApplicationEventMulticaster
 	 * @return a Collection of ApplicationListeners
 	 * @see org.springframework.context.ApplicationListener
 	 */
+	// 如果指定了event事件和eventType，那就这个方法   绝大多数情况下都是这里~~~
+	// 获取该事件对应的监听者：相当于只会获取supportsEvent() = true支持的这种事件~
 	protected Collection<ApplicationListener<?>> getApplicationListeners(
 			ApplicationEvent event, ResolvableType eventType) {
 
 		Object source = event.getSource();
 		Class<?> sourceType = (source != null ? source.getClass() : null);
+		// 这个key是它俩共同决定的~~~~
 		ListenerCacheKey cacheKey = new ListenerCacheKey(eventType, sourceType);
 
 		// Quick check for existing entry on ConcurrentHashMap...
+		// 缓存里若存在  直接返回即可~~~~
 		ListenerRetriever retriever = this.retrieverCache.get(cacheKey);
 		if (retriever != null) {
 			return retriever.getApplicationListeners();
 		}
 
+		// 这里面~~~ 有个缓存安全的特殊处理，其最为核心的方法，其实还是retrieveApplicationListeners
+		// 若是缓存安全的，才会缓存它  否则直接return即可~~~~
+		// 什么叫缓存安全isCacheSafe：原理很简单，就是判断该类型是否在指定classloader或者其parent classloader中
 		if (this.beanClassLoader == null ||
 				(ClassUtils.isCacheSafe(event.getClass(), this.beanClassLoader) &&
 						(sourceType == null || ClassUtils.isCacheSafe(sourceType, this.beanClassLoader)))) {
@@ -193,8 +214,11 @@ public abstract class AbstractApplicationEventMulticaster
 					return retriever.getApplicationListeners();
 				}
 				retriever = new ListenerRetriever(true);
+				// 需要缓存起来，所以才需要把retriever传过去，否则传null即可~（下面传的null）
 				Collection<ApplicationListener<?>> listeners =
 						retrieveApplicationListeners(eventType, sourceType, retriever);
+				// 每个事件对应的Listener，都缓存在此处了~（注意：首次get的才给与缓存）
+				// 因为有的是个体的beanName，有的是给的Bean，所以首次去拿时候缓存吧~~~
 				this.retrieverCache.put(cacheKey, retriever);
 				return listeners;
 			}
@@ -211,6 +235,10 @@ public abstract class AbstractApplicationEventMulticaster
 	 * @param sourceType the event source type
 	 * @param retriever the ListenerRetriever, if supposed to populate one (for caching purposes)
 	 * @return the pre-filtered list of application listeners for the given event and source type
+	 *
+	 *  关于`retrieveApplicationListeners`方法，它就是从defaultRetriever把applicationListeners和beanNames都拿出来合并了
+	 *  摒弃萃取出supportsEvent() 只支持这种类型的事件~
+	 *  最终它还`AnnotationAwareOrderComparator.sort(allListeners);`，证明监听器是支持排序接口的~
 	 */
 	private Collection<ApplicationListener<?>> retrieveApplicationListeners(
 			ResolvableType eventType, @Nullable Class<?> sourceType, @Nullable ListenerRetriever retriever) {

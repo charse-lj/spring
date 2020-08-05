@@ -371,6 +371,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * implementations cannot publish events.
 	 * @param event the event to publish (may be application-specific or a
 	 * standard framework event)
+	 *
+	 * 我们一般都会使用AbstractApplicationContext#publish()来发布一个事件
 	 */
 	@Override
 	public void publishEvent(ApplicationEvent event) {
@@ -404,6 +406,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		Assert.notNull(event, "Event must not be null");
 
 		// Decorate event as an ApplicationEvent if necessary
+		// 如果这个事件不是ApplicationEvent类型，那就包装成这个类型
 		ApplicationEvent applicationEvent;
 		if (event instanceof ApplicationEvent) {
 			applicationEvent = (ApplicationEvent) event;
@@ -417,22 +420,26 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Multicast right now if possible - or lazily once the multicaster is initialized
+		//如果是早期事件，就添加进去  会立马发布了（一般都不属于这种）
 		if (this.earlyApplicationEvents != null) {
 			// 如果早期事件已经被初始化了，那就先放进早期事件里，否则esle那里，就直接发送事件了
 			this.earlyApplicationEvents.add(applicationEvent);
 		}
 		else {
-			//拿到多播器，发送这个事件
+			//拿到多播器，发送这个事件,最终把这些时间都委派给了`ApplicationEventMulticaster` 让它去发送事件
 			getApplicationEventMulticaster().multicastEvent(applicationEvent, eventType);
 		}
 
+		//最后事件都会向父类里广播一份，这个就特别想js事件冒泡机制
 		// Publish event via parent context as well...
 		// 这里注意：如果存在父容器，那也给父容器会发送一个事件
 		if (this.parent != null) {
+			//这个判断的用意是，既然eventType已经解析出来了，所以就调用protected内部方法即可，而不用再次解析一遍了
 			if (this.parent instanceof AbstractApplicationContext) {
 				((AbstractApplicationContext) this.parent).publishEvent(event, eventType);
 			}
 			else {
+				//如果是普通的发布，就没有eventType了
 				this.parent.publishEvent(event);
 			}
 		}

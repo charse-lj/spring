@@ -35,14 +35,18 @@ import org.springframework.util.ObjectUtils;
  * @since 4.1
  * @see AbstractAdvisingBeanPostProcessor
  * @see org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator
+ *
+ * 为代理创建器提供了一些公共方法实现
+ *
  */
-@SuppressWarnings("serial")   //为代理创建器提供了一些公共方法实现
+@SuppressWarnings("serial")  
 public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanClassLoaderAware, AopInfrastructureBean {
 
 	/**
 	 * This should run after all other processors, so that it can just add
 	 * an advisor to existing proxies rather than double-proxy.
-	 * 【AOP的自动代理创建器必须在所有的别的processors之后执行，以确保它可以代理到所有的小伙伴们，即使需要双重代理得那种】
+	 * 
+	 * AOP的自动代理创建器必须在所有的别的processors之后执行，以确保它可以代理到所有的小伙伴们，即使需要双重代理得那种
 	 */
 	private int order = Ordered.LOWEST_PRECEDENCE;
 
@@ -57,6 +61,8 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * of {@link Ordered}, used when applying multiple processors.
 	 * <p>The default value is {@code Ordered.LOWEST_PRECEDENCE}, meaning non-ordered.
 	 * @param order the ordering value
+	 *
+	 * 当然此处还是提供了方法，你可以自己set或者使用@Order来人为的改变这个顺序~~~
 	 */
 	public void setOrder(int order) {
 		this.order = order;
@@ -102,8 +108,8 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * @param beanClass the class of the bean
 	 * @param proxyFactory the ProxyFactory for the bean
 	 *
-	 *  这是它提供的一个最为核心的方法：这里决定了如果目标类没有实现接口直接就是Cglib代理
-	 *  检查给定beanClass上的接口们，并交给proxyFactory处理
+	 *  这是它提供的一个最为核心的方法：这里决定了如果目标类没有实现接口,直接就是Cglib代理
+	 *  检查给定beanClass上的接口,并交给proxyFactory处理
 	 */
 	protected void evaluateProxyInterfaces(Class<?> beanClass, ProxyFactory proxyFactory) {
 		// 找到该类实现的所有接口们~~~
@@ -117,9 +123,10 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 				break;
 			}
 		}
+		//有合理接口,将所有接口假如proxyFactory中,没有,设置使用CGLIB代理状态
 		if (hasReasonableProxyInterface) {
 			// Must allow for introductions; can't just set interfaces to the target's interfaces only.
-			//这里Spring的Doc特别强调了：不能值只把合理的接口设置进去，而是都得加入进去
+			//这里Spring的Doc特别强调了：不能只把合理的接口设置进去，而是都得加入进去
 			for (Class<?> ifc : targetInterfaces) {
 				proxyFactory.addInterface(ifc);
 			}

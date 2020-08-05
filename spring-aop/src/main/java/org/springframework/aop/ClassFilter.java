@@ -39,12 +39,15 @@ public interface ClassFilter {
 	 * Should the pointcut apply to the given interface or target class?
 	 * @param clazz the candidate target class
 	 * @return whether the advice should apply to the given target class
+	 *
+	 * true表示能够匹配。那就会进行织入的操作
 	 */
 	boolean matches(Class<?> clazz);
 
 
 	/**
 	 * Canonical instance of a ClassFilter that matches all classes.
+	 * 常量 会匹配所有的类   TrueClassFilter不是public得class，所以只是Spring内部自己使用的
 	 */
 	ClassFilter TRUE = TrueClassFilter.INSTANCE;
 

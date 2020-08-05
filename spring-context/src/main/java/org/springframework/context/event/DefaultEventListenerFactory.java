@@ -32,6 +32,7 @@ import org.springframework.core.Ordered;
  */
 public class DefaultEventListenerFactory implements EventListenerFactory, Ordered {
 
+	//它希望自己是被最后执行的~~~
 	private int order = LOWEST_PRECEDENCE;
 
 
@@ -45,11 +46,13 @@ public class DefaultEventListenerFactory implements EventListenerFactory, Ordere
 	}
 
 
+	//匹配所有的标注了@EventListener 的方法
 	@Override
 	public boolean supportsMethod(Method method) {
 		return true;
 	}
 
+	// ApplicationListenerMethodAdapter是一个通用的方法监听适配器~~~~
 	@Override
 	public ApplicationListener<?> createApplicationListener(String beanName, Class<?> type, Method method) {
 		return new ApplicationListenerMethodAdapter(beanName, type, method);

@@ -41,6 +41,8 @@ import javax.annotation.Nullable;
  * </pre>
  *
  * @author Rod Johnson
+ *
+ * 从名字里都能看出来，它是通过拦截方法的执行来实现通知得效果的~~~~
  */
 @FunctionalInterface
 public interface MethodInterceptor extends Interceptor {
@@ -54,6 +56,8 @@ public interface MethodInterceptor extends Interceptor {
 	 * might be intercepted by the interceptor
 	 * @throws Throwable if the interceptors or the target object
 	 * throws an exception
+	 *  可以在此方法里  在方法执行之前、之后做对应的处理。
+	 *  需要执行的时候，调用invocation.proceed()方法即可
 	 */
 	@Nullable
 	Object invoke(@Nonnull MethodInvocation invocation) throws Throwable;

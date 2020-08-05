@@ -44,6 +44,8 @@ public interface AdvisorAdapter {
 	 * @return whether this adapter understands the given advice object
 	 * @see #getInterceptor(org.springframework.aop.Advisor)
 	 * @see org.springframework.aop.BeforeAdvice
+	 *
+	 * 判断此适配器是否支持特定的Advice  
 	 */
 	boolean supportsAdvice(Advice advice);
 
@@ -57,6 +59,8 @@ public interface AdvisorAdapter {
 	 * @return an AOP Alliance interceptor for this Advisor. There's
 	 * no need to cache instances for efficiency, as the AOP framework
 	 * caches advice chains.
+	 *
+	 * 将一个Advisor适配成MethodInterceptor  
 	 */
 	MethodInterceptor getInterceptor(Advisor advisor);
 

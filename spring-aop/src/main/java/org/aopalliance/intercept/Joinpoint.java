@@ -54,6 +54,8 @@ public interface Joinpoint {
 	 * on the actual joinpoint type (see the children interfaces).
 	 * @return see the children interfaces' proceed definition
 	 * @throws Throwable if the joinpoint throws an exception
+	 *
+	 * 执行此拦截点，并进入到下一个连接点
 	 */
 	@Nullable
 	Object proceed() throws Throwable;
@@ -62,6 +64,8 @@ public interface Joinpoint {
 	 * Return the object that holds the current joinpoint's static part.
 	 * <p>For instance, the target object for an invocation.
 	 * @return the object (can be null if the accessible object is static)
+	 *
+	 * 返回保存当前连接点静态部分【的对象】。  这里一般指的target
 	 */
 	@Nullable
 	Object getThis();
@@ -70,6 +74,8 @@ public interface Joinpoint {
 	 * Return the static part of this joinpoint.
 	 * <p>The static part is an accessible object on which a chain of
 	 * interceptors are installed.
+	 *
+	 * 返回此静态连接点  一般就为当前的Method(至少目前的唯一实现是MethodInvocation,所以连接点得静态部分肯定就是本方法喽)
 	 */
 	@Nonnull
 	AccessibleObject getStaticPart();

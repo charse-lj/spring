@@ -29,6 +29,8 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
  *
  * @author Stephane Nicoll
  * @since 4.2
+ *
+ * 它是一个和注解驱动的声明式事务相关的监听器工厂。用于处理@TransactionalEventListener这个注解标注的方法
  */
 public class TransactionalEventListenerFactory implements EventListenerFactory, Ordered {
 
@@ -45,11 +47,15 @@ public class TransactionalEventListenerFactory implements EventListenerFactory, 
 	}
 
 
+	// 很显然，它要求此方法必须标注@TransactionalEventListener这个注解
+	// 备注：@TransactionalEventListener继承自@EventListener
 	@Override
 	public boolean supportsMethod(Method method) {
 		return AnnotatedElementUtils.hasAnnotation(method, TransactionalEventListener.class);
 	}
 
+	// ApplicationListenerMethodTransactionalAdapter这个是适配事务监听方法的适配器
+	// 它继承自：ApplicationListenerMethodAdapter
 	@Override
 	public ApplicationListener<?> createApplicationListener(String beanName, Class<?> type, Method method) {
 		return new ApplicationListenerMethodTransactionalAdapter(beanName, type, method);

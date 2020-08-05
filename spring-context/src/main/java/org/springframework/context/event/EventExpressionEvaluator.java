@@ -39,6 +39,8 @@ import org.springframework.lang.Nullable;
  */
 class EventExpressionEvaluator extends CachedExpressionEvaluator {
 
+	// ExpressionKey为CachedExpressionEvaluator的一个吧内部类
+	// Expression为：org.springframework.expression.Expression 表达式
 	private final Map<ExpressionKey, Expression> conditionCache = new ConcurrentHashMap<>(64);
 
 
@@ -48,14 +50,23 @@ class EventExpressionEvaluator extends CachedExpressionEvaluator {
 	 */
 	public boolean condition(String conditionExpression, ApplicationEvent event, Method targetMethod,
 			AnnotatedElementKey methodKey, Object[] args, @Nullable BeanFactory beanFactory) {
-
+		// EventExpressionRootObject就是简单的持有传入的两个变量的引用而已~~~
+		// 这个RootObject是我们#root值的来源~~~~
 		EventExpressionRootObject root = new EventExpressionRootObject(event, args);
+
+		// 准备一个执行上下文。关于SpEL的执行上文，请参照下面的链接
+		// 这个执行上下文是处理此问题的重中之重~~~~下面会有解释
+		// getParameterNameDiscoverer 它能够根据方法参数列表的名称取值~~~强大
+		// 同时也支持a0、a1... 和 p0、p1...等等都直接取值~~这个下面会为何会支持得这么强大的原因~~~
 		MethodBasedEvaluationContext evaluationContext = new MethodBasedEvaluationContext(
 				root, targetMethod, args, getParameterNameDiscoverer());
 		if (beanFactory != null) {
 			evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
 		}
 
+		// 可以看到  请让表达式的值返回bool值~~~~~~~
+		// getExpression是父类的~  最终有用的就一句话：expr = getParser().parseExpression(expression);
+		// 默认采用的是SpelExpressionParser这个解析器解析这个表达式
 		return (Boolean.TRUE.equals(getExpression(this.conditionCache, methodKey, conditionExpression).getValue(
 				evaluationContext, Boolean.class)));
 	}

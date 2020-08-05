@@ -64,6 +64,25 @@ import org.springframework.util.concurrent.ListenableFuture;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 4.2
+ *
+ * Spring的使用@EventListener监听事件。若监听方法有返回值，那将会把这个返回值当作事件源，一直发送下去，直到返回void或者null停止
+ * @EventListener(value = {ContextRefreshedEvent.class})
+ *     public List<Child> handle(Object o) {
+ *         List<Child> childList = new ArrayList<>();
+ *         childList.add(new Child("1"));
+ *         childList.add(new Child("2"));
+ *         return childList;
+ *     }
+ *
+ *     // 因为上个方法有返回  所以事件会传递到此处
+ *     @EventListener(Child.class)
+ *     public void handChild(Child c) {
+ *         System.out.println(c.getName() + " 发来了事件");
+ *     }
+ *
+ * 输出：
+ * 1 发来了事件
+ * 2 发来了事件
  */
 public class ApplicationListenerMethodAdapter implements GenericApplicationListener {
 
@@ -91,6 +110,7 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 	@Nullable
 	private ApplicationContext applicationContext;
 
+	//事件表达式处理器  默认使用的SpEL去解析  只是对它进行了增强
 	@Nullable
 	private EventExpressionEvaluator evaluator;
 
@@ -102,9 +122,12 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 				AopUtils.getMostSpecificMethod(method, targetClass) : this.method);
 		this.methodKey = new AnnotatedElementKey(this.targetMethod, targetClass);
 
+		// 处理@EventListener注解信息  备注：至少指定一个监听类型
 		EventListener ann = AnnotatedElementUtils.findMergedAnnotation(this.targetMethod, EventListener.class);
 		this.declaredEventTypes = resolveDeclaredEventTypes(method, ann);
+		// 拿到条件信息  SpEL中有用
 		this.condition = (ann != null ? ann.condition() : null);
+		// 从此处也能看出，它是支持在方法上标注@Order来控制执行顺序的
 		this.order = resolveOrder(this.targetMethod);
 	}
 
@@ -153,6 +176,9 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 		processEvent(event);
 	}
 
+	// 判断该处理器  是否支持当前类型的事件
+	// 判断思路很简单：类型匹配上了 就表示可以处理这个事件（支持事件的泛型依赖匹配~~~）
+	// 关于condition 是在process处理的时候会生效的
 	@Override
 	public boolean supportsEventType(ResolvableType eventType) {
 		for (ResolvableType declaredEventType : this.declaredEventTypes) {
@@ -185,10 +211,24 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 	 * matches and handling a non-null result, if any.
 	 */
 	public void processEvent(ApplicationEvent event) {
+		// 解析参数，很简单  主要是兼容PayloadApplicationEvent 把事件拿出来
+		// 返回的数组要么为[]，总之最多只有一个参数  就是事件本身
+		//事件类型是PayloadApplicationEvent,那就把.getPayload()，否则就是event本身喽
 		Object[] args = resolveArguments(event);
+		//  此处是我们本文的重点，就是解析condition 条件的地方，下面专门讨论，现在继续往下走
+		// 总之就是根据事件源、绝大多数情况下args里面装的就是这个event~~~~~
+		//解析condition表达式（注意，此处把args传进去了） 因此我们表达式里是可以用这个参数的哦
 		if (shouldHandle(event, args)) {
+			// 这一句非常的简单  就是调用此方法Method~
+			// 就是执行目标方法，我们一般返回值都是void，所以就是null
+			// 但是，但是，但是注意了，此处若返回的不是null，还有处理~~~~非常给力：
 			Object result = doInvoke(args);
+			// 这一步就是@EventListener最大的优势。如果它的返回值不为null，那么它可以行使事件链，可以继续发布事件
+			// 把返回值当作事件继续publish（返回值可以是个Object，最终被包装成payload事件~~~~）
 			if (result != null) {
+				// 如果返回值是数组或者Collection，会把里面内容当作事件循环publishEvent
+				// 如果就是个POJO，那就直接publish
+				// 事件的传递性 就这么的来了，强大啊
 				handleResult(result);
 			}
 			else {
@@ -280,9 +320,12 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 		if (args == null) {
 			return false;
 		}
+		// condition默认是空串  只有配置了才会去执行~~~  是用的解析器是EventExpressionEvaluator
 		String condition = getCondition();
 		if (StringUtils.hasText(condition)) {
 			Assert.notNull(this.evaluator, "EventExpressionEvaluator must not be null");
+			// 最终委托给EventExpressionEvaluator去解析
+			// 备注EventExpressionEvaluator是个内部使用的类，只有此处解析用到了~~~
 			return this.evaluator.condition(
 					condition, event, this.targetMethod, this.methodKey, args, this.applicationContext);
 		}
