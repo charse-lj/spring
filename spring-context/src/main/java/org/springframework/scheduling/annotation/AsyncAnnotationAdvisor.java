@@ -51,6 +51,8 @@ import org.springframework.util.function.SingletonSupplier;
  * @since 3.0
  * @see Async
  * @see AnnotationAsyncExecutionInterceptor
+ *
+ * 和@Async有关
  */
 @SuppressWarnings("serial")
 public class AsyncAnnotationAdvisor extends AbstractPointcutAdvisor implements BeanFactoryAware {

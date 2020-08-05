@@ -27,6 +27,9 @@ import org.springframework.lang.Nullable;
  *
  * @author Costin Leau
  * @since 3.1
+ *
+ * 和Cache有关
+ * Spring Cache的@Cachable等注解的拦截，就是采用了它。该类位于：org.springframework.cache.interceptor，显然它和cache相关了。Jar包属于：Spring-context.jar
  */
 @SuppressWarnings("serial")
 public class BeanFactoryCacheOperationSourceAdvisor extends AbstractBeanFactoryPointcutAdvisor {

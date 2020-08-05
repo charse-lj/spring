@@ -40,6 +40,14 @@ import org.springframework.lang.Nullable;
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 2.0
+ *
+ * 这个Advisor是在Spring解析被 @AspectJ注解注释的类时生成的 Advisor
+ * 而这个 Advisor中的 Pointcut与Advice都是由ReflectiveAspectJAdvisorFactory 来解析生成的(与之对应的 Advice 是 AspectJMethodBeforeAdvice, AspectJAfterAdvice, AspectJAfterReturningAdvice, AspectJAfterThrowingAdvice, AspectJAroundAdvice,Pointcut 则是AspectJExpressionPointcut)
+ * 解析的步骤是
+ * 自动代理创建器：AnnotationAwareAspectJAutoProxyCreator.findCandidateAdvisors() ->
+ * Bean工厂相关的Advisor构建器：BeanFactoryAspectJAdvisorsBuilder.buildAspectJAdvisors() ->
+ * ReflectiveAspectJAdvisorFactory.getAdvisors() ->
+ * ReflectiveAspectJAdvisorFactory.getAdvisor() 最终生成了InstantiationModelAwarePointcutAdvisorImpl(当然包括里面的 Pointcut与 advice 也都是由 ReflectiveAspectJAdvisorFactory 解析生成的)
  */
 @SuppressWarnings("serial")
 final class InstantiationModelAwarePointcutAdvisorImpl

@@ -32,6 +32,8 @@ import org.springframework.lang.Nullable;
  * @since 2.0.2
  * @see #setPointcut
  * @see #setAdviceBeanName
+ *
+ * 通用的BeanFactory的Advisor
  */
 @SuppressWarnings("serial")
 public class DefaultBeanFactoryPointcutAdvisor extends AbstractBeanFactoryPointcutAdvisor {

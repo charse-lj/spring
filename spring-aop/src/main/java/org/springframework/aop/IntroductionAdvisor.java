@@ -30,6 +30,24 @@ package org.springframework.aop;
  * @see IntroductionInterceptor
  *
  * IntroductionAdvisor只能应用于类级别的拦截
+ * 引介切面
+ * BeforeAdvide（前置增强）、AfterAdvice（后置增强）、ThrowsAdvice（异常增强）、RoundAdvice（环绕增强）、IntroductionAdvice（引入增强）
+ * RoundAdvice（环绕增强）：就是BeforeAdvide（前置增强）、AfterAdvice（后置增强）的组合使用叫环绕增强
+ * 引入增强（Introduction Advice）的概念：一个Java类，没有实现A接口，在不修改Java类的情况下，使其具备A接口的功能。（非常强大有木有，A不需要动代码，就能有别的功能，吊炸天有木有）
+ * IntroductionAdvisor纯粹就是为Introduction而生的。
+ *
+ * IntroductionAdvisor 和 PointcutAdvisor接口不同，它仅有一个类过滤器ClassFilter 而没有 MethodMatcher，这是因为 `引介切面 的切点是类级别的，而 Pointcut 的切点是方法级别的（细粒度更细，所以更加常用）。
+ * Introduction可以在不改动目标类定义的情况下，为目标类增加新的属性和行为。
+ * IntroductionInfo：引介信息
+ * IntroductionInfo 接口描述了目标类需要实现的新接口
+ *
+ * IntroductionInterceptor：引介拦截器
+ * 在Spring中，为目标对象添加新的属性和行为必须声明相应的接口以及相应的实现。这样，再通过特定的拦截器将新的接口定义以及实现类中的逻辑附加到目标对象上。然后，目标对象（确切的说，是目标对象的代理对象）就拥有了新的状态和行为
+ *
+ * 这里面介绍这个非常强大的拦截器：IntroductionInterceptor它是对MethodInterceptor的一个扩展，同时他还继承了接口DynamicIntroductionAdvice
+ * 通过DynamicIntroductionAdvice，可以界定当前的 IntroductionInterceptor为哪些接口提供相应的拦截功能。通过MethodInterceptor,IntroductionInterceptor 就可以处理新添加的接口上的方法调用了
+ *
+ * 
  */
 public interface IntroductionAdvisor extends Advisor, IntroductionInfo {
 

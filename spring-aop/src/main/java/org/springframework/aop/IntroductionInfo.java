@@ -32,7 +32,7 @@ public interface IntroductionInfo {
 
 	/**
 	 * Return the additional interfaces introduced by this Advisor or Advice.
-	 * @return the introduced interfaces
+	 * @return the introduced interfaces 接口描述了目标类需要实现的新接口
 	 */
 	Class<?>[] getInterfaces();
 

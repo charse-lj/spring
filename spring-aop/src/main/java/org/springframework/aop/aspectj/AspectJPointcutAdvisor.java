@@ -31,10 +31,12 @@ import org.springframework.util.Assert;
  * @author Adrian Colyer
  * @author Juergen Hoeller
  * @since 2.0
+ *
+ * 显然是和AspectJ相关的，使用得很是广泛。注意它和AspectJExpressionPointcutAdvisor的区别。有名字也能看出来，AspectJExpressionPointcutAdvisor和表达式语言的切点相关的，而AspectJPointcutAdvisor是无关的。它哥俩都位于包org.springframework.aop.aspectj里
  */
 public class AspectJPointcutAdvisor implements PointcutAdvisor, Ordered {
 
-	private final AbstractAspectJAdvice advice;
+	private final AbstractAspectJAdvice advice;                                 InstantiationModelAwarePointcutAdvisor
 
 	private final Pointcut pointcut;
 

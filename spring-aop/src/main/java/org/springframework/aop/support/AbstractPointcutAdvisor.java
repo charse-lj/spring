@@ -57,7 +57,7 @@ public abstract class AbstractPointcutAdvisor implements PointcutAdvisor, Ordere
 		}
 		return Ordered.LOWEST_PRECEDENCE;
 	}
-
+	// Spring还没有使用该属性 永远返回true了
 	@Override
 	public boolean isPerInstance() {
 		return true;
