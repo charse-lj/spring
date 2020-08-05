@@ -42,6 +42,8 @@ public interface DynamicIntroductionAdvice extends Advice {
 	 * Does this introduction advice implement the given interface?
 	 * @param intf the interface to check
 	 * @return whether the advice implements the specified interface
+	 *
+	 * 哪些接口提供相应的拦截功能
 	 */
 	boolean implementsInterface(Class<?> intf);
 

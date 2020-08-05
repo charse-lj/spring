@@ -32,7 +32,22 @@ import org.aopalliance.aop.Advice;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
- * 把pointcut和advice连接起来
+ * Advisor 是Spring AOP的顶层抽象，用来管理Advice和Pointcut
+ * {@link PointcutAdvisor}:和切点有关
+ * {@link IntroductionAdvisor}:和切点无关）
+ * Pointcut是Spring AOP对切点的抽象。切点的实现方式有多种，其中一种就是AspectJ
+ *
+ * 它的继承体系主要有如下两个：PointcutAdvisor和IntroductionAdvisor
+ * 最本质上的区别就是：
+ * 		IntroductionAdvisor只能应用于类级别的拦截，只能使用Introduction型的Advice
+ * 		PointcutAdvisor那样，可以使用任何类型的Pointcut，以及几乎任何类型的Advice
+ *
+ * PointcutAdvisor：和切点有关的Advisor
+ * AbstractPointcutAdvisor：抽象实现
+ * AbstractGenericPointcutAdvisor：一般的、通用的PointcutAdvisor
+ * DefaultPointcutAdvisor：通用的，最强大的Advisor
+ * AbstractBeanFactoryPointcutAdvisor：和bean工厂有关的PointcutAdvisor
+ * DefaultBeanFactoryPointcutAdvisor：通用的BeanFactory的Advisor
  */
 public interface Advisor {
 

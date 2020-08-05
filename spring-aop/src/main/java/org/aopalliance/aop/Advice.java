@@ -22,7 +22,7 @@ package org.aopalliance.aop;
  *
  * @author Rod Johnson
  * @version $Id: Advice.java,v 1.1 2004/03/19 17:02:16 johnsonr Exp $
- * 通知，定义在连接点做什么，比如我们在方法前后进行日志打印
+ * 通知、拦截器(增强器),定义在连接点做什么，比如我们在方法前后进行日志打印
  */
 public interface Advice {
 
