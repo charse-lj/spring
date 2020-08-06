@@ -870,6 +870,8 @@ public abstract class ClassUtils {
 	 * Check whether the specified class name is a CGLIB-generated class.
 	 * @param className the class name to check
 	 * @deprecated as of 5.2, in favor of custom (possibly narrower) checks
+	 *
+	 * 判断是否是CGLIB对象(其实就是看名字里是否含有 "$$"这个)
 	 */
 	@Deprecated
 	public static boolean isCglibProxyClassName(@Nullable String className) {

@@ -79,6 +79,7 @@ public abstract class AopProxyUtils {
 		Object current = candidate;
 		Class<?> result = null;
 		while (current instanceof TargetClassAware) {
+			//被代理的目标类
 			result = ((TargetClassAware) current).getTargetClass();
 			current = getSingletonTarget(current);
 		}
@@ -130,8 +131,11 @@ public abstract class AopProxyUtils {
 				specifiedInterfaces = advised.getProxiedInterfaces();
 			}
 		}
+		//初始化设置的interfaces 中有没有 SpringProxy.class,没有 addSpringProxy 为true,一般是没有的
 		boolean addSpringProxy = !advised.isInterfaceProxied(SpringProxy.class);
+		//创建的代理对象是否需要转换为Advised类型,默认为false,初始化设置的interfaces 中有没有 Advised.class,一般没有;一般addAdvised为true
 		boolean addAdvised = !advised.isOpaque() && !advised.isInterfaceProxied(Advised.class);
+		//addDecoratingProxy一般为true
 		boolean addDecoratingProxy = (decoratingProxy && !advised.isInterfaceProxied(DecoratingProxy.class));
 		int nonUserIfcCount = 0;
 		if (addSpringProxy) {

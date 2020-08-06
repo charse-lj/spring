@@ -69,6 +69,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	@Nullable
 	protected final Object target;
 
+	// 被拦截的方法
 	protected final Method method;
 
 	protected Object[] arguments;
