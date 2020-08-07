@@ -37,6 +37,7 @@ import org.springframework.util.PatternMatchUtils;
  * @see #isMatch
  *
  * 如果创建切入点时候，我们往往只需要方法名字匹配，无需理会方法的签名和返回类型，这种情况下，我们可以使用 NameMatchMethodPointCut方法名字匹配切入点。（这种功能最弱，但显然效率是最高的）
+ * 通过刚发名进行精确匹配的。 (PS: 其中 ClassFilter = ClassFilter.TRUE)
  */
 @SuppressWarnings("serial")
 public class NameMatchMethodPointcut extends StaticMethodMatcherPointcut implements Serializable {

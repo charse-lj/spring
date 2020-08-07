@@ -35,29 +35,34 @@ import org.springframework.aop.TargetSource;
  * @since 13.03.2003
  * @see org.springframework.aop.framework.AdvisedSupport
  * 可以获取拦截器和其他 advice, Advisors和代理接口
+ * 这个 Advised 接口的实现着主要是代理生成的对象与AdvisedSupport (Advised的支持器)
  */
 public interface Advised extends TargetClassAware {
 
 	/**
 	 * Return whether the Advised configuration is frozen,
 	 * in which case no advice changes can be made.
+	 * 这个 frozen 决定是否 AdvisedSupport 里面配置的信息是否改变
 	 */
 	boolean isFrozen();
 
 	/**
 	 * Are we proxying the full target class instead of specified interfaces?
+	 * 是否代理指定的类, 而不是一些 Interface
 	 */
 	boolean isProxyTargetClass();
 
 	/**
 	 * Return the interfaces proxied by the AOP proxy.
 	 * <p>Will not include the target class, which may also be proxied.
+	 * 返回代理的接口
 	 */
 	Class<?>[] getProxiedInterfaces();
 
 	/**
 	 * Determine whether the given interface is proxied.
 	 * @param intf the interface to check
+	 * 判断这个接口是否是被代理的接口
 	 */
 	boolean isInterfaceProxied(Class<?> intf);
 
@@ -65,6 +70,7 @@ public interface Advised extends TargetClassAware {
 	 * Change the {@code TargetSource} used by this {@code Advised} object.
 	 * <p>Only works if the configuration isn't {@linkplain #isFrozen frozen}.
 	 * @param targetSource new TargetSource to use
+	 * 获取被代理的对象
 	 */
 	void setTargetSource(TargetSource targetSource);
 
@@ -90,6 +96,8 @@ public interface Advised extends TargetClassAware {
 	 * advised object invokes a method on {@code this}, no advice will be applied.
 	 * <p>Getting the proxy is analogous to an EJB calling {@code getEJBObject()}.
 	 * @see AopContext
+	 *
+	 * 判断是否需要将代理的对象暴露到 ThreadLocal中, 而获取对应的代理对象则通过 AopContext 获取
 	 */
 	boolean isExposeProxy();
 
@@ -100,18 +108,24 @@ public interface Advised extends TargetClassAware {
 	 * pre-filtered already, meaning that the ClassFilter check can be skipped
 	 * when building the actual advisor chain for proxy invocations.
 	 * @see org.springframework.aop.ClassFilter
+	 *
+	 *  设置 Advisor 是否 已经在前面 过滤过是否匹配Pointcut
 	 */
 	void setPreFiltered(boolean preFiltered);
 
 	/**
 	 * Return whether this proxy configuration is pre-filtered so that it only
 	 * contains applicable advisors (matching this proxy's target class).
+	 *
+	 * 获取 Advisor 是否已经在前面过滤过是否匹配 Pointcut (极少用到)
 	 */
 	boolean isPreFiltered();
 
 	/**
 	 * Return the advisors applying to this proxy.
 	 * @return a list of Advisors applying to this proxy (never {@code null})
+	 *
+	 *   获取所有的 Advisor
 	 */
 	Advisor[] getAdvisors();
 
@@ -122,6 +136,8 @@ public interface Advised extends TargetClassAware {
 	 * from the relevant factory.
 	 * @param advisor the advisor to add to the end of the chain
 	 * @throws AopConfigException in case of invalid advice
+	 *
+	 * 增加 Advisor 到链表的最后
 	 */
 	void addAdvisor(Advisor advisor) throws AopConfigException;
 
@@ -130,6 +146,8 @@ public interface Advised extends TargetClassAware {
 	 * @param advisor the advisor to add at the specified position in the chain
 	 * @param pos position in chain (0 is head). Must be valid.
 	 * @throws AopConfigException in case of invalid advice
+	 *
+	 * 在指定位置增加 Advisor
 	 */
 	void addAdvisor(int pos, Advisor advisor) throws AopConfigException;
 
@@ -168,6 +186,8 @@ public interface Advised extends TargetClassAware {
 	 * @return whether it was replaced. If the advisor wasn't found in the
 	 * list of advisors, this method returns {@code false} and does nothing.
 	 * @throws AopConfigException in case of invalid advice
+	 *
+	 * 将指定的两个 Advisor 进行替换
 	 */
 	boolean replaceAdvisor(Advisor a, Advisor b) throws AopConfigException;
 
@@ -182,6 +202,8 @@ public interface Advised extends TargetClassAware {
 	 * @throws AopConfigException in case of invalid advice
 	 * @see #addAdvice(int, Advice)
 	 * @see org.springframework.aop.support.DefaultPointcutAdvisor
+	 *
+	 * 增加 Advice <- 这个Advice将会包裹成 DefaultPointcutAdvisor
 	 */
 	void addAdvice(Advice advice) throws AopConfigException;
 
@@ -196,6 +218,8 @@ public interface Advised extends TargetClassAware {
 	 * @param pos index from 0 (head)
 	 * @param advice the advice to add at the specified position in the advice chain
 	 * @throws AopConfigException in case of invalid advice
+	 *
+	 * 在指定 index 增加 Advice <- 这个Advice将会包裹成 DefaultPointcutAdvisor
 	 */
 	void addAdvice(int pos, Advice advice) throws AopConfigException;
 
@@ -204,6 +228,8 @@ public interface Advised extends TargetClassAware {
 	 * @param advice the advice to remove
 	 * @return {@code true} of the advice was found and removed;
 	 * {@code false} if there was no such advice
+	 *
+	 * 删除给定的 Advice
 	 */
 	boolean removeAdvice(Advice advice);
 
@@ -214,6 +240,8 @@ public interface Advised extends TargetClassAware {
 	 * the advisors array.
 	 * @param advice the AOP Alliance advice to search for
 	 * @return index from 0 of this advice, or -1 if there's no such advice
+	 *
+	 * 获取 Advice 的索引位置
 	 */
 	int indexOf(Advice advice);
 
@@ -221,6 +249,8 @@ public interface Advised extends TargetClassAware {
 	 * As {@code toString()} will normally be delegated to the target,
 	 * this returns the equivalent for the AOP proxy.
 	 * @return a string description of the proxy configuration
+	 *
+	 * 将 ProxyConfig 通过 String 形式返回
 	 */
 	String toProxyConfigString();
 
