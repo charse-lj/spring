@@ -29,7 +29,7 @@ package org.springframework.aop;
  * @see org.springframework.aop.support.Pointcuts
  * @see org.springframework.aop.support.ClassFilters
  * @see org.springframework.aop.support.MethodMatchers
- * 切点，决定advice应该作用于那个连接点，比如根据正则等规则匹配哪些方法需要增强;（Pointcut 目前有getClassFilter（类匹配），getMethodMatcher（方法匹配），Pointcut TRUE （全匹配））
+ * 切点，决定advice切面的匹配点，比如根据正则等规则匹配哪些方法需要增强;（Pointcut 目前有getClassFilter（类匹配），getMethodMatcher（方法匹配），Pointcut TRUE （全匹配））
  *
  * 11(10+1)种类型的表达式
  * 1.execution：一般用于指定方法的执行，用的最多。

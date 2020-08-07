@@ -26,6 +26,11 @@ import org.springframework.lang.Nullable;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
+ *
+ * 这个接口主要定义了从 Advised中获取 Advisor
+ * 并判断其是否与 对应的 Method 相匹配
+ * 最终返回的是MethodInterceptor
+ * (其中对 Advisor 转化成 MethodInterceptor 的工作都是交由 DefaultAdvisorAdapterRegistry 来完成)
  */
 public interface AdvisorChainFactory {
 

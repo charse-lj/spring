@@ -83,6 +83,9 @@ import org.springframework.util.ReflectionUtils;
  * 和JDK的一样，Object的方法，只有toString()会被拦截（执行通知）
  * 生成出来的代理对象，Spring默认都给你实现了接口：SpringProxy、DecoratingProxy、Advised
  * 它和JDK不同的是，比如equals和hashCode等方法根本就不会进入intecept方法，而是在getCallbacks()那里就给特殊处理掉了
+ *
+ * 回调数组Callback[]：不同的Method的调用可以对应不同的回调函数。在动态代理中，回调函数就是拦截器需要执行的函数，所以我们说回调函数，可以约等于拦截器。拦截器通过实现MethodInterceptor接口定义。
+ * 回调过滤器CallbackFilter：int accept(Method method) 返回的值为数字代表了Callback数组中的索引位置，即Method对应的Callback。
  */
 @SuppressWarnings("serial")
 class CglibAopProxy implements AopProxy, Serializable {
@@ -172,15 +175,20 @@ class CglibAopProxy implements AopProxy, Serializable {
 			Assert.state(rootClass != null, "Target class must be available for creating a CGLIB proxy");
 
 			Class<?> proxySuperClass = rootClass;
+			// 这里判断rootClass(被代理对象的类)是否是Cglib代理所产生的类（内部判断rootClass的className是否包含$$）
 			if (rootClass.getName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)) {
+				//是Cglib代理所产生的类,获取父类--被代理对象的类
 				proxySuperClass = rootClass.getSuperclass();
+				//获取被代理对象所有的接口
 				Class<?>[] additionalInterfaces = rootClass.getInterfaces();
 				for (Class<?> additionalInterface : additionalInterfaces) {
+					//代理对象需要实现的所有接口.
 					this.advised.addInterface(additionalInterface);
 				}
 			}
 
 			// Validate the class, writing log messages as necessary.
+			// 方法校验，final方法不能被代理，记录日志
 			validateClassIfNecessary(proxySuperClass, classLoader);
 
 			// Configure CGLIB Enhancer...
@@ -197,6 +205,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setStrategy(new ClassLoaderAwareGeneratorStrategy(classLoader));
 
+			// 通过callbacks设置拦截器链
 			Callback[] callbacks = getCallbacks(rootClass);
 			Class<?>[] types = new Class<?>[callbacks.length];
 			for (int x = 0; x < types.length; x++) {
@@ -262,7 +271,9 @@ class CglibAopProxy implements AopProxy, Serializable {
 			Method[] methods = proxySuperClass.getDeclaredMethods();
 			for (Method method : methods) {
 				int mod = method.getModifiers();
+				// 静态方法直接跳过
 				if (!Modifier.isStatic(mod) && !Modifier.isPrivate(mod)) {
+					// final方法不能被代理
 					if (Modifier.isFinal(mod)) {
 						if (logger.isInfoEnabled() && implementsInterface(method, ifcs)) {
 							logger.info("Unable to proxy interface-implementing method [" + method + "] because " +
@@ -293,6 +304,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 		boolean isStatic = this.advised.getTargetSource().isStatic();
 
 		// Choose an "aop" interceptor (used for AOP calls).
+		// 我们最常用的就是这个拦截器DynamicAdvisedInterceptor
 		Callback aopInterceptor = new DynamicAdvisedInterceptor(this.advised);
 
 		// Choose a "straight to target" interceptor. (used for calls that are

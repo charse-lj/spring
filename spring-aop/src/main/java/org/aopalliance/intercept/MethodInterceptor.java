@@ -43,6 +43,8 @@ import javax.annotation.Nullable;
  * @author Rod Johnson
  *
  * 从名字里都能看出来，它是通过拦截方法的执行来实现通知得效果的~~~~
+ *
+ * 注意，注意，注意：在Proxy中最终执行的其实都是MethodInterceptor，因此这些Advice最终都是交给 AdvisorAdapter -> 将 advice 适配成 MethodInterceptor
  */
 @FunctionalInterface
 public interface MethodInterceptor extends Interceptor {
