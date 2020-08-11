@@ -115,14 +115,21 @@ public abstract class AopProxyUtils {
 	 * @see SpringProxy
 	 * @see Advised
 	 * @see DecoratingProxy
+	 *
+	 * @see DefaultAopProxyFactory#createAopProxy(AdvisedSupport) JdkDynamicAopProxy 创建过程,已经检查了相关配置
+	 *
+	 * 决定 SpringProxy、Advised、DecoratingProxy 三个接口是否需要放到配置advised中,代理对象需要实现的接口中
 	 */
 	static Class<?>[] completeProxiedInterfaces(AdvisedSupport advised, boolean decoratingProxy) {
+		//在配置对象中,被代理对象自己实现的接口们
 		Class<?>[] specifiedInterfaces = advised.getProxiedInterfaces();
 		if (specifiedInterfaces.length == 0) {
 			// No user-specified interfaces: check whether target class is an interface.
+			//被代理对象的类
 			Class<?> targetClass = advised.getTargetClass();
 			if (targetClass != null) {
 				if (targetClass.isInterface()) {
+					//被代理对象的类是接口,添加
 					advised.setInterfaces(targetClass);
 				}
 				else if (Proxy.isProxyClass(targetClass)) {
@@ -135,7 +142,7 @@ public abstract class AopProxyUtils {
 		boolean addSpringProxy = !advised.isInterfaceProxied(SpringProxy.class);
 		//创建的代理对象是否需要转换为Advised类型,默认为false,初始化设置的interfaces 中有没有 Advised.class,一般没有;一般addAdvised为true
 		boolean addAdvised = !advised.isOpaque() && !advised.isInterfaceProxied(Advised.class);
-		//addDecoratingProxy一般为true
+		//addDecoratingProxy一般为 decoratingProxy的值,此处为false
 		boolean addDecoratingProxy = (decoratingProxy && !advised.isInterfaceProxied(DecoratingProxy.class));
 		int nonUserIfcCount = 0;
 		if (addSpringProxy) {

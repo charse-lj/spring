@@ -171,9 +171,11 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 
 		try {
+			//被代理的对象类型.
 			Class<?> rootClass = this.advised.getTargetClass();
 			Assert.state(rootClass != null, "Target class must be available for creating a CGLIB proxy");
 
+			//初始化代理对象的父类型
 			Class<?> proxySuperClass = rootClass;
 			// 这里判断rootClass(被代理对象的类)是否是Cglib代理所产生的类（内部判断rootClass的className是否包含$$）
 			if (rootClass.getName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)) {
@@ -182,7 +184,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 				//获取被代理对象所有的接口
 				Class<?>[] additionalInterfaces = rootClass.getInterfaces();
 				for (Class<?> additionalInterface : additionalInterfaces) {
-					//代理对象需要实现的所有接口.
+					//代理对象需要实现的所有接口(advised是配置类)
 					this.advised.addInterface(additionalInterface);
 				}
 			}
@@ -205,13 +207,16 @@ class CglibAopProxy implements AopProxy, Serializable {
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setStrategy(new ClassLoaderAwareGeneratorStrategy(classLoader));
 
-			// 通过callbacks设置拦截器链
+			// 通过callbacks设置拦截器
 			Callback[] callbacks = getCallbacks(rootClass);
 			Class<?>[] types = new Class<?>[callbacks.length];
 			for (int x = 0; x < types.length; x++) {
 				types[x] = callbacks[x].getClass();
 			}
 			// fixedInterceptorMap only populated at this point, after getCallbacks call above
+			/**方法拦截器过滤器
+			 * @{see ProxyCallbackFilter#accept(Method)} ：决定该方法交给哪个索引的过滤器处理
+			 */
 			enhancer.setCallbackFilter(new ProxyCallbackFilter(
 					this.advised.getConfigurationOnlyCopy(), this.fixedInterceptorMap, this.fixedInterceptorOffset));
 			enhancer.setCallbackTypes(types);
@@ -297,10 +302,19 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 	}
 
+	/**
+	 *   Callback 只是个标记接口.
+	 * @param rootClass
+	 * @return
+	 * @throws Exception
+	 */
 	private Callback[] getCallbacks(Class<?> rootClass) throws Exception {
 		// Parameters used for optimization choices...
+		//标记代理对象是否应该被aop框架通过AopContext以ThreadLocal的形式暴露出去
 		boolean exposeProxy = this.advised.isExposeProxy();
+		//是否冻结,其中的配置不可修改
 		boolean isFrozen = this.advised.isFrozen();
+		// 常见的单例bean就是静态的，而prototype就是动态的
 		boolean isStatic = this.advised.getTargetSource().isStatic();
 
 		// Choose an "aop" interceptor (used for AOP calls).
@@ -326,11 +340,16 @@ class CglibAopProxy implements AopProxy, Serializable {
 		Callback targetDispatcher = (isStatic ?
 				new StaticDispatcher(this.advised.getTargetSource().getTarget()) : new SerializableNoOp());
 
+		//通过advised的属性,创建一些主要的回调
 		Callback[] mainCallbacks = new Callback[] {
-				aopInterceptor,  // for normal advice
-				targetInterceptor,  // invoke target without considering advice, if optimized
-				new SerializableNoOp(),  // no override for methods mapped to this
-				targetDispatcher, this.advisedDispatcher,
+				// for normal advice
+				aopInterceptor,
+				// invoke target without considering advice, if optimized
+				targetInterceptor,
+				// no override for methods mapped to this
+				new SerializableNoOp(),
+				targetDispatcher,
+				this.advisedDispatcher,
 				new EqualsInterceptor(this.advised),
 				new HashCodeInterceptor(this.advised)
 		};
@@ -339,8 +358,9 @@ class CglibAopProxy implements AopProxy, Serializable {
 
 		// If the target is a static one and the advice chain is frozen,
 		// then we can make some optimizations by sending the AOP calls
-		// direct to the target using the fixed chain for that method.
+		// direct to the target using the fixed chain for that method.                                                                            
 		if (isStatic && isFrozen) {
+			//获取被代理对象中所有的方法
 			Method[] methods = rootClass.getMethods();
 			Callback[] fixedCallbacks = new Callback[methods.length];
 			this.fixedInterceptorMap = new HashMap<>(methods.length);
@@ -348,7 +368,9 @@ class CglibAopProxy implements AopProxy, Serializable {
 			// TODO: small memory optimization here (can skip creation for methods with no advice)
 			for (int x = 0; x < methods.length; x++) {
 				Method method = methods[x];
+				//获取每个方法的调用链
 				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, rootClass);
+				//构建一个固定的拦截器
 				fixedCallbacks[x] = new FixedChainStaticTargetInterceptor(
 						chain, this.advised.getTargetSource().getTarget(), this.advised.getTargetClass());
 				this.fixedInterceptorMap.put(method, x);
