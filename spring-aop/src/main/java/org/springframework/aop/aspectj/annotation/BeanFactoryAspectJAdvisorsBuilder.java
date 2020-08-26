@@ -79,6 +79,12 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 	 * <p>Creates a Spring Advisor for each AspectJ advice method.
 	 * @return the list of {@link org.springframework.aop.Advisor} beans
 	 * @see #isEligibleBean
+	 *
+	 * 封装了获取@Aspect注解类切面的方法
+	 * 1.从beanFactory中获取所有的bean
+	 * 2.判断该bean是否为@Aspect标注的切面类
+	 * 3.调用advisorFactory获取Advisor列表（具体过程前面已经分析）
+	 * 4.返回所有@Aspect注解标注的bean解析到的Advisor列表
 	 */
 	public List<Advisor> buildAspectJAdvisors() {
 		List<String> aspectNames = this.aspectBeanNames;

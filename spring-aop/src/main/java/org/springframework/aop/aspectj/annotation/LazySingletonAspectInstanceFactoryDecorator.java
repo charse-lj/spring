@@ -49,6 +49,7 @@ public class LazySingletonAspectInstanceFactoryDecorator implements MetadataAwar
 
 	@Override
 	public Object getAspectInstance() {
+		//采用装饰器模式，使得aspectInstance只会实例化一次，里面采用双重检查加锁实现单例模式
 		Object aspectInstance = this.materialized;
 		if (aspectInstance == null) {
 			Object mutex = this.maaif.getAspectCreationMutex();
