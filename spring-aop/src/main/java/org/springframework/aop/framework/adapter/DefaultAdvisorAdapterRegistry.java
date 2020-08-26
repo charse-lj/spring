@@ -84,12 +84,14 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 		}
 		throw new UnknownAdviceTypeException(advice);
 	}
-	//获得通知器的通知
+
 	@Override
 	public MethodInterceptor[] getInterceptors(Advisor advisor) throws UnknownAdviceTypeException {
 		List<MethodInterceptor> interceptors = new ArrayList<>(3);
+		//获得通知器的通知
 		Advice advice = advisor.getAdvice();
 		if (advice instanceof MethodInterceptor) {
+			//实现方法拦截器，加入
 			interceptors.add((MethodInterceptor) advice);
 		}
 		// 从所支持的适配器中拿到拦截器通知器

@@ -61,7 +61,7 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		Advisor[] advisors = config.getAdvisors();
 		//容器：用于存放拦截器链
 		List<Object> interceptorList = new ArrayList<>(advisors.length);
-		// 定义该方法所在的类
+		// 该方法所在的类
 		Class<?> actualClass = (targetClass != null ? targetClass : method.getDeclaringClass());
 		Boolean hasIntroductions = null;
 
@@ -75,8 +75,9 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 					// 方法拦截器是否允许通过
 					MethodMatcher mm = pointcutAdvisor.getPointcut().getMethodMatcher();
 					boolean match;
-					if (mm instanceof IntroductionAwareMethodMatcher) {
+					if (mm instanceof IntroductionAwareMethodMatcher) { //是一个意识到引入的方法匹配器
 						if (hasIntroductions == null) {
+							//所有拦截器中是否支持引入该类
 							hasIntroductions = hasMatchingIntroductions(advisors, actualClass);
 						}
 						match = ((IntroductionAwareMethodMatcher) mm).matches(method, actualClass, hasIntroductions);
@@ -85,6 +86,7 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 						match = mm.matches(method, actualClass);
 					}
 					if (match) {
+						//获取所有支持的方法拦截器
 						MethodInterceptor[] interceptors = registry.getInterceptors(advisor);
 						if (mm.isRuntime()) {
 							// Creating a new object instance in the getInterceptors() method

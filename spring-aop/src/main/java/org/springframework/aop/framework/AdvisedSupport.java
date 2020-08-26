@@ -125,6 +125,8 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * Will create a SingletonTargetSource for the object.
 	 * @see #setTargetSource
 	 * @see org.springframework.aop.target.SingletonTargetSource
+	 *
+	 * 这里需要注意的是：setTarget最终的效果其实也是转换成了TargetSource
 	 * 代理的目标对象  效果同setTargetSource(@Nullable TargetSource targetSource) ;因此建议此处还是从容器中去拿
 	 */
 	public void setTarget(Object target) {
@@ -397,6 +399,13 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	/**
 	 * Cannot add introductions this way unless the advice implements IntroductionInfo.
+	 *
+	 * advice最终都会备转换成一个`Advisor`
+	 * 1.（DefaultPointcutAdvisor  表示切面+通知），它使用的切面为Pointcut.TRUE
+	 * 	Pointcut.TRUE：表示啥都返回true，也就是说这个增强通知将作用于所有的方法上
+	 * 2.DefaultIntroductionAdvisor
+	 *   方法拦截器，默认作用于所有的方法上
+	 * 若要自己指定切面（比如切点表达式）,使用它的另一个构造函数：public DefaultPointcutAdvisor(Pointcut pointcut, Advice advice)
 	 */
 	@Override
 	public void addAdvice(int pos, Advice advice) throws AopConfigException {
@@ -479,6 +488,8 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * @param method the proxied method
 	 * @param targetClass the target class
 	 * @return a List of MethodInterceptors (may also include InterceptorAndDynamicMethodMatchers)
+	 *
+	 * 获取拦截器链
 	 */
 	public List<Object> getInterceptorsAndDynamicInterceptionAdvice(Method method, @Nullable Class<?> targetClass) {
 		// 以这个Method生成一个key，准备缓存
@@ -486,7 +497,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		MethodCacheKey cacheKey = new MethodCacheKey(method);
 		List<Object> cached = this.methodCache.get(cacheKey);
 		if (cached == null) {
-			// 这个方法最终在这 DefaultAdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice
+			// 这个方法最终在这 DefaultAdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvicey
 			//DefaultAdvisorChainFactory：生成通知器链的工厂，实现了interceptor链的获取过程
 			cached = this.advisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice(
 					this, method, targetClass);

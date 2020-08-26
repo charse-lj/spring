@@ -73,23 +73,27 @@ class ConditionEvaluator {
 
 	/**
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
-	 * @param metadata the meta data
+	 * @param metadata the meta data 能在上面标注注解的元素
 	 * @param phase the phase of the call
 	 * @return if the item should be skipped
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
 		if (metadata == null || !metadata.isAnnotated(Conditional.class.getName())) {
+			//metadata 为null,或者元数据注解不含Conditional注解
 			return false;
 		}
 
+		//元数据注解包含Conditional注解
 		if (phase == null) {
 			if (metadata instanceof AnnotationMetadata &&
-					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {
+					//类元数据含@Component @ComponentScan @Import @ImportResource其一或者方法被@Bean标注
+					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {//是配置类的话直接使用PARSE_CONFIGURATION阶段
 				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
 			}
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
 
+		//获取所有@Conditional注解的value值
 		List<Condition> conditions = new ArrayList<>();
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
 			for (String conditionClass : conditionClasses) {
@@ -98,6 +102,7 @@ class ConditionEvaluator {
 			}
 		}
 
+		//排序所有condition类
 		AnnotationAwareOrderComparator.sort(conditions);
 
 		for (Condition condition : conditions) {

@@ -45,6 +45,9 @@ public interface ConfigurationCondition extends Condition {
 		 * class is being parsed.
 		 * <p>If the condition does not match at this point, the {@code @Configuration}
 		 * class will not be added.
+		 *
+		 * @Configuration注解的类解析的阶段判断Condition
+		 * 如果Condition不匹配，则@Configuration注解的类不会加载
 		 */
 		PARSE_CONFIGURATION,
 
@@ -54,6 +57,9 @@ public interface ConfigurationCondition extends Condition {
 		 * {@code @Configuration} classes from being added.
 		 * <p>At the time that the condition is evaluated, all {@code @Configuration}s
 		 * will have been parsed.
+		 *
+		 * @Configuration注解的类实例化为bean的阶段判断Condition
+		 * 无论Condition是否匹配，@Configuration注解的类都会加载，且类加载先于Condition判断
 		 */
 		REGISTER_BEAN
 	}

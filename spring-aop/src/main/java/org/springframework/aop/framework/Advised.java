@@ -62,7 +62,7 @@ public interface Advised extends TargetClassAware {
 	/**
 	 * Determine whether the given interface is proxied.
 	 * @param intf the interface to check
-	 * 判断这个接口是否是被代理的接口
+	 * 判断这个接口是否是被代理
 	 */
 	boolean isInterfaceProxied(Class<?> intf);
 
@@ -70,7 +70,7 @@ public interface Advised extends TargetClassAware {
 	 * Change the {@code TargetSource} used by this {@code Advised} object.
 	 * <p>Only works if the configuration isn't {@linkplain #isFrozen frozen}.
 	 * @param targetSource new TargetSource to use
-	 * 获取被代理的对象
+	 * 代理的对象源
 	 */
 	void setTargetSource(TargetSource targetSource);
 

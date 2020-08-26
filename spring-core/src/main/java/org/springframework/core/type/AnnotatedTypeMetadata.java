@@ -44,7 +44,7 @@ import org.springframework.util.MultiValueMap;
  * @see MethodMetadata
  *
  * 对注解元素的封装适配
- * 什么叫注解元素(AnnotatedElement)？比如我们常见的Class、Method、Constructor、Parameter等等都属于它的子类都属于注解元素;单理解：只要能在上面标注注解都属于这种元素
+ * 什么叫注解元素(AnnotatedElement)？比如我们常见的Class、Method、Constructor、Parameter等等都属于它的子类,都属于注解元素;单理解：只要能在上面标注注解都属于这种元素
  */
 public interface AnnotatedTypeMetadata {
 

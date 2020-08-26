@@ -57,6 +57,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		// 需要优化  强制cglib  没有实现接口等都会进入这里面来
 		if (!IN_NATIVE_IMAGE && (config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config))) {
 			Class<?> targetClass = config.getTargetClass();
 			if (targetClass == null) {
@@ -80,6 +81,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 	 */
 	private boolean hasNoUserSuppliedProxyInterfaces(AdvisedSupport config) {
 		Class<?>[] ifcs = config.getProxiedInterfaces();
+		//如果它没有实现过接口（ifcs.length == 0）  或者 仅仅实现了一个接口，但是呢这个接口却是SpringProxy类型的   那就返回false
 		return (ifcs.length == 0 || (ifcs.length == 1 && SpringProxy.class.isAssignableFrom(ifcs[0])));
 	}
 

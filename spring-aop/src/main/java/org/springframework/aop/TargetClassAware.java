@@ -37,7 +37,8 @@ public interface TargetClassAware {
 	 * Return the target class behind the implementing object
 	 * (typically a proxy configuration or an actual proxy).
 	 * @return the target Class, or {@code null} if not known
-	 * // 返回被代理得目标类型  AopUtils#getTargetClass(Object)
+	 *
+	 * 返回被代理得目标类型  AopUtils#getTargetClass(Object)
 	 */
 	@Nullable
 	Class<?> getTargetClass();
