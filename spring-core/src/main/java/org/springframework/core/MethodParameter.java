@@ -63,16 +63,36 @@ public class MethodParameter {
 	private static final Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 
 
+	/**
+	 * 方法或者构造函数.
+	 */
 	private final Executable executable;
 
+	/**
+	 * 方法参数在方法中的索引.
+	 */
 	private final int parameterIndex;
 
+	/**
+	 * 参数对象.
+	 */
 	@Nullable
 	private volatile Parameter parameter;
 
+	/**
+	 * 嵌套的深度.
+	 */
 	private int nestingLevel;
 
-	/** Map from Integer level to Integer type index. */
+	/**
+	 * Map from Integer level to Integer type index.
+	 *  List<Map<String,List<Integer>>>
+	 *  typeIndexesPerLevel=(1,0) --> List
+	 *  typeIndexesPerLevel=(2,0) --> Map
+	 * 	typeIndexesPerLevel=(3,0) --> String
+	 * 	typeIndexesPerLevel=(3,1) --> List
+	 * 	typeIndexesPerLevel=(4,0) --> Integer
+	 */
 	@Nullable
 	Map<Integer, Integer> typeIndexesPerLevel;
 
@@ -80,21 +100,39 @@ public class MethodParameter {
 	@Nullable
 	private volatile Class<?> containingClass;
 
+	/**
+	 * 参数的class
+	 */
 	@Nullable
 	private volatile Class<?> parameterType;
 
+	/**
+	 * 参数的type
+	 */
 	@Nullable
 	private volatile Type genericParameterType;
 
+	/**
+	 * 参数的注解
+	 */
 	@Nullable
 	private volatile Annotation[] parameterAnnotations;
 
+	/**
+	 * 参数名搜索器.
+	 */
 	@Nullable
 	private volatile ParameterNameDiscoverer parameterNameDiscoverer;
 
+	/**
+	 * 参数名称.
+	 */
 	@Nullable
 	private volatile String parameterName;
 
+	/**
+	 * 嵌套的方法参数对象.
+	 */
 	@Nullable
 	private volatile MethodParameter nestedMethodParameter;
 
@@ -121,7 +159,8 @@ public class MethodParameter {
 	 * @param nestingLevel the nesting level of the target type
 	 * (typically 1; e.g. in case of a List of Lists, 1 would indicate the
 	 * nested List, whereas 2 would indicate the element of the nested List)
-	 *  如果参数列表是一个List<T>,1代表List,2代表T
+	 *
+	 *  nestingLevel 如果参数列表是一个List<T>,1代表List,2代表T
 	 */
 	public MethodParameter(Method method, int parameterIndex, int nestingLevel) {
 		Assert.notNull(method, "Method must not be null");
@@ -256,7 +295,7 @@ public class MethodParameter {
 		}
 		Parameter parameter = this.parameter;
 		if (parameter == null) {
-			parameter = getExecutable().getParameters()[this.parameterIndex];
+			parameter = getExecutable().getParameters()[this.parameterIndex];                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 			this.parameter = parameter;
 		}
 		return parameter;
@@ -305,7 +344,7 @@ public class MethodParameter {
 	 * Return a variant of this {@code MethodParameter} with the type
 	 * for the current level set to the specified value.
 	 * @param typeIndex the new type index
-	 * @since 5.2
+	 * @since 5.2nested
 	 */
 	public MethodParameter withTypeIndex(int typeIndex) {
 		return nested(this.nestingLevel, typeIndex);
@@ -383,12 +422,6 @@ public class MethodParameter {
 	}
 
 	/**
-	 *  List<Map<String,List<Integer>>>
-	 *  typeIndexesPerLevel=(1,0) --> List
-	 *  typeIndexesPerLevel=(2,0) --> Map
-	 *  typeIndexesPerLevel=(3,0) --> String
-	 *  typeIndexesPerLevel=(3,1) --> List
-	 *  typeIndexesPerLevel=(4,0) --> Integer
 	 *
 	 * @param nestingLevel .
 	 * @param typeIndex .
@@ -396,6 +429,7 @@ public class MethodParameter {
 	 */
 	private MethodParameter nested(int nestingLevel, @Nullable Integer typeIndex) {
 		MethodParameter copy = clone();
+		//嵌套深度增加了1
 		copy.nestingLevel = nestingLevel;
 		if (this.typeIndexesPerLevel != null) {
 			copy.typeIndexesPerLevel = new HashMap<>(this.typeIndexesPerLevel);

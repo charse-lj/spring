@@ -60,6 +60,15 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	}
 
 
+	/**
+	 * 是否允许被依赖~~~
+	 * 因为bean定义里默认是true，绝大多数情况下我们不会修改它~~~
+	 * 所以继续执行：checkGenericTypeMatch 看看泛型类型是否能够匹配上
+	 * 若能够匹配上   这个就会被当作候选的Bean了~~~
+	 * @param bdHolder
+	 * @param descriptor
+	 * @return
+	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		if (!super.isAutowireCandidate(bdHolder, descriptor)) {
