@@ -42,6 +42,8 @@ import org.springframework.util.ObjectUtils;
  *
  * @author Juergen Hoeller
  * @since 4.3.4
+ *
+ * ApplicationListener探测器.
  */
 class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, MergedBeanDefinitionPostProcessor {
 
@@ -49,6 +51,7 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 
 	private final transient AbstractApplicationContext applicationContext;
 
+	//ApplicationListener的beanName,是否为单例
 	private final transient Map<String, Boolean> singletonNames = new ConcurrentHashMap<>(256);
 
 
@@ -70,8 +73,9 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 	}
 
 	/**
-	 * 测那些实现了接口ApplicationListener的bean，在它们创建时初始化之后，将它们添加到应用上下文的事件多播器上
+	 * 探测那些实现了接口ApplicationListener的bean，在它们创建时初始化之后，将它们添加到应用上下文的事件多播器上
 	 * 并在这些ApplicationListener bean销毁之前，将它们从应用上下文的事件多播器上移除
+	 * 整个Bean创建过程中最后一个阶段执行，在对象被初始化后执行
 	 * @param bean the new bean instance
 	 * @param beanName the name of the bean
 	 * @return
@@ -80,6 +84,7 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 	public Object postProcessAfterInitialization(Object bean, String beanName) {
 		if (bean instanceof ApplicationListener) {
 			// potentially not detected as a listener by getBeanNamesForType retrieval
+			//从ApplicationListener的容器singletonNames中取值，确认该对象是否为单例
 			Boolean flag = this.singletonNames.get(beanName);
 			if (Boolean.TRUE.equals(flag)) {
 				// singleton bean (top-level or inner): register on the fly
@@ -93,9 +98,11 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 							"because it does not have singleton scope. Only top-level listener beans are allowed " +
 							"to be of non-singleton scope.");
 				}
+				//不为单例会移除
 				this.singletonNames.remove(beanName);
 			}
 		}
+		//交给容器
 		return bean;
 	}
 
@@ -113,6 +120,7 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 		}
 	}
 
+	//是否需要销毁
 	@Override
 	public boolean requiresDestruction(Object bean) {
 		return (bean instanceof ApplicationListener);

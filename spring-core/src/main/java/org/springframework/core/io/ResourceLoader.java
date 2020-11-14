@@ -38,6 +38,10 @@ import org.springframework.util.ResourceUtils;
  * @see org.springframework.core.io.support.ResourcePatternResolver
  * @see org.springframework.context.ApplicationContext
  * @see org.springframework.context.ResourceLoaderAware
+ *
+ * 加载资源文件
+ *
+ * 资源名_语言代码_国/地区代码.properties
  */
 public interface ResourceLoader {
 

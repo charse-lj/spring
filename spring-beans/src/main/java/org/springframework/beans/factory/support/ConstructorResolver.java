@@ -865,15 +865,22 @@ class ConstructorResolver {
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 			Executable executable, Object[] argsToResolve, boolean fallback) {
 
+		//属性转换器
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
+
+		//方法或构造函数的参数类型
 		Class<?>[] paramTypes = executable.getParameterTypes();
 
+		//被解析的参数对象
 		Object[] resolvedArgs = new Object[argsToResolve.length];
+		//遍历
 		for (int argIndex = 0; argIndex < argsToResolve.length; argIndex++) {
+			//遍历中的参数对象
 			Object argValue = argsToResolve[argIndex];
+			//同位置的方法参数类型
 			MethodParameter methodParam = MethodParameter.forExecutable(executable, argIndex);
 			if (argValue == autowiredArgumentMarker) {
 				argValue = resolveAutowiredArgument(methodParam, beanName, null, converter, fallback);

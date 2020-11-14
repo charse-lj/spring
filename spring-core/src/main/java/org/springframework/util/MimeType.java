@@ -59,6 +59,9 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 
 	private static final String PARAM_CHARSET = "charset";
 
+	//TOKEN.word[0]:0000 0011 1111 1111 0110 1100 1111 1010 0000 0000 0000 0000 0000 0000 0000 0000  ->63 ~ 0
+	// index         16   15   14   13   12   11   10   09   08   07   06   05   04   03   02   01
+	//TOKEN.word[1]:0101 0111 1111 1111 1111 1111 1111 1111 1100 0111 1111 1111 1111 1111 1111 1110 ->127 ~ 64
 	private static final BitSet TOKEN;
 
 	static {

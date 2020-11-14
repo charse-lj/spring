@@ -62,7 +62,9 @@ abstract class ParserStrategyUtils {
 		}
 		ClassLoader classLoader = (registry instanceof ConfigurableBeanFactory ?
 				((ConfigurableBeanFactory) registry).getBeanClassLoader() : resourceLoader.getClassLoader());
+		//实例化
 		T instance = (T) createInstance(clazz, environment, resourceLoader, registry, classLoader);
+		//各种aware
 		ParserStrategyUtils.invokeAwareMethods(instance, environment, resourceLoader, registry, classLoader);
 		return instance;
 	}
@@ -71,12 +73,16 @@ abstract class ParserStrategyUtils {
 			ResourceLoader resourceLoader, BeanDefinitionRegistry registry,
 			@Nullable ClassLoader classLoader) {
 
+		//获取Class对象的构造方法
 		Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+		//构造帆帆只有一个,且需要方法参数
 		if (constructors.length == 1 && constructors[0].getParameterCount() > 0) {
 			try {
 				Constructor<?> constructor = constructors[0];
+				//从中匹配
 				Object[] args = resolveArgs(constructor.getParameterTypes(),
 						environment, resourceLoader, registry, classLoader);
+				//构造
 				return BeanUtils.instantiateClass(constructor, args);
 			}
 			catch (Exception ex) {

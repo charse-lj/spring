@@ -60,7 +60,7 @@ public final class GenericTypeResolver {
 	 * @deprecated since 5.2 in favor of {@code methodParameter.withContainingClass(implementationClass).getParameterType()}
 	 */
 	@Deprecated
-	public static Class<?> resolveParameterType(MethodParameter methodParameter, Class<?> implementationClass) {
+	public static Class<?>  resolveParameterType(MethodParameter methodParameter, Class<?> implementationClass) {
 		Assert.notNull(methodParameter, "MethodParameter must not be null");
 		Assert.notNull(implementationClass, "Class must not be null");
 		methodParameter.setContainingClass(implementationClass);

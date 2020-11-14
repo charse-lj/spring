@@ -79,7 +79,7 @@ import org.springframework.util.ClassUtils;
  * {@link BeanFactoryPostProcessor} executes.
  *
  * @author Chris Beams
- * @author Juergen Hoeller
+ * @author Juergen Hoellero-iuetdswaqCN FD	Q`Z
  * @author Phillip Webb
  * @since 3.0
  *
@@ -260,7 +260,9 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 */
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+		//根据beanFactory生成id
 		int factoryId = System.identityHashCode(beanFactory);
+		//beanFactory的factoriesPostProcessed 包含了该id，直接报错
 		if (this.factoriesPostProcessed.contains(factoryId)) {
 			throw new IllegalStateException(
 					"postProcessBeanFactory already called on this post-processor against " + beanFactory);
@@ -268,6 +270,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		// 这一步的意思是：如果processConfigBeanDefinitions没被执行过（不支持hook的时候不会执行）
 		// 这里会补充去执行processConfigBeanDefinitions这个方法
 		this.factoriesPostProcessed.add(factoryId);
+		//beanFactory的registriesPostProcessed 不包含该id
 		if (!this.registriesPostProcessed.contains(factoryId)) {
 			// BeanDefinitionRegistryPostProcessor hook apparently not supported...
 			// Simply call processConfigurationClasses lazily at this point then.
@@ -295,7 +298,9 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		// 获取已经注册的bean名称
 		String[] candidateNames = registry.getBeanDefinitionNames();
 
+		//遍历
 		for (String beanName : candidateNames) {
+			//获取beanName对应的BeanDefinition
 			BeanDefinition beanDef = registry.getBeanDefinition(beanName);
 			// 这个判断很有意思~~~ 如果你的beanDef现在就已经确定了是full或者lite，说明你肯定已经被解析过了，，所以再来的话输出个debug即可（其实我觉得输出warn也行~~~）
 			if (beanDef.getAttribute(ConfigurationClassUtils.CONFIGURATION_CLASS_ATTRIBUTE) != null) {
@@ -303,10 +308,12 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
 				}
 			}
-			// 检查是否是@Configuration的Class,如果是就标记下属性：full 或者lite。beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL)
+			// 检查是否是@Configuration的Class,如果是就标记下属性：full 或者lite。
+			// beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL)
 			// 加入到configCandidates里保存配置文件类的定义
 			// 显然此处，仅仅只有rootConfig一个类符合条件
 			else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
+				//beanDef和beanName构建成BeanDefinitionHolder,存起来,供后续解析
 				configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
 			}
 		}
@@ -354,6 +361,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				this.metadataReaderFactory, this.problemReporter, this.environment,
 				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
 
+		//copy 待解析的BeanDefinitionHolder
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
 		// 装载已经处理过的配置类，最大长度为：configCandidates.size()
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
@@ -364,6 +372,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			parser.validate();
 			// 此处就拿出了我们已经处理好的所有配置类们（该配置文件下的所有组件们~~~~）
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
+			//去除掉做为源的class对应的ConfigurationClass
 			configClasses.removeAll(alreadyParsed);
 
 			// Read the model and create bean definitions based on its content
@@ -377,7 +386,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			// 这个方法是非常重要的，因为它决定了向容器注册Bean定义信息的顺序问题~~~
 			this.reader.loadBeanDefinitions(configClasses);
 			alreadyParsed.addAll(configClasses);
-
+			//清空候选容器
 			candidates.clear();
 			// 如果registry中注册的bean的数量 大于 之前获得的数量,则意味着在解析过程中又新加入了很多,那么就需要对其进行解继续析
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
@@ -426,7 +435,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * @see ConfigurationClassEnhancer
 	 *
 	 * Spring为何要用cglib增强配置文件@Configuration呢？
-	 * 只有full模式的才会去增强，然后增强带来的好处是：Spring可以更好的管理Bean的依赖关系了。比如@Bean之间方法之间的调用，我们发现，其实是去Spring容器里去找Bean了，而并不是再生成了一个实例。（它的缺点是使用了代理，带来的性能影响完全可以忽略）
+	 * 只有full模式的才会去增强，然后增强带来的好处是：Spring可以更好的管理Bean的依赖关系了。
+	 * 比如@Bean之间方法之间的调用，我们发现，其实是去Spring容器里去找Bean了，而并不是再生成了一个实例。（它的缺点是使用了代理，带来的性能影响完全可以忽略）
 	 * Liter模式是不会采用代理的，因此它的Bean依赖关系程序员自己去把控吧。建议：不要使用Lite模式，会带来不少莫名其妙的坑
 	 */
 	public void enhanceConfigurationClasses(ConfigurableListableBeanFactory beanFactory) {

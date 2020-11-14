@@ -202,6 +202,7 @@ public class AnnotationDrivenEventListenerTests {
 
 	@Test
 	public void arrayReply() {
+		//事件传播,对于监听事件的返回值再次传播
 		load(TestEventListener.class, ReplyEventListener.class);
 		AnotherTestEvent event = new AnotherTestEvent(this, new String[]{"first", "second"});
 		ReplyEventListener replyEventListener = this.context.getBean(ReplyEventListener.class);

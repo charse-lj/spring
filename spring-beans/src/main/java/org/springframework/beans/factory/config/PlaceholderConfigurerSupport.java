@@ -85,17 +85,19 @@ import org.springframework.util.StringValueResolver;
  * @since 3.1
  * @see PropertyPlaceholderConfigurer
  * @see org.springframework.context.support.PropertySourcesPlaceholderConfigurer
+ *
+ * 负责对占位符进行解析
  */
 public abstract class PlaceholderConfigurerSupport extends PropertyResourceConfigurer
 		implements BeanNameAware, BeanFactoryAware {
 
-	/** Default placeholder prefix: {@value}. */
+	/** Default placeholder prefix: {@value}. 默认解析的前缀*/
 	public static final String DEFAULT_PLACEHOLDER_PREFIX = "${";
 
-	/** Default placeholder suffix: {@value}. */
+	/** Default placeholder suffix: {@value}. 默认解析的后缀*/
 	public static final String DEFAULT_PLACEHOLDER_SUFFIX = "}";
 
-	/** Default value separator: {@value}. */
+	/** Default value separator: {@value}. 属性名称跟属性值的分隔符*/
 	public static final String DEFAULT_VALUE_SEPARATOR = ":";
 
 

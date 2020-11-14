@@ -16,24 +16,15 @@
 
 package org.springframework.core.annotation;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.springframework.core.annotation.AnnotationTypeMapping.MirrorSets.MirrorSet;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Provides mapping information for a single annotation (or meta-annotation) in
@@ -41,58 +32,110 @@ import org.springframework.util.StringUtils;
  *
  * @author Phillip Webb
  * @author Sam Brannen
- * @since 5.2
  * @see AnnotationTypeMappings
+ * @since 5.2
  */
 final class AnnotationTypeMapping {
 
 	private static final MirrorSet[] EMPTY_MIRROR_SETS = new MirrorSet[0];
 
 
+	/**
+	 * this的parent
+	 */
 	@Nullable
 	private final AnnotationTypeMapping source;
 
+	/**
+	 * this的root
+	 */
 	private final AnnotationTypeMapping root;
 
+	/**
+	 * 距离root的深度,root为0
+	 */
 	private final int distance;
 
+	/**
+	 * this所属注解对象类型
+	 */
 	private final Class<? extends Annotation> annotationType;
 
+	/**
+	 * 遍历到this的注解路径，所有的注解对象类型
+	 */
 	private final List<Class<? extends Annotation>> metaTypes;
 
+	/**
+	 * 该注解类型实例
+	 */
 	@Nullable
 	private final Annotation annotation;
 
+	/**
+	 * 注解属性方法列表
+	 */
 	private final AttributeMethods attributes;
 
+	/**
+	 *MirrorSet集合
+	 *本注解里声明的属性，最终为同一个属性的别名的属性集合,为一个MirrorSet
+	 */
 	private final MirrorSets mirrorSets;
 
+	/**
+	 * this中每个属性在root中对应的同名的属性方法的索引
+	 */
 	private final int[] aliasMappings;
 
+	/**
+	 * 方便访问属性 的映射消息，如果在root中有别名，则优先获取
+	 */
 	private final int[] conventionMappings;
 
+	/**
+	 * 与annotationValueSource是相匹配的，定义每个属性最终从哪个注解的哪个属性获取值
+	 */
 	private final int[] annotationValueMappings;
 
 	private final AnnotationTypeMapping[] annotationValueSource;
 
+	/**
+	 * @interface A{
+	 *     @aliasFor(value="mz",annotation=B.class)
+	 *     String name();
+	 * }
+	 *
+	 * @interface B{
+	 *     String mz();
+	 * }
+	 *
+	 * aliasedBy --> B.mz()::[A.name()]
+	 */
 	private final Map<Method, List<Method>> aliasedBy;
 
 	private final boolean synthesizable;
 
+	/**
+	 * 该注解属性方法+声明的属性方法的别名集合
+	 */
 	private final Set<Method> claimedAliases = new HashSet<>();
 
 
 	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source,
-			Class<? extends Annotation> annotationType, @Nullable Annotation annotation) {
+						  Class<? extends Annotation> annotationType, @Nullable Annotation annotation) {
 
 		this.source = source;
 		this.root = (source != null ? source.getRoot() : this);
 		this.distance = (source == null ? 0 : source.getDistance() + 1);
+		//注解类
 		this.annotationType = annotationType;
+		//注解的元注解
 		this.metaTypes = merge(
 				source != null ? source.getMetaTypes() : null,
 				annotationType);
 		this.annotation = annotation;
+		//注解属性方法
 		this.attributes = AttributeMethods.forAnnotationType(annotationType);
 		this.mirrorSets = new MirrorSets();
 		this.aliasMappings = filledIntArray(this.attributes.size());
@@ -117,12 +160,19 @@ final class AnnotationTypeMapping {
 		return Collections.unmodifiableList(merged);
 	}
 
+	/**
+	 * 返回每个属性方法的所有别名（本注解声明的属性方法）.
+	 * @return .
+	 */
 	private Map<Method, List<Method>> resolveAliasedForTargets() {
 		Map<Method, List<Method>> aliasedBy = new HashMap<>();
+		//遍历注解属性方法
 		for (int i = 0; i < this.attributes.size(); i++) {
 			Method attribute = this.attributes.get(i);
+			//注解属性方法上的@AliasFor注解对象
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null) {
+				//获取被@aliasFor标注的注解方法-> @aliasFor(value="xx",annotation=B.class)->在B注解中寻找xx()注解属性方法
 				Method target = resolveAliasTarget(attribute, aliasFor);
 				aliasedBy.computeIfAbsent(target, key -> new ArrayList<>()).add(attribute);
 			}
@@ -134,11 +184,20 @@ final class AnnotationTypeMapping {
 		return resolveAliasTarget(attribute, aliasFor, true);
 	}
 
+	/**
+	 * @param attribute      .
+	 * @param aliasFor       .
+	 * @param checkAliasPair .
+	 * @return
+	 * 获取对应注解的注解属性方法
+	 * @AliasFor(value="test",annotation="A.class") ->找到注解A中的属性test
+	 */
 	private Method resolveAliasTarget(Method attribute, AliasFor aliasFor, boolean checkAliasPair) {
+		//@AliasFor注解中，包含value和attribute,其上又被@AliasFor修饰,互为别名,在使用时,只能存在其一.
 		if (StringUtils.hasText(aliasFor.value()) && StringUtils.hasText(aliasFor.attribute())) {
 			throw new AnnotationConfigurationException(String.format(
 					"In @AliasFor declared on %s, attribute 'attribute' and its alias 'value' " +
-					"are present with values of '%s' and '%s', but only one is permitted.",
+							"are present with values of '%s' and '%s', but only one is permitted.",
 					AttributeMethods.describe(attribute), aliasFor.attribute(),
 					aliasFor.value()));
 		}
@@ -168,7 +227,7 @@ final class AnnotationTypeMapping {
 		if (target.equals(attribute)) {
 			throw new AnnotationConfigurationException(String.format(
 					"@AliasFor declaration on %s points to itself. " +
-					"Specify 'annotation' to point to a same-named attribute on a meta-annotation.",
+							"Specify 'annotation' to point to a same-named attribute on a meta-annotation.",
 					AttributeMethods.describe(attribute)));
 		}
 		if (!isCompatibleReturnType(attribute.getReturnType(), target.getReturnType())) {
@@ -200,18 +259,29 @@ final class AnnotationTypeMapping {
 		return (attributeType == targetType || attributeType == targetType.getComponentType());
 	}
 
+	/**
+	 * 处理别名，生成MirrorSets
+	 * 对该注解中的每个注解方法处理别名.
+	 */
 	private void processAliases() {
 		List<Method> aliases = new ArrayList<>();
 		for (int i = 0; i < this.attributes.size(); i++) {
 			aliases.clear();
+			//该注解的注解属性方法
 			aliases.add(this.attributes.get(i));
+			//收集注解属性别名
 			collectAliases(aliases);
 			if (aliases.size() > 1) {
+				//>1表示该注解属性方法代表的属性有注解属性别名.
 				processAliases(i, aliases);
 			}
 		}
 	}
 
+	/**
+	 * 递归向上处理
+	 * @param aliases
+	 */
 	private void collectAliases(List<Method> aliases) {
 		AnnotationTypeMapping mapping = this;
 		while (mapping != null) {
@@ -226,23 +296,36 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * 对每个属性方法，处理它的别名
+	 * @param attributeIndex .
+	 * @param aliases this.attributes[attributeIndex]()+该属性方法的所有层级的别名属性方法,地位等同.
+	 */
 	private void processAliases(int attributeIndex, List<Method> aliases) {
+		//获取root声明的第一个别名属性的index。-1表示root不存dd在此属性方法的别名
+		//如果>-1,表示root中索引位置的属性是该aliases的别名，地位等同
 		int rootAttributeIndex = getFirstRootAttributeIndex(aliases);
 		AnnotationTypeMapping mapping = this;
 		while (mapping != null) {
+			//在root中有别名，并且此mapping不是root
 			if (rootAttributeIndex != -1 && mapping != this.root) {
 				for (int i = 0; i < mapping.attributes.size(); i++) {
+					//如果别名中有mapping中属性方法，则对应的属性index值为root的属性的index。
 					if (aliases.contains(mapping.attributes.get(i))) {
 						mapping.aliasMappings[i] = rootAttributeIndex;
 					}
 				}
 			}
+			//更新mapping的mirrorSets
 			mapping.mirrorSets.updateFrom(aliases);
+			//mapping声明的属性方法的别名集合。
 			mapping.claimedAliases.addAll(aliases);
 			if (mapping.annotation != null) {
+				//返回本mapping每个属性最终取值的属性方法的序号 数组。
 				int[] resolvedMirrors = mapping.mirrorSets.resolve(null,
 						mapping.annotation, ReflectionUtils::invokeMethod);
 				for (int i = 0; i < mapping.attributes.size(); i++) {
+					//本属性方法是别名，则设置注解值的最终来源（mapping和属性序号）
 					if (aliases.contains(mapping.attributes.get(i))) {
 						this.annotationValueMappings[attributeIndex] = resolvedMirrors[i];
 						this.annotationValueSource[attributeIndex] = mapping;
@@ -253,9 +336,14 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * @param aliases 原注解属性方法+所有别名注解属性方法
+	 * @return
+	 */
 	private int getFirstRootAttributeIndex(Collection<Method> aliases) {
 		AttributeMethods rootAttributes = this.root.getAttributes();
 		for (int i = 0; i < rootAttributes.size(); i++) {
+			//aliases中包含根注解属性方法的索引
 			if (aliases.contains(rootAttributes.get(i))) {
 				return i;
 			}
@@ -263,20 +351,27 @@ final class AnnotationTypeMapping {
 		return -1;
 	}
 
+	/**
+	 *生成从root访问属性的方便属性方法信息
+	 */
 	private void addConventionMappings() {
 		if (this.distance == 0) {
 			return;
 		}
 		AttributeMethods rootAttributes = this.root.getAttributes();
+		//此时，元素值全为-1
 		int[] mappings = this.conventionMappings;
 		for (int i = 0; i < mappings.length; i++) {
 			String name = this.attributes.get(i).getName();
 			MirrorSet mirrors = getMirrorSets().getAssigned(i);
+			//root中是否存在同名的属性
 			int mapped = rootAttributes.indexOf(name);
+			//root中存在同名的属性，并且属性名不为value
 			if (!MergedAnnotation.VALUE.equals(name) && mapped != -1) {
 				mappings[i] = mapped;
 				if (mirrors != null) {
 					for (int j = 0; j < mirrors.size(); j++) {
+						//同一属性的所有别名，设置成一样的root 属性index
 						mappings[mirrors.getAttributeIndex(j)] = mapped;
 					}
 				}
@@ -284,11 +379,15 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * 更新各级AnnotationTypeMapping的annotationValueMappings和annotationValueSource.
+	 */
 	private void addConventionAnnotationValues() {
 		for (int i = 0; i < this.attributes.size(); i++) {
 			Method attribute = this.attributes.get(i);
 			boolean isValueAttribute = MergedAnnotation.VALUE.equals(attribute.getName());
 			AnnotationTypeMapping mapping = this;
+			//在向root端（mapping.distance 比自己下的）遍历
 			while (mapping != null && mapping.distance > 0) {
 				int mapped = mapping.getAttributes().indexOf(attribute.getName());
 				if (mapped != -1 && isBetterConventionAnnotationValue(i, isValueAttribute, mapping)) {
@@ -300,9 +399,17 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * 是更好的注解值获取属性方法（Value属性优先，distance较小的优先）.
+	 * @param index
+	 * @param isValueAttribute
+	 * @param mapping
+	 * @return
+	 */
 	private boolean isBetterConventionAnnotationValue(int index, boolean isValueAttribute,
-			AnnotationTypeMapping mapping) {
+													  AnnotationTypeMapping mapping) {
 
+		//原来没有获取值的属性方法。
 		if (this.annotationValueMappings[index] == -1) {
 			return true;
 		}
@@ -397,6 +504,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the root mapping.
+	 *
 	 * @return the root mapping
 	 */
 	AnnotationTypeMapping getRoot() {
@@ -405,6 +513,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the source of the mapping or {@code null}.
+	 *
 	 * @return the source of the mapping
 	 */
 	@Nullable
@@ -414,6 +523,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the distance of this mapping.
+	 *
 	 * @return the distance of the mapping
 	 */
 	int getDistance() {
@@ -422,6 +532,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the type of the mapped annotation.
+	 *
 	 * @return the annotation type
 	 */
 	Class<? extends Annotation> getAnnotationType() {
@@ -435,6 +546,7 @@ final class AnnotationTypeMapping {
 	/**
 	 * Get the source annotation for this mapping. This will be the
 	 * meta-annotation, or {@code null} if this is the root mapping.
+	 *
 	 * @return the source annotation of the mapping
 	 */
 	@Nullable
@@ -444,6 +556,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the annotation attributes for the mapping annotation type.
+	 *
 	 * @return the attribute methods
 	 */
 	AttributeMethods getAttributes() {
@@ -455,6 +568,7 @@ final class AnnotationTypeMapping {
 	 * there is no mapping. The resulting value is the index of the attribute on
 	 * the root annotation that can be invoked in order to obtain the actual
 	 * value.
+	 *
 	 * @param attributeIndex the attribute index of the source attribute
 	 * @return the mapped attribute index or {@code -1}
 	 */
@@ -467,6 +581,7 @@ final class AnnotationTypeMapping {
 	 * if there is no mapping. The resulting value is the index of the attribute
 	 * on the root annotation that can be invoked in order to obtain the actual
 	 * value.
+	 *
 	 * @param attributeIndex the attribute index of the source attribute
 	 * @return the mapped attribute index or {@code -1}
 	 */
@@ -480,10 +595,11 @@ final class AnnotationTypeMapping {
 	 * <p>The resulting value is obtained from the closest meta-annotation,
 	 * taking into consideration both convention and alias based mapping rules.
 	 * For root mappings, this method will always return {@code null}.
-	 * @param attributeIndex the attribute index of the source attribute
+	 *
+	 * @param attributeIndex      the attribute index of the source attribute
 	 * @param metaAnnotationsOnly if only meta annotations should be considered.
-	 * If this parameter is {@code false} then aliases within the annotation will
-	 * also be considered.
+	 *                            If this parameter is {@code false} then aliases within the annotation will
+	 *                            also be considered.
 	 * @return the mapped annotation value, or {@code null}
 	 */
 	@Nullable
@@ -502,10 +618,11 @@ final class AnnotationTypeMapping {
 	/**
 	 * Determine if the specified value is equivalent to the default value of the
 	 * attribute at the given index.
+	 *
 	 * @param attributeIndex the attribute index of the source attribute
-	 * @param value the value to check
+	 * @param value          the value to check
 	 * @param valueExtractor the value extractor used to extract values from any
-	 * nested annotations
+	 *                       nested annotations
 	 * @return {@code true} if the value is equivalent to the default value
 	 */
 	boolean isEquivalentToDefaultValue(int attributeIndex, Object value, ValueExtractor valueExtractor) {
@@ -516,6 +633,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the mirror sets for this type mapping.
+	 *
 	 * @return the attribute mirror sets
 	 */
 	MirrorSets getMirrorSets() {
@@ -526,6 +644,7 @@ final class AnnotationTypeMapping {
 	 * Determine if the mapped annotation is <em>synthesizable</em>.
 	 * <p>Consult the documentation for {@link MergedAnnotation#synthesize()}
 	 * for an explanation of what is considered synthesizable.
+	 *
 	 * @return {@code true} if the mapped annotation is synthesizable
 	 * @since 5.2.6
 	 */
@@ -541,13 +660,13 @@ final class AnnotationTypeMapping {
 	}
 
 	private static boolean isEquivalentToDefaultValue(Method attribute, Object value,
-			ValueExtractor valueExtractor) {
+													  ValueExtractor valueExtractor) {
 
 		return areEquivalent(attribute.getDefaultValue(), value, valueExtractor);
 	}
 
 	private static boolean areEquivalent(@Nullable Object value, @Nullable Object extractedValue,
-			ValueExtractor valueExtractor) {
+										 ValueExtractor valueExtractor) {
 
 		if (ObjectUtils.nullSafeEquals(value, extractedValue)) {
 			return true;
@@ -581,7 +700,7 @@ final class AnnotationTypeMapping {
 	}
 
 	private static boolean areEquivalent(Annotation annotation, @Nullable Object extractedValue,
-			ValueExtractor valueExtractor) {
+										 ValueExtractor valueExtractor) {
 
 		AttributeMethods attributes = AttributeMethods.forAnnotationType(annotation.annotationType());
 		for (int i = 0; i < attributes.size(); i++) {
@@ -590,8 +709,7 @@ final class AnnotationTypeMapping {
 			Object value2;
 			if (extractedValue instanceof TypeMappedAnnotation) {
 				value2 = ((TypeMappedAnnotation<?>) extractedValue).getValue(attribute.getName()).orElse(null);
-			}
-			else {
+			} else {
 				value2 = valueExtractor.extract(attribute, extractedValue);
 			}
 			if (!areEquivalent(value1, value2, valueExtractor)) {
@@ -621,6 +739,7 @@ final class AnnotationTypeMapping {
 			MirrorSet mirrorSet = null;
 			int size = 0;
 			int last = -1;
+			//mapping注解属性方法中,
 			for (int i = 0; i < attributes.size(); i++) {
 				Method attribute = attributes.get(i);
 				if (aliases.contains(attribute)) {
@@ -710,7 +829,7 @@ final class AnnotationTypeMapping {
 						String on = (source != null) ? " declared on " + source : "";
 						throw new AnnotationConfigurationException(String.format(
 								"Different @AliasFor mirror values for annotation [%s]%s; attribute '%s' " +
-								"and its alias '%s' are declared with values of [%s] and [%s].",
+										"and its alias '%s' are declared with values of [%s] and [%s].",
 								getAnnotationType().getName(), on,
 								attributes.get(result).getName(),
 								attribute.getName(),

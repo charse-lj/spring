@@ -93,6 +93,14 @@ import org.springframework.lang.Nullable;
  * PriorityOrdered > Ordered > 无实现接口的 > 内部Bean后处理器（实现了MergedBeanDefinitionPostProcessor接口的是内部Bean PostProcessor，将在最后且无序注册）
  *
  * 接口中两个方法不能返回null，如果返回null那么在后续初始化方法将报空指针异常或者通过getBean()方法获取不到bena实例对象 ，因为后置处理器从Spring IoC容器中取出bean实例对象没有再次放回IoC容器中
+ *
+ * 方法的执行在属性注入完成后
+ *
+ * BeanPostProcessor，主要用于干预Bean的创建过程
+ * BeanFactroyPostProcessor，主要用于针对容器中的BeanDefinition
+ * FactoryBean，主要用于将一个对象直接放入到Spring容器中，同时可以封装复杂的对象的创建逻辑
+ *
+ *
  */
 public interface BeanPostProcessor {
 

@@ -423,7 +423,7 @@ import org.springframework.stereotype.Component;
  * @Configuration
  * public class AppConfig {
  *
- *        @Bean
+ *    @Bean
  *    public Foo foo() {
  * 		return new Foo(bar()); // 这里调用的bar()方法
  *    }

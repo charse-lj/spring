@@ -39,27 +39,30 @@ import org.springframework.util.Assert;
  *
  * @author Juergen Hoeller
  * @author Chris Beams
- * @since 2.5
  * @see #getMetadata()
  * @see #getBeanClassName()
  * @see org.springframework.core.type.classreading.MetadataReaderFactory
  * @see AnnotatedGenericBeanDefinition
- *
+ * @since 2.5
+ * <p>
  * ScannedGenericBeanDefinition:存储@Component、@Service、@Controller等注解注释的类
+ * 通过注解扫描的类，如@Service,@Component等方式配置的Bean都是ScannedGenericBeanDefinition
  */
 @SuppressWarnings("serial")
 public class ScannedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
 
-	/**用来存储扫描进来的Bean的一些注解信息*/
+	/**
+	 * 用来存储扫描进来的Bean的一些注解信息
+	 */
 	private final AnnotationMetadata metadata;
 
 
 	/**
 	 * Create a new ScannedGenericBeanDefinition for the class that the
 	 * given MetadataReader describes.
-	 * @param metadataReader the MetadataReader for the scanned target class
 	 *
-	 * 必须传入MetadataReader
+	 * @param metadataReader the MetadataReader for the scanned target class.
+	 *                       必须传入MetadataReader
 	 */
 	public ScannedGenericBeanDefinition(MetadataReader metadataReader) {
 		Assert.notNull(metadataReader, "MetadataReader must not be null");

@@ -62,10 +62,14 @@ final class ConfigurationClass {
 	 */
 	private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
 
-	private final Map<String, Class<? extends BeanDefinitionReader>> importedResources =
-			new LinkedHashMap<>();
 	/**
 	 * 用Map保存着@ImportResource 导入进来的资源们~
+	 */
+	private final Map<String, Class<? extends BeanDefinitionReader>> importedResources =
+			new LinkedHashMap<>();
+
+	/**
+	 * 用Map保存着部分@Import 导入进来的资源们~
 	 */
 	private final Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> importBeanDefinitionRegistrars =
 			new LinkedHashMap<>();

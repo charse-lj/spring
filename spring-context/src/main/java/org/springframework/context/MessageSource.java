@@ -36,6 +36,8 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @see org.springframework.context.support.ResourceBundleMessageSource
  * @see org.springframework.context.support.ReloadableResourceBundleMessageSource
+ *
+ * 主要用于国际化
  */
 public interface MessageSource {
 
@@ -53,6 +55,10 @@ public interface MessageSource {
 	 * the default message passed as a parameter (which may be {@code null})
 	 * @see #getMessage(MessageSourceResolvable, Locale)
 	 * @see java.text.MessageFormat
+	 *
+	 * code表示国际化资源中的属性名；args用于传递格式化串占位符所用的运行期参数；
+	 * 当在资源找不到对应属性名时，返回defaultMessage参数所指定的默认信息；
+	 * locale表示本地化对象；
 	 */
 	@Nullable
 	String getMessage(String code, @Nullable Object[] args, @Nullable String defaultMessage, Locale locale);
@@ -90,6 +96,8 @@ public interface MessageSource {
 	 * @see MessageSourceResolvable#getArguments()
 	 * @see MessageSourceResolvable#getDefaultMessage()
 	 * @see java.text.MessageFormat
+	 *
+	 * 将属性名、参数数组以及默认信息封装起来，它的功能和第一个接口方法相同。
 	 */
 	String getMessage(MessageSourceResolvable resolvable, Locale locale) throws NoSuchMessageException;
 

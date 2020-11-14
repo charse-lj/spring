@@ -95,17 +95,25 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	 */
 	@Nullable
 	protected String determineBeanNameFromAnnotation(AnnotatedBeanDefinition annotatedDef) {
+		//获取Class相关信息AnnotationMetadata
 		AnnotationMetadata amd = annotatedDef.getMetadata();
+		//获取注解类名称
 		Set<String> types = amd.getAnnotationTypes();
 		String beanName = null;
+		//遍历注解类名称
 		for (String type : types) {
+			//从类上获取当前注解名相关的属性信息
 			AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(amd, type);
 			if (attributes != null) {
+
 				Set<String> metaTypes = this.metaAnnotationTypesCache.computeIfAbsent(type, key -> {
+					//注解的元注解名
 					Set<String> result = amd.getMetaAnnotationTypes(key);
 					return (result.isEmpty() ? Collections.emptySet() : result);
 				});
+				//满足筛选条件.
 				if (isStereotypeWithNameValue(type, metaTypes, attributes)) {
+					//获取值
 					Object value = attributes.get("value");
 					if (value instanceof String) {
 						String strVal = (String) value;
@@ -164,6 +172,7 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	 * @return the default bean name (never {@code null})
 	 */
 	protected String buildDefaultBeanName(BeanDefinition definition) {
+		//获取beanClass
 		String beanClassName = definition.getBeanClassName();
 		Assert.state(beanClassName != null, "No bean class name set");
 		String shortClassName = ClassUtils.getShortName(beanClassName);

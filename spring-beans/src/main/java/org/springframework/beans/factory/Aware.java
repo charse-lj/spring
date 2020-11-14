@@ -31,6 +31,10 @@ package org.springframework.beans.factory;
  * @author Chris Beams
  * @author Juergen Hoeller
  * @since 3.1
+ *
+ * 所有的Aware接口都是为了能让我们拿到容器中相关的资源，比如BeanNameAware,可以让我们拿到Bean的名称，ApplicationContextAware 可以让我们拿到整个容器。
+ * 但是使用Aware接口也会相应的带来一些弊病，当我们去实现这些接口时，意味着我们的应用程序跟Spring容器发生了强耦合，违背了IOC的原则。
+ * 所以一般情况下，并不推荐采用这种方式
  */
 public interface Aware {
 

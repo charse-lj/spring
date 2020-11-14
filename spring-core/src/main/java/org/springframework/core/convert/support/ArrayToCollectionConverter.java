@@ -67,18 +67,26 @@ final class ArrayToCollectionConverter implements ConditionalGenericConverter {
 			return null;
 		}
 
+		//native方法获取数组长度.
 		int length = Array.getLength(source);
+		//获取目标容器中元素类型的TypeDescriptor
 		TypeDescriptor elementDesc = targetType.getElementTypeDescriptor();
+		//创建目标容器
 		Collection<Object> target = CollectionFactory.createCollection(targetType.getType(),
 				(elementDesc != null ? elementDesc.getType() : null), length);
 
+
+		//TODO 可以合并?
+		//目标容器元素的TypeDescriptor为null=>遍历源容器
 		if (elementDesc == null) {
 			for (int i = 0; i < length; i++) {
+				//native方法获取数组指定index上的元素.
 				Object sourceElement = Array.get(source, i);
 				target.add(sourceElement);
 			}
 		}
 		else {
+			//目标容器元素的TypeDescriptor为null=>遍历源容器
 			for (int i = 0; i < length; i++) {
 				Object sourceElement = Array.get(source, i);
 				Object targetElement = this.conversionService.convert(sourceElement,

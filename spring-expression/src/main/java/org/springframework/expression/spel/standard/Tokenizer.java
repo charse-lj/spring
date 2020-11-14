@@ -566,6 +566,11 @@ class Tokenizer {
 		return (FLAGS[ch] & IS_DIGIT) != 0;
 	}
 
+	/**
+	 * 是否是字母
+	 * @param ch
+	 * @return
+	 */
 	private boolean isAlphabetic(char ch) {
 		if (ch > 255) {
 			return false;

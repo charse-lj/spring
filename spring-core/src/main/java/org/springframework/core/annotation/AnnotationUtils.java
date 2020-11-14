@@ -184,6 +184,8 @@ public abstract class AnnotationUtils {
 	 * @param annotationType the annotation type to look for, both locally and as a meta-annotation
 	 * @return the first matching annotation, or {@code null} if not found
 	 * @since 4.0
+	 *
+	 * 该方法不递归,递归使用find*()
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
@@ -217,7 +219,9 @@ public abstract class AnnotationUtils {
 	@Nullable
 	public static <A extends Annotation> A getAnnotation(AnnotatedElement annotatedElement, Class<A> annotationType) {
 		// Shortcut: directly present on the element, with no merging needed?
+		//注解是元注解：Java元注解+Spring元注解
 		if (AnnotationFilter.PLAIN.matches(annotationType) ||
+				//被注解元素annotatedElement类型以java.开头或者是Order.class
 				AnnotationsScanner.hasPlainJavaAnnotationsOnly(annotatedElement)) {
 			return annotatedElement.getAnnotation(annotationType);
 		}

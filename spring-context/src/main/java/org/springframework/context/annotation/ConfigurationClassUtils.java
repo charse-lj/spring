@@ -83,22 +83,28 @@ abstract class ConfigurationClassUtils {
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
 	 * 
-	 * 判断Bean定义信息，是否是配置类，至于Bean定义里这个属性啥时候放进去的，请参考
+	 * 判断Bean定义信息，是否是配置类
+	 * 此处最多会往检查的BeanDefinition对象的Map<String, Object> attributes中添加两个属性
+	 * configurationClass --> full/lite
+	 * order --> 配置的值
+	 *
 	 */
 	public static boolean checkConfigurationClassCandidate(
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
 
+		//类的全限定名
 		String className = beanDef.getBeanClassName();
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;
 		}
 
 		AnnotationMetadata metadata;
-		if (beanDef instanceof AnnotatedBeanDefinition &&
+		if (beanDef instanceof AnnotatedBeanDefinition && //
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}
+		//beanDef 是AbstractBeanDefinition 子类,beanDef 有beanClass
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
@@ -109,10 +115,12 @@ abstract class ConfigurationClassUtils {
 					EventListenerFactory.class.isAssignableFrom(beanClass)) {
 				return false;
 			}
+			//metadata --> StandardAnnotationMetadata
 			metadata = AnnotationMetadata.introspect(beanClass);
 		}
 		else {
 			try {
+				//asm读取类信息
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
 				metadata = metadataReader.getAnnotationMetadata();
 			}
@@ -124,6 +132,7 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 		}
+		//metadata 肯定有值
 
 		//如果类上有@Configuration注解,並且@Configuration中的proxyBeanMethods为true,说明是一个完全（Full）的配置类
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());

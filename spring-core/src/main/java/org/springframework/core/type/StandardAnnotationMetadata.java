@@ -147,13 +147,18 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	public Set<MethodMetadata> getAnnotatedMethods(String annotationName) {
 		Set<MethodMetadata> annotatedMethods = null;
 		if (AnnotationUtils.isCandidateClass(getIntrospectedClass(), annotationName)) {
+			//筛选
 			try {
+				//获取类中所有方法
 				Method[] methods = ReflectionUtils.getDeclaredMethods(getIntrospectedClass());
+				//遍历
 				for (Method method : methods) {
+					//筛选
 					if (isAnnotatedMethod(method, annotationName)) {
 						if (annotatedMethods == null) {
 							annotatedMethods = new LinkedHashSet<>(4);
 						}
+						//构建StandardMethodMetadata(包含method,方法上所有注解属性),放入容器返回
 						annotatedMethods.add(new StandardMethodMetadata(method, this.nestedAnnotationsAsMap));
 					}
 				}

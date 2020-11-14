@@ -266,7 +266,7 @@ class GenericConversionServiceTests {
 	@Test
 	void interfaceToString() {
 		conversionService.addConverter(new MyBaseInterfaceToStringConverter());
-		conversionService.addConverter(new ObjectToStringConverter());
+//		conversionService.addConverter(new ObjectToStringConverter());
 		Object converted = conversionService.convert(new MyInterfaceImplementer(), String.class);
 		assertThat(converted).isEqualTo("RESULT");
 	}
@@ -423,8 +423,8 @@ class GenericConversionServiceTests {
 
 	@Test
 	void conditionalConverter() {
-		MyConditionalConverter converter = new MyConditionalConverter();
 		conversionService.addConverter(new ColorConverter());
+		MyConditionalConverter converter = new MyConditionalConverter();
 		conversionService.addConverter(converter);
 		assertThat(conversionService.convert("#000000", Color.class)).isEqualTo(Color.BLACK);
 		assertThat(converter.getMatchAttempts() > 0).isTrue();
@@ -432,8 +432,8 @@ class GenericConversionServiceTests {
 
 	@Test
 	void conditionalConverterFactory() {
-		MyConditionalConverterFactory converter = new MyConditionalConverterFactory();
 		conversionService.addConverter(new ColorConverter());
+		MyConditionalConverterFactory converter = new MyConditionalConverterFactory();
 		conversionService.addConverterFactory(converter);
 		assertThat(conversionService.convert("#000000", Color.class)).isEqualTo(Color.BLACK);
 		assertThat(converter.getMatchAttempts() > 0).isTrue();

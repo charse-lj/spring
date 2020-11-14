@@ -44,6 +44,9 @@ import org.springframework.util.ObjectUtils;
  * @see RootBeanDefinition
  *
  * ChildBeanDefinition：子Bean定义信息，依赖于父类RootBeanDefinition
+ *
+ * 现在已经被GenericBeanDefinition所替代了。我在5.1.x版本没有找到使用这个类的代码
+ * ChildBeanDefinition在实例化的时候必须要指定一个parentName,而GenericBeanDefinition不需要
  */
 @SuppressWarnings("serial")
 public class ChildBeanDefinition extends AbstractBeanDefinition {

@@ -610,7 +610,7 @@ class AnnotationTypeMappingsTests {
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@AliasForToOtherNonExistingAttributeTarget
+//	@AliasForToOtherNonExistingAttributeTarget
 	@interface AliasForToOtherNonExistingAttribute {
 
 		@AliasFor(annotation = AliasForToOtherNonExistingAttributeTarget.class, attribute = "missing")
@@ -679,7 +679,7 @@ class AnnotationTypeMappingsTests {
 	@interface AliasForWithMixedImplicitAndExplicitAliasesV1 {
 
 		// attempted implicit alias via attribute override
-		@AliasFor(annotation = AliasPair.class, attribute = "b")
+		@AliasFor(annotation = AliasPair.class, attribute = "a")
 		String b() default "";
 
 		// explicit local alias
@@ -692,7 +692,7 @@ class AnnotationTypeMappingsTests {
 	@interface AliasForWithMixedImplicitAndExplicitAliasesV2 {
 
 		// attempted implicit alias via attribute override
-		@AliasFor(annotation = AliasPair.class, attribute = "a")
+		@AliasFor(annotation = AliasPair.class, attribute = "b")
 		String b() default "";
 
 		// explicit local alias

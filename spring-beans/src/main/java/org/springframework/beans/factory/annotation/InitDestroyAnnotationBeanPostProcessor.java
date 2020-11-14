@@ -217,6 +217,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 	}
 
 	private LifecycleMetadata buildLifecycleMetadata(final Class<?> clazz) {
+		//做筛选
 		if (!AnnotationUtils.isCandidateClass(clazz, Arrays.asList(this.initAnnotationType, this.destroyAnnotationType))) {
 			return this.emptyLifecycleMetadata;
 		}
@@ -225,12 +226,14 @@ public class InitDestroyAnnotationBeanPostProcessor
 		List<LifecycleElement> destroyMethods = new ArrayList<>();
 		Class<?> targetClass = clazz;
 
+		//递归.
 		do {
 			final List<LifecycleElement> currInitMethods = new ArrayList<>();
 			final List<LifecycleElement> currDestroyMethods = new ArrayList<>();
 
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
 				if (this.initAnnotationType != null && method.isAnnotationPresent(this.initAnnotationType)) {
+					//包含initAnnotationType,创建一个LifecycleElement,添加到容器中
 					LifecycleElement element = new LifecycleElement(method);
 					currInitMethods.add(element);
 					if (logger.isTraceEnabled()) {
@@ -238,6 +241,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 					}
 				}
 				if (this.destroyAnnotationType != null && method.isAnnotationPresent(this.destroyAnnotationType)) {
+					//包含destroyAnnotationType,创建一个LifecycleElement,添加到容器中
 					currDestroyMethods.add(new LifecycleElement(method));
 					if (logger.isTraceEnabled()) {
 						logger.trace("Found destroy method on class [" + clazz.getName() + "]: " + method);
@@ -245,8 +249,11 @@ public class InitDestroyAnnotationBeanPostProcessor
 				}
 			});
 
+			//是List,先定义的,后执行
 			initMethods.addAll(0, currInitMethods);
+			//后定义的，后执行
 			destroyMethods.addAll(currDestroyMethods);
+			//父类.
 			targetClass = targetClass.getSuperclass();
 		}
 		while (targetClass != null && targetClass != Object.class);
@@ -296,9 +303,13 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 		public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 			Set<LifecycleElement> checkedInitMethods = new LinkedHashSet<>(this.initMethods.size());
+			//initMethods 处理方式
 			for (LifecycleElement element : this.initMethods) {
+				//获取方法的方法名(内部类复杂点)
 				String methodIdentifier = element.getIdentifier();
+				//beanDefinition中不包含.
 				if (!beanDefinition.isExternallyManagedInitMethod(methodIdentifier)) {
+					//添加
 					beanDefinition.registerExternallyManagedInitMethod(methodIdentifier);
 					checkedInitMethods.add(element);
 					if (logger.isTraceEnabled()) {
@@ -306,6 +317,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 					}
 				}
 			}
+			//destroyMethods 处理方式类似
 			Set<LifecycleElement> checkedDestroyMethods = new LinkedHashSet<>(this.destroyMethods.size());
 			for (LifecycleElement element : this.destroyMethods) {
 				String methodIdentifier = element.getIdentifier();
@@ -321,6 +333,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 			this.checkedDestroyMethods = checkedDestroyMethods;
 		}
 
+		/**执行初始化方法*/
 		public void invokeInitMethods(Object target, String beanName) throws Throwable {
 			Collection<LifecycleElement> checkedInitMethods = this.checkedInitMethods;
 			Collection<LifecycleElement> initMethodsToIterate =
@@ -335,6 +348,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 			}
 		}
 
+		/**执行销毁方法*/
 		public void invokeDestroyMethods(Object target, String beanName) throws Throwable {
 			Collection<LifecycleElement> checkedDestroyMethods = this.checkedDestroyMethods;
 			Collection<LifecycleElement> destroyMethodsToUse =

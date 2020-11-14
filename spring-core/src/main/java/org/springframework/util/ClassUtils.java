@@ -950,12 +950,17 @@ public abstract class ClassUtils {
 	 */
 	public static String getShortName(String className) {
 		Assert.hasLength(className, "Class name must not be empty");
+		//最后一个'.'的索引位置
 		int lastDotIndex = className.lastIndexOf(PACKAGE_SEPARATOR);
+		//$$的索引位置
 		int nameEndIndex = className.indexOf(CGLIB_CLASS_SEPARATOR);
 		if (nameEndIndex == -1) {
+			//没有''$$',索引位置取末尾
 			nameEndIndex = className.length();
 		}
+		//取[start,end]
 		String shortName = className.substring(lastDotIndex + 1, nameEndIndex);
+		//将其中'$'替换成'.'
 		shortName = shortName.replace(INNER_CLASS_SEPARATOR, PACKAGE_SEPARATOR);
 		return shortName;
 	}

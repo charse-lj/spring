@@ -46,6 +46,35 @@ package org.springframework.context;
  * @see ConfigurableApplicationContext
  * @see org.springframework.jms.listener.AbstractMessageListenerContainer
  * @see org.springframework.scheduling.quartz.SchedulerFactoryBean
+ *
+ *容器启动或停止回调
+ *
+ * @Component
+ * public class LifeCycleService implements Lifecycle {
+ *
+ * 	boolean isRunning;
+ *
+ *        @Override
+ *    public void start() {
+ * 		isRunning = true;
+ * 		System.out.println("LifeCycleService start");
+ *    }
+ *
+ *    @Override
+ *    public void stop() {
+ * 		isRunning = false;
+ * 		System.out.println("LifeCycleService stop");
+ *    }
+ *
+ *    @Override
+ *    public boolean isRunning() {
+ * 		return isRunning;
+ *    }
+ * }
+ * 代码可以发现程序正常打印启动跟停止的日志，在上面的例子中需要注意的时，一定要在start方法执行时将容器的运行状态isRunning置为true，否则stop方法不会调用
+ * 当接收到start或stop信号时，容器会将这些传递到所有实现了Lifecycle的组件上，在Spring内部是通过LifecycleProcessor接口来完成这一功能的。其接口定义如下
+ *
+ *
  */
 public interface Lifecycle {
 
@@ -55,6 +84,8 @@ public interface Lifecycle {
 	 * <p>In the case of a container, this will propagate the start signal to all
 	 * components that apply.
 	 * @see SmartLifecycle#isAutoStartup()
+	 *
+	 * 当容器启动时调用
 	 */
 	void start();
 
@@ -72,6 +103,8 @@ public interface Lifecycle {
 	 * that apply.
 	 * @see SmartLifecycle#stop(Runnable)
 	 * @see org.springframework.beans.factory.DisposableBean#destroy()
+	 *
+	 * 当容器停止时调用
 	 */
 	void stop();
 
@@ -80,6 +113,8 @@ public interface Lifecycle {
 	 * <p>In the case of a container, this will return {@code true} only if <i>all</i>
 	 * components that apply are currently running.
 	 * @return whether the component is currently running
+	 *
+	 * 当前组件的运行状态
 	 */
 	boolean isRunning();
 

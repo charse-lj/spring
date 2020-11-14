@@ -64,6 +64,11 @@ import org.springframework.lang.Nullable;
  * 它是用来处理复杂的Bean,在初始化过程中需要做很多事情（比如MyBatis的SqlSessionFactoryBean等等）
  * 如果这种Bean用xml去配置，几乎是不可能的。当用注解驱动@Bean去做后，虽然也是可以的，但是很显然对调用很不友好的（因为我们使用MyBatis可不想去知道它初始化到底要做些啥事之类的）。
  * 因此使用这个方法是最优雅的解决方案。Spring在1.0就支持了这个接口，优秀~
+ *
+ * 我们当当实现一个FactoryBean接口，Spring并不会在启动时就将这个FactoryBean所创建的Bean创建出,两种办法
+ * 1.实现SmartFactoryBean，并重写isEagerInit方法，将返回值设置为true
+ * 2.可以在一个不是懒加载的Bean中注入这个FactoryBean所创建的Bean，Spring在解决依赖关系也会帮我们将这个Bean创建出来
+ *
  */
 public interface FactoryBean<T> {
 

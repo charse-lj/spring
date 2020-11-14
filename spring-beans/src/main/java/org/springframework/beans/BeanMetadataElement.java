@@ -27,6 +27,14 @@ import org.springframework.lang.Nullable;
  *
  * 具有访问source（配置源）的能力
  * 这个方法在@Configuration中使用较多，因为它会被代理
+ *
+ * 这个接口提供了一个方法去获取配置源对象，其实就是我们的原文件。
+ * 当我们通过注解的方式定义了一个IndexService时，那么此时的IndexService对应的BeanDefinition通过getSource方法返回的就是IndexService.class这个文件对应的一个File对象
+ * 如果我们通过@Bean方式定义了一个IndexService的话，那么此时的source是被@Bean注解所标注的一个Mehthod对象。
+ *
+ * 这个接口提供了一个方法去获取配置源对象，其实就是我们的原文件
+ * 当我们通过注解的方式定义了一个IndexService时，那么此时的IndexService对应的BeanDefinition通过getSource方法返回的就是IndexService.class这个文件对应的一个File对象。
+ * 如果我们通过@Bean方式定义了一个IndexService的话，那么此时的source是被@Bean注解所标注的一个Mehthod对象。
  */
 public interface BeanMetadataElement {
 

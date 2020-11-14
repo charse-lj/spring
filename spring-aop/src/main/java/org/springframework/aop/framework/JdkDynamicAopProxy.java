@@ -169,6 +169,8 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 	@Override
 	@Nullable
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+
 		Object oldProxy = null;
 		boolean setProxyContext = false;
 

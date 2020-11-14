@@ -41,6 +41,8 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
  * @author Chris Beams
  * @since 3.2
  *
+ * 注解方式配置的DispatcherServlet初始化器
+ *
  * 自己来实现AbstractAnnotationConfigDispatcherServletInitializer一个初始化实体类
  * 你想定制化父类的一些默认行为  这里都是可以复写父类的protected方法的~~~~
  */

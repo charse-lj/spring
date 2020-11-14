@@ -980,6 +980,7 @@ class AnnotationUtilsTests {
 
 	@Test  // gh-23929
 	void findDeprecatedAnnotation() throws Exception {
+		getAnnotation(MetaMetaMetaAnnotatedClass.class.getAnnotation(MetaMetaMeta.class),Meta2.class);
 		assertThat(getAnnotation(DeprecatedClass.class, Deprecated.class)).isNotNull();
 		assertThat(getAnnotation(SubclassOfDeprecatedClass.class, Deprecated.class)).isNull();
 		assertThat(findAnnotation(DeprecatedClass.class, Deprecated.class)).isNotNull();

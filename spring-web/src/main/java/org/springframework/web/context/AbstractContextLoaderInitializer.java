@@ -84,6 +84,8 @@ public abstract class AbstractContextLoaderInitializer implements WebApplication
 	 * @return the root application context, or {@code null} if a root context is not
 	 * desired
 	 * @see org.springframework.web.servlet.support.AbstractDispatcherServletInitializer
+	 *
+	 * 创建根容器
 	 */
 	@Nullable
 	protected abstract WebApplicationContext createRootApplicationContext();

@@ -135,6 +135,8 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	 * it typically contains controllers, view resolvers, locale resolvers, and other
 	 * web-related beans.
 	 * @see #registerDispatcherServlet(ServletContext)
+	 *
+	 * 创建一个web的ioc容器
 	 */
 	protected abstract WebApplicationContext createServletApplicationContext();
 

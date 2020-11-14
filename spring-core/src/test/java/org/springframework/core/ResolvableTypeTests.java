@@ -29,17 +29,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.AbstractCollection;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import org.assertj.core.api.AbstractAssert;
@@ -136,7 +126,23 @@ class ResolvableTypeTests {
 
 	@Test  // gh-23321
 	void forRawClassAssignableFromTypeVariable() throws Exception {
-		ResolvableType typeVariable = ResolvableType.forClass(ExtendsList.class).as(List.class).getGeneric();
+		//<E:Ljava/lang/Object;>Lorg/springframework/core/ResolvableTypeTests$A<TE;TE;>;
+		Type genericSuperclass1 = B.class.getGenericSuperclass();
+		if (genericSuperclass1 instanceof ParameterizedType){
+			Type[] actualTypeArguments = ((ParameterizedType) genericSuperclass1).getActualTypeArguments();
+		}
+		//Ljava/util/ArrayList<Ljava/lang/CharSequence;>;
+		Type genericSuperclass = ExtendsList.class.getGenericSuperclass();
+		if(genericSuperclass instanceof ParameterizedType){
+			Type[] actualTypeArguments = ((ParameterizedType) genericSuperclass).getActualTypeArguments();
+			System.out.println(actualTypeArguments);
+		}
+
+		ResolvableType as = ResolvableType.forClass(ExtendsList.class).as(ArrayList.class);
+		ResolvableType[] xxoo = ResolvableType.forClass(ExtendsList.class).as(List.class).getGenerics();
+		ResolvableType typeVariable = as.getGeneric();
+		ResolvableType[] xx = ResolvableType.forClass(ExtendExtendsList.class).getGenerics();
+		ResolvableType[] oo = ResolvableType.forClass(C.class).as(A.class).getGenerics();
 		ResolvableType raw = ResolvableType.forRawClass(CharSequence.class);
 		assertThat(raw.resolve()).isEqualTo(CharSequence.class);
 		assertThat(typeVariable.resolve()).isEqualTo(CharSequence.class);
@@ -144,6 +150,7 @@ class ResolvableTypeTests {
 		assertThat(typeVariable.resolve().isAssignableFrom(raw.resolve())).isTrue();
 		assertThat(raw.isAssignableFrom(typeVariable)).isTrue();
 		assertThat(typeVariable.isAssignableFrom(raw)).isTrue();
+
 	}
 
 	@Test
@@ -185,6 +192,7 @@ class ResolvableTypeTests {
 	void forPrivateField() throws Exception {
 		Field field = Fields.class.getDeclaredField("privateField");
 		ResolvableType type = ResolvableType.forField(field);
+		type.getGenerics();
 		assertThat(type.getType()).isEqualTo(field.getGenericType());
 		assertThat(type.resolve()).isEqualTo(List.class);
 		assertThat(type.getSource()).isSameAs(field);
@@ -1349,6 +1357,14 @@ class ResolvableTypeTests {
 	@SuppressWarnings("serial")
 	static class ExtendsList extends ArrayList<CharSequence> {
 	}
+
+	@SuppressWarnings("serial")
+	static class ExtendExtendsList<E extends String> extends ArrayList<E> {
+	}
+	static class C extends B<String>{}
+	static class B<E> extends A<E,E>{}
+
+	static class A<T extends E,E>{}
 
 	@SuppressWarnings("serial")
 	static class ExtendsMap extends HashMap<String, Integer> {

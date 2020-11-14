@@ -27,6 +27,9 @@ import org.springframework.lang.Nullable;
  *
  * 接口都比较简单  就是定义了对对象属性的一些访问方法
  * 说明它可以持有Bean元数据元素，作用是可以持有XML文件的一个bean标签对应的Object（或者@Configuration元配置对象）
+ *
+ * 这个接口为从其它任意类中获取或设置元数据提供了一个通用的规范
+ * 其实这就是访问者模式的一种体现，采用这方方法，我们可以将数据接口跟操作方法进行分离。
  */
 public interface AttributeAccessor {
 

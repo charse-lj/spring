@@ -113,7 +113,7 @@ abstract class AnnotationsScanner {
 	}
 
 	@Nullable
-	private static <C, R> R processClass(C context, Class<?> source,
+	private static <C, R> R  processClass(C context, Class<?> source,
 			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor,
 			@Nullable BiPredicate<C, Class<?>> classFilter) {
 
@@ -153,9 +153,11 @@ abstract class AnnotationsScanner {
 				if (isFiltered(source, context, classFilter)) {
 					continue;
 				}
+				//source声明的注解
 				Annotation[] declaredAnnotations =
 						getDeclaredAnnotations(context, source, classFilter, true);
 				if (relevant == null && declaredAnnotations.length > 0) {
+					//root类的所有注解+所有父类注解中标注@Inherited的集合
 					relevant = root.getAnnotations();
 					remaining = relevant.length;
 				}
@@ -171,6 +173,7 @@ abstract class AnnotationsScanner {
 								break;
 							}
 						}
+						//不在relevant中,即该注解未标注@Inherited，需要去除
 						if (!isRelevant) {
 							declaredAnnotations[i] = null;
 						}
@@ -545,6 +548,11 @@ abstract class AnnotationsScanner {
 		return false;
 	}
 
+	/**
+	 *
+	 * @param annotatedElement 可注解的对象.
+	 * @return 是否是java的原生注解.
+	 */
 	static boolean hasPlainJavaAnnotationsOnly(@Nullable Object annotatedElement) {
 		if (annotatedElement instanceof Class) {
 			return hasPlainJavaAnnotationsOnly((Class<?>) annotatedElement);
@@ -557,6 +565,11 @@ abstract class AnnotationsScanner {
 		}
 	}
 
+	/**
+	 *
+	 * @param type 被注解的类是否以java.开头,或者是Ordered.class.
+	 * @return .
+	 */
 	static boolean hasPlainJavaAnnotationsOnly(Class<?> type) {
 		return (type.getName().startsWith("java.") || type == Ordered.class);
 	}

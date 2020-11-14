@@ -31,6 +31,16 @@ import org.springframework.util.ReflectionUtils;
  * Provides a quick way to access the attribute methods of an {@link Annotation}
  * with consistent ordering as well as a few useful utility methods.
  *
+ * 元注解是一种标注在别的注解之上的注解
+ *
+ * 注解属性的方法的封装类
+ *
+ * 定义的注解只有成员变量，没有方法
+ * Import annotation = SbApplication.class.getAnnotation(Import.class);
+ *
+ * Import.class 注解对象的类中只包含方法
+ * public abstract java.lang.Class[] org.springframework.context.annotation.Import.value()
+ *
  * @author Phillip Webb
  * @since 5.2
  */
@@ -50,15 +60,31 @@ final class AttributeMethods {
 	};
 
 
+	/**
+	 * 注解类型
+	 */
 	@Nullable
 	private final Class<? extends Annotation> annotationType;
 
+	/**
+	 * 注解属性对应的方法
+	 */
 	private final Method[] attributeMethods;
 
+	/**
+	 * 注解方法没有设置时是否抛出异常
+	 * 如果属性类型为类、类数组、枚举，则不赋值时要抛出异常。
+	 */
 	private final boolean[] canThrowTypeNotPresentException;
 
+	/**
+	 * 是否有默认值方法
+	 */
 	private final boolean hasDefaultValueMethod;
 
+	/**
+	 * 是否有嵌套注解
+	 */
 	private final boolean hasNestedAnnotation;
 
 
@@ -70,6 +96,7 @@ final class AttributeMethods {
 		boolean foundNestedAnnotation = false;
 		for (int i = 0; i < attributeMethods.length; i++) {
 			Method method = this.attributeMethods[i];
+			//注解方法(注解对象的类中方法)的返回值类型
 			Class<?> type = method.getReturnType();
 			if (method.getDefaultValue() != null) {
 				foundDefaultValueMethod = true;
@@ -108,6 +135,7 @@ final class AttributeMethods {
 		for (int i = 0; i < size(); i++) {
 			if (canThrowTypeNotPresentException(i)) {
 				try {
+					//在这个对象上执行这个方法
 					get(i).invoke(annotation);
 				}
 				catch (Throwable ex) {
@@ -269,6 +297,11 @@ final class AttributeMethods {
 		return new AttributeMethods(annotationType, attributeMethods);
 	}
 
+	/**
+	 * 方式是不是属性方法：没有形参并且返回值不为void的方法为属性方法。
+	 * @param method 注解中的方法
+	 * @return
+	 */
 	private static boolean isAttributeMethod(Method method) {
 		return (method.getParameterCount() == 0 && method.getReturnType() != void.class);
 	}

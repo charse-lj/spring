@@ -83,7 +83,7 @@ public class ConfigurationClassPostProcessorTests {
 	@BeforeEach
 	public void setup() {
 		QualifierAnnotationAutowireCandidateResolver acr = new QualifierAnnotationAutowireCandidateResolver();
-		acr.setBeanFactory(this.beanFactory);
+//		acr.setBeanFactory(this.beanFactory);
 		this.beanFactory.setAutowireCandidateResolver(acr);
 	}
 
@@ -188,8 +188,9 @@ public class ConfigurationClassPostProcessorTests {
 		beanFactory.registerBeanDefinition("loadedConfig", new RootBeanDefinition(LoadedConfig.class));
 		ConfigurationClassPostProcessor pp = new ConfigurationClassPostProcessor();
 		pp.postProcessBeanFactory(beanFactory);
-		beanFactory.getBean("foo");
-		beanFactory.getBean("bar");
+		Foo foo = beanFactory.getBean("foo",Foo.class);
+		Bar bar = beanFactory.getBean("bar",Bar.class);
+		assertThat(bar.foo).isNotSameAs(foo);
 	}
 
 	/**
@@ -324,6 +325,7 @@ public class ConfigurationClassPostProcessorTests {
 	@Test
 	public void postProcessorOverridesNonApplicationBeanDefinitions() {
 		RootBeanDefinition rbd = new RootBeanDefinition(TestBean.class);
+		//已经存在的Role>新增的Role,会替换
 		rbd.setRole(RootBeanDefinition.ROLE_SUPPORT);
 		beanFactory.registerBeanDefinition("bar", rbd);
 		beanFactory.registerBeanDefinition("config", new RootBeanDefinition(SingletonBeanConfig.class));
@@ -343,6 +345,7 @@ public class ConfigurationClassPostProcessorTests {
 		ConfigurationClassPostProcessor pp = new ConfigurationClassPostProcessor();
 		pp.postProcessBeanFactory(beanFactory);
 		beanFactory.getBean("foo", Foo.class);
+		//isOverriddenByExistingDefinition(beanMethod, beanName) 返回true，会忽略由SingletonBeanConfig 引入的同名bean
 		beanFactory.getBean("bar", TestBean.class);
 	}
 
@@ -441,10 +444,10 @@ public class ConfigurationClassPostProcessorTests {
 		beanFactory.addBeanPostProcessor(new AutowiredAnnotationBeanPostProcessor());
 
 		Foo foo = beanFactory.getBean(Foo.class);
-		boolean condition = foo instanceof ExtendedFoo;
-		assertThat(condition).isTrue();
-		Bar bar = beanFactory.getBean(Bar.class);
-		assertThat(bar.foo).isSameAs(foo);
+//		boolean condition = foo instanceof ExtendedFoo;
+//		assertThat(condition).isTrue();
+//		Bar bar = beanFactory.getBean(Bar.class);
+//		assertThat(bar.foo).isSameAs(foo);
 	}
 
 	@Test

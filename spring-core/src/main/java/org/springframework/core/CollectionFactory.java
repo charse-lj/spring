@@ -205,6 +205,7 @@ public final class CollectionFactory {
 				throw new IllegalArgumentException("Unsupported Collection type: " + collectionType.getName());
 			}
 			try {
+				//类,直接反射创建,必须要有空参构造
 				return (Collection<E>) ReflectionUtils.accessibleConstructor(collectionType).newInstance();
 			}
 			catch (Throwable ex) {

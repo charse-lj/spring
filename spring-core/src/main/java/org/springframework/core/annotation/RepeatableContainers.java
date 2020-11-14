@@ -38,6 +38,8 @@ import org.springframework.util.ReflectionUtils;
  *
  * <p>To completely disable repeatable support use {@link #none()}.
  *
+ * 可重复注解容器
+ *
  * @author Phillip Webb
  * @since 5.2
  */
@@ -58,6 +60,8 @@ public abstract class RepeatableContainers {
 	 * @param container the container type
 	 * @param repeatable the contained repeatable type
 	 * @return a new {@link RepeatableContainers} instance
+	 *
+	 * 在一个可重复注解和包含注解之间建立关系
 	 */
 	public RepeatableContainers and(Class<? extends Annotation> container,
 			Class<? extends Annotation> repeatable) {
@@ -65,6 +69,11 @@ public abstract class RepeatableContainers {
 		return new ExplicitRepeatableContainer(this, repeatable, container);
 	}
 
+	/**
+	 * 查找可重复注解
+	 * @param annotation .
+	 * @return .
+	 */
 	@Nullable
 	Annotation[] findRepeatedAnnotations(Annotation annotation) {
 		if (this.parent == null) {
@@ -161,6 +170,7 @@ public abstract class RepeatableContainers {
 		}
 
 		private static Object computeRepeatedAnnotationsMethod(Class<? extends Annotation> annotationType) {
+			//获取所注解类的所有注解属性方法
 			AttributeMethods methods = AttributeMethods.forAnnotationType(annotationType);
 			if (methods.hasOnlyValueAttribute()) {
 				Method method = methods.get(0);

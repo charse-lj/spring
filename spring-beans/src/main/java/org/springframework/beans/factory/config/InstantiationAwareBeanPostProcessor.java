@@ -45,8 +45,8 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.aop.framework.autoproxy.target.LazyInitTargetSourceCreator
  *
  * 代表了Spring的另外一段生命周期：实例化。先区别一下Spring Bean的实例化和初始化两个阶段的主要作用：
- * 实例化：实例化的过程是一个创建Bean的过程，即调用Bean的构造函数，单例的Bean放入单例池中
- * 初始化：初始化的过程是一个赋值的过程，即调用Bean的setter，设置Bean的属性
+ * 实例化：实例化的过程是一个创建Bean的过程，即调用Bean的构造函数，单例的Bean放入单例池中；此时bean都是以bd形式存在
+ * 初始化：初始化的过程是一个赋值的过程，即调用Bean的setter，设置Bean的属性；此时bean都是以对象形式存在容器中
  *
  * InstantiationAwareBeanPostProcessor是作用于 实例化 前后,所以是先执行的
  * BeanPostProcessor是作用于 初始化，给Bean各个属性赋值的时候执行的（比如我们的属性依赖注入，都是这个时候生效的）
@@ -145,6 +145,8 @@ public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
 	 * @throws org.springframework.beans.BeansException in case of errors
 	 * @since 5.1
 	 * @see #postProcessPropertyValues
+	 *
+	 * 我们采用注解时，Spring通过这个方法完成了属性注入
 	 */
 	@Nullable
 	default PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName)
@@ -178,6 +180,8 @@ public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
 	 * 	  2. CommonAnnotationBeanPostProcessor 执行@Resource等注解的注入，
 	 * 	  3. PersistenceAnnotationBeanPostProcessor 执行@ PersistenceContext等JPA注解的注入，
 	 * 	  4. RequiredAnnotationBeanPostProcessor 执行@ Required注解的检查等等
+	 *
+	 * 	  实现postProcessProperties必须返回null，否则postProcessPropertyValues方法的逻辑不会执行
 	 */
 	@Deprecated
 	@Nullable

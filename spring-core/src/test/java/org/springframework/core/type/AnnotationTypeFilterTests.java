@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sam Brannen
  * @see AnnotationTypeFilterTestsTypes
  */
-class AnnotationTypeFilterTests {
+public class AnnotationTypeFilterTests {
 
 	@Test
 	void directAnnotationMatch() throws Exception {

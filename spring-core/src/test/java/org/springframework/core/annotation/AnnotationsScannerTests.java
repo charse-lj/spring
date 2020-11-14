@@ -47,6 +47,7 @@ class AnnotationsScannerTests {
 	void directStrategyOnClassWhenNotAnnotatedScansNone() {
 		Class<?> source = WithNoAnnotations.class;
 		assertThat(scan(source, SearchStrategy.DIRECT)).isEmpty();
+
 	}
 
 	@Test

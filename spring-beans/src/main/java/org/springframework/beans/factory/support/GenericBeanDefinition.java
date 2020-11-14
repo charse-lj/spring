@@ -39,6 +39,9 @@ import org.springframework.util.ObjectUtils;
  *
  * 标准bean definition，通用的
  * 若你是xml配置，最初被加载进来都是一个GenericBeanDefinition，之后再逐渐解析的
+ *
+ * 替代了原来的ChildBeanDefinition，比起ChildBeanDefinition更为灵活，ChildBeanDefinition在实例化的时候必须要指定一个parentName,而GenericBeanDefinition不需要。
+ * 我们通过注解配置的bean以及我们的配置类（除@Bean外）的BeanDefiniton类型都是GenericBeanDefinition
  */
 @SuppressWarnings("serial")
 public class GenericBeanDefinition extends AbstractBeanDefinition {

@@ -121,6 +121,7 @@ class MethodParameterTests {
 
 	@Test  // SPR-16652
 	void annotatedConstructorParameterInInnerClass() throws Exception {
+		//内部类的第一个参数必须是外部类
 		Constructor<?> constructor = InnerClass.class.getConstructor(getClass(), String.class, Callable.class);
 
 		MethodParameter methodParameter = MethodParameter.forExecutable(constructor, 0);

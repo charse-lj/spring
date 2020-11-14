@@ -452,6 +452,8 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * {@link Inherited @Inherited} annotation is ignored for all other
 		 * {@linkplain AnnotatedElement annotated elements}. This strategy does
 		 * not search implemented interfaces.
+		 *
+		 * root类的所有注解+所有父类注解中标注Inherited的集合,不包含接口.
 		 */
 		INHERITED_ANNOTATIONS,
 

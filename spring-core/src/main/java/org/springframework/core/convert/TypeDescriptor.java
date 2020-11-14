@@ -280,17 +280,21 @@ public class TypeDescriptor implements Serializable {
 	 * @see #getObjectType()
 	 */
 	public boolean isAssignableTo(TypeDescriptor typeDescriptor) {
+		//typeDescriptor代表的Class是否为this.typeDescriptor代表的Class的父类
 		boolean typesAssignable = typeDescriptor.getObjectType().isAssignableFrom(getObjectType());
 		if (!typesAssignable) {
 			return false;
 		}
+		//this.typeDescriptor代表的Class和typeDescriptor 都为数组类型
 		if (isArray() && typeDescriptor.isArray()) {
 			return isNestedAssignable(getElementTypeDescriptor(), typeDescriptor.getElementTypeDescriptor());
 		}
 		else if (isCollection() && typeDescriptor.isCollection()) {
 			return isNestedAssignable(getElementTypeDescriptor(), typeDescriptor.getElementTypeDescriptor());
 		}
+		//this.typeDescriptor代表的Class和typeDescriptor 都为Map类型
 		else if (isMap() && typeDescriptor.isMap()) {
+			//key、value都是子父类关系
 			return isNestedAssignable(getMapKeyTypeDescriptor(), typeDescriptor.getMapKeyTypeDescriptor()) &&
 				isNestedAssignable(getMapValueTypeDescriptor(), typeDescriptor.getMapValueTypeDescriptor());
 		}
@@ -328,12 +332,15 @@ public class TypeDescriptor implements Serializable {
 	 * @return the array component type or Collection element type, or {@code null} if this type is not
 	 * an array type or a {@code java.util.Collection} or if its element type is not parameterized
 	 * @see #elementTypeDescriptor(Object)
+	 *
+	 * 获取容器中(数组、Stream、Collection)元素类型的TypeDescriptor
 	 */
 	@Nullable
 	public TypeDescriptor getElementTypeDescriptor() {
 		if (getResolvableType().isArray()) {
 			return new TypeDescriptor(getResolvableType().getComponentType(), null, getAnnotations());
 		}
+		//TypeDescriptor 修饰的Class是Stream的子类
 		if (Stream.class.isAssignableFrom(getType())) {
 			return getRelatedIfResolvable(this, getResolvableType().as(Stream.class).getGeneric(0));
 		}

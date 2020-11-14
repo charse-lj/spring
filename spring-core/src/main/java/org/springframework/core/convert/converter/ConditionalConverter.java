@@ -40,7 +40,7 @@ import org.springframework.core.convert.TypeDescriptor;
  * @see ConverterFactory
  * @see ConditionalGenericConverter
  */
-public interface ConditionalConverter {
+public interface ConditionalConverter  {
 
 	/**
 	 * Should the conversion from {@code sourceType} to {@code targetType} currently under

@@ -58,6 +58,7 @@ class MapToMapConverterTests {
 		map.put("1", "9");
 		map.put("2", "37");
 		TypeDescriptor sourceType = TypeDescriptor.forObject(map);
+
 		TypeDescriptor targetType = new TypeDescriptor(getClass().getField("scalarMapTarget"));
 
 		assertThat(conversionService.canConvert(sourceType, targetType)).isTrue();

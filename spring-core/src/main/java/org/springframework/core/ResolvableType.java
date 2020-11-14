@@ -79,6 +79,7 @@ import org.springframework.util.StringUtils;
  * @see #forType(Type)
  * @see #forInstance(Object)
  * @see ResolvableTypeProvider
+ * 将java的Type类型解析成ResolvableType,每个Type对应一个ResolvableType
  */
 @SuppressWarnings("serial")
 public class ResolvableType implements Serializable {
@@ -97,6 +98,10 @@ public class ResolvableType implements Serializable {
 
 	/**
 	 * The underlying Java type being managed.
+	 * 类型type
+	 * 0)E
+	 * 1)List<String>
+	 * 2)Map<T,E>
 	 */
 	private final Type type;
 
@@ -121,6 +126,12 @@ public class ResolvableType implements Serializable {
 	@Nullable
 	private final Integer hash;
 
+	/**
+	 * 类型对应的类
+	 * 0)null
+	 * 1)List
+	 * 2)Map
+	 */
 	@Nullable
 	private Class<?> resolved;
 
@@ -130,6 +141,12 @@ public class ResolvableType implements Serializable {
 	@Nullable
 	private volatile ResolvableType[] interfaces;
 
+	/**
+	 * 类型包含的泛型
+	 * 0)null
+	 * 1)[{'type':String,'resolved':String}]
+	 * 2)[{'type':T},{'type':E}]
+	 */
 	@Nullable
 	private volatile ResolvableType[] generics;
 
@@ -345,6 +362,7 @@ public class ResolvableType implements Serializable {
 
 		// We need an exact type match for generics
 		// List<CharSequence> is not assignable from List<String>
+		//otherResolved is child of ourResolved
 		if (exactMatch ? !ourResolved.equals(otherResolved) : !ClassUtils.isAssignable(ourResolved, otherResolved)) {
 			return false;
 		}
@@ -499,9 +517,13 @@ public class ResolvableType implements Serializable {
 		}
 		ResolvableType[] interfaces = this.interfaces;
 		if (interfaces == null) {
+			//获取resolved的泛型接口
+			// 1.泛型接口 =>泛型类
+			// 2.类接口 => 类
 			Type[] genericIfcs = resolved.getGenericInterfaces();
 			interfaces = new ResolvableType[genericIfcs.length];
 			for (int i = 0; i < genericIfcs.length; i++) {
+				//
 				interfaces[i] = forType(genericIfcs[i], this);
 			}
 			this.interfaces = interfaces;
@@ -707,7 +729,9 @@ public class ResolvableType implements Serializable {
 		}
 		ResolvableType[] generics = this.generics;
 		if (generics == null) {
+			//当前type是Class
 			if (this.type instanceof Class) {
+				//获取类(List.class)的参数化类型(List<E>)
 				Type[] typeParams = ((Class<?>) this.type).getTypeParameters();
 				generics = new ResolvableType[typeParams.length];
 				for (int i = 0; i < generics.length; i++) {
@@ -832,9 +856,11 @@ public class ResolvableType implements Serializable {
 	 * as it cannot be serialized.
 	 */
 	ResolvableType resolveType() {
+		//List<String> 泛型类
 		if (this.type instanceof ParameterizedType) {
 			return forType(((ParameterizedType) this.type).getRawType(), this.variableResolver);
 		}
+		//List<? extends Number> 通配符类型
 		if (this.type instanceof WildcardType) {
 			Type resolved = resolveBounds(((WildcardType) this.type).getUpperBounds());
 			if (resolved == null) {
@@ -842,6 +868,7 @@ public class ResolvableType implements Serializable {
 			}
 			return forType(resolved, this.variableResolver);
 		}
+		//T 类型变量
 		if (this.type instanceof TypeVariable) {
 			TypeVariable<?> variable = (TypeVariable<?>) this.type;
 			// Try default variable resolution
@@ -1420,16 +1447,20 @@ public class ResolvableType implements Serializable {
 		if (type == null && typeProvider != null) {
 			type = SerializableTypeWrapper.forTypeProvider(typeProvider);
 		}
+
+		//type == null && typeProvider == null
 		if (type == null) {
 			return NONE;
 		}
 
 		// For simple Class references, build the wrapper right away -
 		// no expensive resolution necessary, so not worth caching...
+		//class reference
 		if (type instanceof Class) {
 			return new ResolvableType(type, typeProvider, variableResolver, (ResolvableType) null);
 		}
 
+		//ParameterizedType reference
 		// Purge empty entries on access since we don't have a clean-up thread or the like.
 		cache.purgeUnreferencedEntries();
 

@@ -232,6 +232,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 		// Handle aliasing...
 		String resolvedName;
 		do {
+			//aliasMap 的key 是别名,value 是beanName,如果name是别名,最终获取的是beanName,如果name是beanName,直接跳出循环
 			resolvedName = this.aliasMap.get(canonicalName);
 			if (resolvedName != null) {
 				canonicalName = resolvedName;

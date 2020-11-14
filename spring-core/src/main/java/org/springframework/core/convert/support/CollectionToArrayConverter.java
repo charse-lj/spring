@@ -66,14 +66,19 @@ final class CollectionToArrayConverter implements ConditionalGenericConverter {
 		if (source == null) {
 			return null;
 		}
+		//将source强转成Collection类型
 		Collection<?> sourceCollection = (Collection<?>) source;
+		//获取目标容器元素的TypeDescriptor
 		TypeDescriptor targetElementType = targetType.getElementTypeDescriptor();
+		//TODO 为什么不能为null? =>创建数组的时候,需要类型和长度.
 		Assert.state(targetElementType != null, "No target element type");
 		Object array = Array.newInstance(targetElementType.getType(), sourceCollection.size());
 		int i = 0;
 		for (Object sourceElement : sourceCollection) {
+			//根据sourceElement、sourceType、targetType,找到合适的转化器进行转换
 			Object targetElement = this.conversionService.convert(sourceElement,
 					sourceType.elementTypeDescriptor(sourceElement), targetElementType);
+			//native方法在指定位置设置元素.
 			Array.set(array, i++, targetElement);
 		}
 		return array;

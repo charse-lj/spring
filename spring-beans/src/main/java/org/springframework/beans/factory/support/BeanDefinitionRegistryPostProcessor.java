@@ -29,6 +29,8 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
  * @author Juergen Hoeller
  * @since 3.0.1
  * @see org.springframework.context.annotation.ConfigurationClassPostProcessor
+ *
+ * 相比于BeanFactoryPostProcessor的postProcessBeanFactory方法，这个方法的执行时机会更加靠前，Spring自身利用这个特性完成了BeanDefinition的扫描解析。我们在对Spring进行扩展时，也可以利用这个特性来完成扫描这种功能
  */
 public interface BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor {
 

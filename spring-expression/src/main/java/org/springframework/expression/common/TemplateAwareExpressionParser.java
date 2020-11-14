@@ -93,10 +93,12 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 		int startIdx = 0;
 
 		while (startIdx < expressionString.length()) {
+			//从startIdx查找prefix的索引
 			int prefixIndex = expressionString.indexOf(prefix, startIdx);
 			if (prefixIndex >= startIdx) {
 				// an inner expression was found - this is a composite
 				if (prefixIndex > startIdx) {
+					//startIdx前的文本信息
 					expressions.add(new LiteralExpression(expressionString.substring(startIdx, prefixIndex)));
 				}
 				int afterPrefixIndex = prefixIndex + prefix.length();
@@ -167,14 +169,18 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 		// Chew on the expression text - relying on the rules:
 		// brackets must be in pairs: () [] {}
 		// string literals are "..." or '...' and these may contain unmatched brackets
+		//afterPrefixIndex是prefix后的第一个字符位置
 		int pos = afterPrefixIndex;
 		int maxlen = expressionString.length();
 		int nextSuffix = expressionString.indexOf(suffix, afterPrefixIndex);
 		if (nextSuffix == -1) {
 			return -1; // the suffix is missing
 		}
+
 		Deque<Bracket> stack = new ArrayDeque<>();
+		//找到匹配的suffix索引或者异常跳出
 		while (pos < maxlen) {
+			//afterPrefixIndex位置刚好是一个suffix
 			if (isSuffixHere(expressionString, pos, suffix) && stack.isEmpty()) {
 				break;
 			}
@@ -189,11 +195,14 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 				case ']':
 				case ')':
 					if (stack.isEmpty()) {
+						//不成对
 						throw new ParseException(expressionString, pos, "Found closing '" + ch +
 								"' at position " + pos + " without an opening '" +
 								Bracket.theOpenBracketFor(ch) + "'");
 					}
+					//出队
 					Bracket p = stack.pop();
+					//校验是否成对
 					if (!p.compatibleWithCloseBracket(ch)) {
 						throw new ParseException(expressionString, pos, "Found closing '" + ch +
 								"' at position " + pos + " but most recent opening is '" + p.bracket +
@@ -202,6 +211,7 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 					break;
 				case '\'':
 				case '"':
+					//找到被 '或 " 引用的字面量索引
 					// jump to the end of the literal
 					int endLiteral = expressionString.indexOf(ch, pos + 1);
 					if (endLiteral == -1) {
@@ -218,6 +228,7 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 			throw new ParseException(expressionString, p.pos, "Missing closing '" +
 					Bracket.theCloseBracketFor(p.bracket) + "' for '" + p.bracket + "' at position " + p.pos);
 		}
+		//再次校验
 		if (!isSuffixHere(expressionString, pos, suffix)) {
 			return -1;
 		}

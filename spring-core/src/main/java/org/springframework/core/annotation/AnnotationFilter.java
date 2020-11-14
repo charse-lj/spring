@@ -39,18 +39,25 @@ public interface AnnotationFilter {
 	 * {@code java.lang} and {@code org.springframework.lang} packages
 	 * and their subpackages.
 	 * <p>This is the default filter in the {@link MergedAnnotations} model.
+	 *
+	 * JAVA元注解+Spring元注解
+	 * java.lang 位于rt.jar中,org.springframework.lang 位于 spring-core包中
 	 */
 	AnnotationFilter PLAIN = packages("java.lang", "org.springframework.lang");
 
 	/**
 	 * {@link AnnotationFilter} that matches annotations in the
 	 * {@code java} and {@code javax} packages and their subpackages.
+	 *
+	 * JAVA元注解
 	 */
 	AnnotationFilter JAVA = packages("java", "javax");
 
 	/**
 	 * {@link AnnotationFilter} that always matches and can be used when no
 	 * relevant annotation types are expected to be present at all.
+	 *
+	 * 过滤掉所有annotation
 	 */
 	AnnotationFilter ALL = new AnnotationFilter() {
 		@Override
@@ -78,6 +85,8 @@ public interface AnnotationFilter {
 	 * always ignores lang annotations according to the {@link #PLAIN} filter
 	 * (for efficiency reasons)
 	 * @see #PLAIN
+	 *
+	 * 不过滤任何annotation
 	 */
 	@Deprecated
 	AnnotationFilter NONE = new AnnotationFilter() {

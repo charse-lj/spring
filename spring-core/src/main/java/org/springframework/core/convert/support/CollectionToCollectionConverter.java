@@ -68,24 +68,31 @@ final class CollectionToCollectionConverter implements ConditionalGenericConvert
 		Collection<?> sourceCollection = (Collection<?>) source;
 
 		// Shortcut if possible...
+		//target是否不是source的子类
 		boolean copyRequired = !targetType.getType().isInstance(source);
 		if (!copyRequired && sourceCollection.isEmpty()) {
+			//是，source是空的,返回source
 			return source;
 		}
 		TypeDescriptor elementDesc = targetType.getElementTypeDescriptor();
 		if (elementDesc == null && !copyRequired) {
+			//是,elementDesc是null，也返回source
 			return source;
 		}
 
 		// At this point, we need a collection copy in any case, even if just for finding out about element copies...
+		//构造装target元素的容器
 		Collection<Object> target = CollectionFactory.createCollection(targetType.getType(),
 				(elementDesc != null ? elementDesc.getType() : null), sourceCollection.size());
 
+		//target元素类型是空的
 		if (elementDesc == null) {
 			target.addAll(sourceCollection);
 		}
 		else {
+			//遍历source中的元素
 			for (Object sourceElement : sourceCollection) {
+				//根据sourceElement、sourceType、targetType,找到合适的转化器进行转换
 				Object targetElement = this.conversionService.convert(sourceElement,
 						sourceType.elementTypeDescriptor(sourceElement), elementDesc);
 				target.add(targetElement);

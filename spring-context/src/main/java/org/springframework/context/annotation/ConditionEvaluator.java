@@ -79,7 +79,7 @@ class ConditionEvaluator {
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
 		if (metadata == null || !metadata.isAnnotated(Conditional.class.getName())) {
-			//metadata 为null,或者元数据注解不含Conditional注解
+			//metadata 为null,或者元数据注解不含Conditional注解，不会跳过
 			return false;
 		}
 

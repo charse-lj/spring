@@ -63,6 +63,8 @@ package org.springframework.context;
  * @since 3.0
  * @see LifecycleProcessor
  * @see ConfigurableApplicationContext
+ *
+ * 当我们启动容器时，如果有Bean实现了SmartLifecycle接口，其getPhase()方法返回的值越小，那么对于的start方法执行的时间就会越早，stop方法执行的时机就会越晚。因此，一个实现SmartLifecycle的对象，它的getPhase()方法返回Integer.MIN_VALUE将是第一个执行start方法的Bean和最后一个执行Stop方法的Bean
  */
 public interface SmartLifecycle extends Lifecycle, Phased {
 
@@ -75,6 +77,8 @@ public interface SmartLifecycle extends Lifecycle, Phased {
 	 * @since 5.1
 	 * @see #getPhase()
 	 * @see org.springframework.context.support.DefaultLifecycleProcessor#getPhase(Lifecycle)
+	 *
+	 * 优先级，默认最低
 	 */
 	int DEFAULT_PHASE = Integer.MAX_VALUE;
 

@@ -58,6 +58,9 @@ import org.springframework.beans.BeansException;
  * @since 06.07.2003
  * @see BeanPostProcessor
  * @see PropertyResourceConfigurer
+ *
+ * BeanFactoryPostProcessor可以对Bean配置元数据进行操作。也就是说，Spring容器允许BeanFactoryPostProcessor读取指定Bean的配置元数据，并可以在Bean被实例化之前修改它。这里说的配置元数据其实就是我们之前讲过的BeanDefinition
+ * 我们可以配置多个BeanFactoryPostProcessor，并且只要我们配置的BeanFactoryPostProcessor同时实现了Ordered接口的话，我们还可以控制这些BeanFactoryPostProcessor执行的顺序
  */
 @FunctionalInterface
 public interface BeanFactoryPostProcessor {

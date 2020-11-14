@@ -65,6 +65,7 @@ class MethodInvocationTests {
 		// If it hits target, the test will fail with the UnsupportedOpException
 		// in the inner class above.
 		invocation.toString();
+		invocation.proceed();
 	}
 
 }
