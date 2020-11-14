@@ -647,6 +647,13 @@ public abstract class StringUtils {
 	 * notice that Windows separators ("\") are replaced by simple slashes.
 	 * @param path the original path
 	 * @return the normalized path
+	 *
+	 * "/"是在Linux下的文件分隔符
+	 * 其实在Windows下"/"和"\"是没有区别的
+	 * 由于在Windows系统下，编写程序是"\"常常表示转义字符，所以我们在要用到"\"的话，只能是使用"\\"。
+	 * file:///C:/Users/lijun/.gradle/wrapper/dists/gradle-6.5.1-all/cdund22i8guosqylfo49op4dv/
+	 *
+	 * 标准 url scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]本地文件没有 host，就直接省略了，只剩下最后的斜线后就是路径，看起来就是三个连起来了
 	 */
 	public static String cleanPath(String path) {
 		if (!hasLength(path)) {
@@ -667,6 +674,7 @@ public abstract class StringUtils {
 		String prefix = "";
 		if (prefixIndex != -1) {
 			prefix = pathToUse.substring(0, prefixIndex + 1);
+			//prefix 是协议,如果包含"/"
 			if (prefix.contains(FOLDER_SEPARATOR)) {
 				prefix = "";
 			}
@@ -674,6 +682,7 @@ public abstract class StringUtils {
 				pathToUse = pathToUse.substring(prefixIndex + 1);
 			}
 		}
+		
 		if (pathToUse.startsWith(FOLDER_SEPARATOR)) {
 			prefix = prefix + FOLDER_SEPARATOR;
 			pathToUse = pathToUse.substring(1);
@@ -683,6 +692,7 @@ public abstract class StringUtils {
 		LinkedList<String> pathElements = new LinkedList<>();
 		int tops = 0;
 
+		//反序遍历,统计..数量,并进行过滤
 		for (int i = pathArray.length - 1; i >= 0; i--) {
 			String element = pathArray[i];
 			if (CURRENT_PATH.equals(element)) {

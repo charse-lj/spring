@@ -39,12 +39,21 @@ import org.springframework.util.ObjectUtils;
  */
 public class InjectionPoint {
 
+	/**
+	 * 包装函数参数时用于保存所包装的函数参数，内含该参数的注解信息
+	 */
 	@Nullable
 	protected MethodParameter methodParameter;
 
+	/**
+	 * 包装成员属性时用于保存所包装的成员属性
+	 */
 	@Nullable
 	protected Field field;
 
+	/**
+	 * 包装成员属性时用于保存所包装的成员属性的注解信息
+	 */
 	@Nullable
 	private volatile Annotation[] fieldAnnotations;
 
