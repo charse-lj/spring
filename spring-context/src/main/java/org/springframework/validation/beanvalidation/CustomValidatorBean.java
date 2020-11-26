@@ -36,12 +36,21 @@ import org.springframework.lang.Nullable;
  */
 public class CustomValidatorBean extends SpringValidatorAdapter implements Validator, InitializingBean {
 
+	/**
+	 * JSR中的接口，校验器工厂
+	 */
 	@Nullable
 	private ValidatorFactory validatorFactory;
 
+	/**
+	 * JSR中的接口，用于封装校验信息
+	 */
 	@Nullable
 	private MessageInterpolator messageInterpolator;
 
+	/**
+	 * JSR中的接口，用于判断属性能否被ValidatorProvider访问
+	 */
 	@Nullable
 	private TraversableResolver traversableResolver;
 
@@ -69,6 +78,9 @@ public class CustomValidatorBean extends SpringValidatorAdapter implements Valid
 	}
 
 
+	/**
+	 * 在SpringValidatorAdapter的基础上实现了InitializingBean，在Bean初始化时调用，用于给上面三个属性进行配置
+	 */
 	@Override
 	public void afterPropertiesSet() {
 		if (this.validatorFactory == null) {

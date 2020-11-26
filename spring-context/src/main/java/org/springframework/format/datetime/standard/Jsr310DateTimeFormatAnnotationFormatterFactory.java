@@ -42,6 +42,7 @@ import org.springframework.util.StringUtils;
  * @author Juergen Hoeller
  * @since 4.0
  * @see org.springframework.format.annotation.DateTimeFormat
+ * 专门用于处理java8中的日期格式
  */
 public class Jsr310DateTimeFormatAnnotationFormatterFactory extends EmbeddedValueResolutionSupport
 		implements AnnotationFormatterFactory<DateTimeFormat> {

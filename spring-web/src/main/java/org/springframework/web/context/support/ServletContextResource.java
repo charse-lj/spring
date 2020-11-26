@@ -48,6 +48,8 @@ import org.springframework.web.util.WebUtils;
  * @see javax.servlet.ServletContext#getResourceAsStream
  * @see javax.servlet.ServletContext#getResource
  * @see javax.servlet.ServletContext#getRealPath
+ *
+ * 是针对于ServletContext封装的资源，用于访问ServletContext环境下的资源。ServletContextResource持有一个ServletContext的引用，其底层是通过ServletContext的getResource()方法和getResourceAsStream()方法来获取资源的
  */
 public class ServletContextResource extends AbstractFileResolvingResource implements ContextResource {
 

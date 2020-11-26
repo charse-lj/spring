@@ -1048,6 +1048,9 @@ public class ResolvableType implements Serializable {
 	 * @since 4.2
 	 * @see #forClass(Class)
 	 * @see #getRawClass()
+	 *
+	 * 对于第一个forRawClass方法，入参传入的一定是一个原始数据类型，也就是一个不带泛型的类的Class对象
+	 * 对于这种原始数据类型，其getGenerics，isAssignableFrom方法的实现逻辑是固定的，所以forRawClass方法直接对这三个方法进行了复写
 	 */
 	public static ResolvableType forRawClass(@Nullable Class<?> clazz) {
 		return new ResolvableType(clazz) {
@@ -1080,6 +1083,7 @@ public class ResolvableType implements Serializable {
 	 */
 	public static ResolvableType forClass(Class<?> baseType, Class<?> implementationClass) {
 		Assert.notNull(baseType, "Base type must not be null");
+		//as方法在之后分析，就是根据继承链找打对应的父类
 		ResolvableType asType = forType(implementationClass).as(baseType);
 		return (asType == NONE ? forType(baseType) : asType);
 	}
@@ -1444,18 +1448,21 @@ public class ResolvableType implements Serializable {
 	static ResolvableType forType(
 			@Nullable Type type, @Nullable TypeProvider typeProvider, @Nullable VariableResolver variableResolver) {
 
+		//这里可以看出，即使我们提供了一个typeProvider，也不会直接调用它的getType返回，而是会进行一层包装，这个是为什么呢？这么做的目的主要就是为了得到一个可以进行序列化的Type
 		if (type == null && typeProvider != null) {
 			type = SerializableTypeWrapper.forTypeProvider(typeProvider);
 		}
 
 		//type == null && typeProvider == null
 		if (type == null) {
+			//自身定义的一个常量
 			return NONE;
 		}
 
 		// For simple Class references, build the wrapper right away -
 		// no expensive resolution necessary, so not worth caching...
 		//class reference
+		// 如果是原始的数据类型（一个简单的Class引用），那么直接封装后返回，这里不做缓存，因为没有上面昂贵的开销
 		if (type instanceof Class) {
 			return new ResolvableType(type, typeProvider, variableResolver, (ResolvableType) null);
 		}

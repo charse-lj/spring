@@ -41,6 +41,8 @@ import org.springframework.util.Assert;
  * @see ClassPathResource
  * @see FileSystemResource
  * @see UrlResource
+ *
+ * 是针对于输入流封装的资源，它的构建需要一个输入流。 对于“getInputStream ”操作将直接返回该字节流，因此只能读取一次该字节流，即“isOpen”永远返回true
  */
 public class InputStreamResource extends AbstractResource {
 

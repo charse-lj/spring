@@ -94,6 +94,7 @@ abstract class ConfigurationClassUtils {
 
 		//类的全限定名
 		String className = beanDef.getBeanClassName();
+		//className== null,说明不是rootBd，beanDef.getFactoryMethodName()！=null 说明已经解析过了
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;
 		}

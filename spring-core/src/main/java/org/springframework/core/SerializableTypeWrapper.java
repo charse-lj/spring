@@ -111,9 +111,12 @@ final class SerializableTypeWrapper {
 	 */
 	@Nullable
 	static Type forTypeProvider(TypeProvider provider) {
+		// 直接从provider获取到具体的类型
 		Type providedType = provider.getType();
 		if (providedType == null || providedType instanceof Serializable) {
 			// No serializable type wrapping necessary (e.g. for java.lang.Class)
+			// 如果本身可以序列化的直接返回，例如Java.lang.Class。
+			// 如果不能进行序列化，多进行一层包装
 			return providedType;
 		}
 		if (IN_NATIVE_IMAGE || !Serializable.class.isAssignableFrom(Class.class)) {
@@ -123,15 +126,22 @@ final class SerializableTypeWrapper {
 		}
 
 		// Obtain a serializable type proxy for the given provider...
+		// 从缓存中获取
 		Type cached = cache.get(providedType);
 		if (cached != null) {
 			return cached;
 		}
+		// 遍历支持的集合，就是GenericArrayType.class, ParameterizedType.class, TypeVariable.class, WildcardType.class，处理这个四种类型
 		for (Class<?> type : SUPPORTED_SERIALIZABLE_TYPES) {
 			if (type.isInstance(providedType)) {
 				ClassLoader classLoader = provider.getClass().getClassLoader();
+				// 创建的代理类实现的接口，type就不用说了代理类跟目标类必须是同一个类型
+				// SerializableTypeProxy：标记接口，标志是一个代理类
+				// Serializable：代表可以被序列化
 				Class<?>[] interfaces = new Class<?>[] {type, SerializableTypeProxy.class, Serializable.class};
+				// 核心代码：TypeProxyInvocationHandler是什么？
 				InvocationHandler handler = new TypeProxyInvocationHandler(provider);
+				// 依赖于先前的InvocationHandler，以当前的type为目标对象创建了一个代理对象
 				cached = (Type) Proxy.newProxyInstance(classLoader, interfaces, handler);
 				cache.put(providedType, cached);
 				return cached;
@@ -194,6 +204,7 @@ final class SerializableTypeWrapper {
 		@Nullable
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			switch (method.getName()) {
+				// 复写目标类的equals方法
 				case "equals":
 					Object other = args[0];
 					// Unwrap proxies for speed
@@ -201,12 +212,16 @@ final class SerializableTypeWrapper {
 						other = unwrap((Type) other);
 					}
 					return ObjectUtils.nullSafeEquals(this.provider.getType(), other);
+				// 复写目标类的hashCode方法
 				case "hashCode":
 					return ObjectUtils.nullSafeHashCode(this.provider.getType());
 				case "getTypeProvider":
+					// 复写目标类的getTypeProvider方法
 					return this.provider;
 			}
 
+			// 之所以不直接返回method.invoke(this.provider.getType(), args);也是为了缓存
+			// 空参的时候才能缓存，带参数的话不能缓存，因为每次调用传入的参数可能不一样
 			if (Type.class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
 				return forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, -1));
 			}

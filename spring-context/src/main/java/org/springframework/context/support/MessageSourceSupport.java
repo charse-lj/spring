@@ -38,6 +38,8 @@ import org.springframework.util.ObjectUtils;
  *
  * @author Juergen Hoeller
  * @since 2.5.5
+ *
+ * 对消息的格式化
  */
 public abstract class MessageSourceSupport {
 

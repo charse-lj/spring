@@ -63,6 +63,8 @@ public class WebDataBinder extends DataBinder {
 	 * marker parameter does not matter in this case; an arbitrary value can be used.
 	 * This is particularly useful for HTML checkboxes and select options.
 	 * @see #setFieldMarkerPrefix
+	 *
+	 * // 这两个字段的详细作用见下面的两个方法checkFieldDefaults/checkFieldMarkers
 	 */
 	public static final String DEFAULT_FIELD_MARKER_PREFIX = "_";
 
@@ -194,6 +196,7 @@ public class WebDataBinder extends DataBinder {
 	protected void doBind(MutablePropertyValues mpvs) {
 		checkFieldDefaults(mpvs);
 		checkFieldMarkers(mpvs);
+		// 没有对数据绑定做什么扩展，只是单纯的调用了父类的方法，也就是DataBinder的方法
 		super.doBind(mpvs);
 	}
 
@@ -204,6 +207,13 @@ public class WebDataBinder extends DataBinder {
 	 * value should be used if the field is otherwise not present.
 	 * @param mpvs the property values to be bound (can be modified)
 	 * @see #getFieldDefaultPrefix
+	 *
+	 *   // 若你给定的PropertyValue的属性名是以!开头的，例如，传入的属性名称为：!name,属性值为：dmz
+	 *     // 那就做处理如下：
+	 *     // 如果Bean中的name属性是可写的并且mpvs不存在name属性，那么向mpvs中添加一个属性对，其中属性名称为name,值为dmz
+	 *     // 然后将!name这个属性值对从mpvs中移除
+	 *     // 其实这里就是说你可以使用！来给个默认值。比如!name表示若找不到name这个属性的时，就取它的值，
+	 *     // 也就是说你request里若有穿!name保底，也就不怕出现null值啦
 	 */
 	protected void checkFieldDefaults(MutablePropertyValues mpvs) {
 		String fieldDefaultPrefix = getFieldDefaultPrefix();
@@ -231,6 +241,14 @@ public class WebDataBinder extends DataBinder {
 	 * @param mpvs the property values to be bound (can be modified)
 	 * @see #getFieldMarkerPrefix
 	 * @see #getEmptyValue(String, Class)
+	 *
+	 *    // 处理_的步骤
+	 *     // 若传入的字段以“_”开头，以属性名称：“_name”，属性值dmz为例
+	 *     // 如果Bean中的name字段可写，并且mpvs没有这个值
+	 *     // 那么对Bean中的name字段赋默认的空值，比如Boolean类型默认给false，数组给空数组[]，集合给空集合，Map给空map
+	 *     // 然后移除mpvs中的“_name”
+	 *     // 相当于说，当我们进行数据绑定时，传入“_name”时，如果没有传入具体的属性值，Spring会为我们赋默认的空值
+	 *     // 前提是必须以“_”开头
 	 */
 	protected void checkFieldMarkers(MutablePropertyValues mpvs) {
 		String fieldMarkerPrefix = getFieldMarkerPrefix();
@@ -275,6 +293,8 @@ public class WebDataBinder extends DataBinder {
 	 * @param fieldType the type of the field
 	 * @return the empty value (for most fields: {@code null})
 	 * @since 5.0
+	 *
+	 * 根据不同的类型给出空值
 	 */
 	@Nullable
 	public Object getEmptyValue(Class<?> fieldType) {
@@ -313,6 +333,8 @@ public class WebDataBinder extends DataBinder {
 	 * @param mpvs the property values to be bound (can be modified)
 	 * @see org.springframework.web.multipart.MultipartFile
 	 * @see #setBindEmptyMultipartFiles
+	 *
+	 * 这个方法表示，支持将文件作为属性绑定到对象的上
 	 */
 	protected void bindMultipart(Map<String, List<MultipartFile>> multipartFiles, MutablePropertyValues mpvs) {
 		multipartFiles.forEach((key, values) -> {

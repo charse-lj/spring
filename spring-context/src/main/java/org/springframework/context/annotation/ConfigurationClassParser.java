@@ -347,6 +347,7 @@ class ConfigurationClassParser {
 		// 解析@ComponentScans和@ComponentScan注解，进行包扫描。最终交给ComponentScanAnnotationParser#parse方法进行处理
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
+		//类上注解的注解ComponentScan属性值
 		if (!componentScans.isEmpty() &&
 				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
 
@@ -372,7 +373,7 @@ class ConfigurationClassParser {
 
 		// Process any @Import annotations
 		//getImports方法的实现 很有意思
-		//递归式的处理@Configuration文件一样处理@Import(内部也就可以写@Bean之类隐式的给容器注册Bean)
+		//和递归式的处理@Configuration文件一样处理@Import(内部也就可以写@Bean之类隐式的给容器注册Bean)
 		//解析到@EnableWebMvc的时候，拿到了它的@Import，拿到DelegatingWebMvcConfiguration，但是我们发现它也还是个@Configuration
 		processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
 
@@ -478,7 +479,7 @@ class ConfigurationClassParser {
 
 	/**
 	 * Register default methods on interfaces implemented by the configuration class.
-	 * 默认方法
+	 * 默认方法,深度优先遍历
 	 */
 	private void processInterfaces(ConfigurationClass configClass, SourceClass sourceClass) throws IOException {
 		//接口类构成的SourceClass
@@ -492,6 +493,7 @@ class ConfigurationClassParser {
 					configClass.addBeanMethod(new BeanMethod(methodMetadata, configClass));
 				}
 			}
+			//递归
 			processInterfaces(configClass, ifc);
 		}
 	}
@@ -659,9 +661,7 @@ class ConfigurationClassParser {
 	 */
 	private void collectImports(SourceClass sourceClass, Set<SourceClass> imports, Set<SourceClass> visited)
 			throws IOException {
-		// 此处什么时候返回true，什么时候返回false，请操作HashMap的put方法的返回值，看什么时候返回null
-		// 答案：put一个新key，返回null。put一个已经存在的key，返回老的value值
-		// 因此此处把add放在if条件里，是比较有技巧性的（若放置的是新的，返回null，若已经存在，就返回的false，不需要用contains()进一步判断了）
+		// 把add放在if条件里，是比较有技巧性的（若放置的是新的，返回true，若已经存在，就返回的false，不需要用contains()进一步判断了）
 		if (visited.add(sourceClass)) {
 			//visited添加sourceClass成功后
 			//遍历sourceClass上由注解组成的SourceClass容器

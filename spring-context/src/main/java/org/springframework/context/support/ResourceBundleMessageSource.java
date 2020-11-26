@@ -76,6 +76,8 @@ import org.springframework.util.ClassUtils;
  * @see ReloadableResourceBundleMessageSource
  * @see java.util.ResourceBundle
  * @see java.text.MessageFormat
+ *
+ * 基于JDK的ResourceBundle实现，可以根据名称加载Bundle
  */
 public class ResourceBundleMessageSource extends AbstractResourceBasedMessageSource implements BeanClassLoaderAware {
 

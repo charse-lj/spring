@@ -67,6 +67,9 @@ package org.springframework.core.env;
  * @see org.springframework.context.ConfigurableApplicationContext#getEnvironment
  * @see org.springframework.context.ConfigurableApplicationContext#setEnvironment
  * @see org.springframework.context.support.AbstractApplicationContext#createEnvironment
+ *
+ * Environment接口继承了PropertyResolver，而Environment接口自身主要提供了对Profile的操作，PropertyResolver接口中主要提供了对当前运行环境中属性的操作，
+ * 如果我们去查看它的一些方法的实现可以发现，对属性的操作大都依赖于PropertySource
  */
 public interface Environment extends PropertyResolver {
 

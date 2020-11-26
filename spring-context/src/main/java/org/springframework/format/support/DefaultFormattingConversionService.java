@@ -53,7 +53,9 @@ public class DefaultFormattingConversionService extends FormattingConversionServ
 
 	static {
 		ClassLoader classLoader = DefaultFormattingConversionService.class.getClassLoader();
+		// 判断是否导入了jsr354相关的包
 		jsr354Present = ClassUtils.isPresent("javax.money.MonetaryAmount", classLoader);
+		// 判断是否导入了joda
 		jodaTimePresent = ClassUtils.isPresent("org.joda.time.LocalDate", classLoader);
 	}
 
@@ -62,6 +64,7 @@ public class DefaultFormattingConversionService extends FormattingConversionServ
 	 * Create a new {@code DefaultFormattingConversionService} with the set of
 	 * {@linkplain DefaultConversionService#addDefaultConverters default converters} and
 	 * {@linkplain #addDefaultFormatters default formatters}.
+	 * 会注册很多默认的格式化器
 	 */
 	public DefaultFormattingConversionService() {
 		this(null, true);
@@ -108,9 +111,11 @@ public class DefaultFormattingConversionService extends FormattingConversionServ
 	 */
 	public static void addDefaultFormatters(FormatterRegistry formatterRegistry) {
 		// Default handling of number values
+		// 添加针对@NumberFormat的格式化器
 		formatterRegistry.addFormatterForFieldAnnotation(new NumberFormatAnnotationFormatterFactory());
 
 		// Default handling of monetary values
+		// 针对货币的格式化器
 		if (jsr354Present) {
 			formatterRegistry.addFormatter(new CurrencyUnitFormatter());
 			formatterRegistry.addFormatter(new MonetaryAmountFormatter());
@@ -121,15 +126,23 @@ public class DefaultFormattingConversionService extends FormattingConversionServ
 
 		// just handling JSR-310 specific date and time types
 		new DateTimeFormatterRegistrar().registerFormatters(formatterRegistry);
-
+		// 如没有导入joda的包，那就默认使用Date
 		if (jodaTimePresent) {
 			// handles Joda-specific types as well as Date, Calendar, Long
+			// 针对Joda
 			new JodaTimeFormatterRegistrar().registerFormatters(formatterRegistry);
 		}
 		else {
 			// regular DateFormat-based Date, Calendar, Long converters
+			// 没有joda的包，是否Date
 			new DateFormatterRegistrar().registerFormatters(formatterRegistry);
 		}
+
+		//其中的JodaTimeFormatterRegistrar，DateFormatterRegistrar就是FormatterRegistrar。那么这个接口有什么用呢？我们先来看看它的接口定义：
+		//为什么已经有了FormatterRegistry,Spring还要开发一个FormatterRegistrar呢？直接使用FormatterRegistry完成注册不好吗？
+		//我们可以发现FormatterRegistrar相当于对格式化器及转换器进行了分组，我们调用它的registerFormatters方法，相当于将这一组格式化器直接添加到指定的formatterRegistry中。
+		// 这样做的好处在于，如果我们对同一个类型的数据有两组不同的格式化策略，
+		// 例如就以上面的日期为例，我们既有可能采用joda的策略进行格式化，也有可能采用Date的策略进行格式化，通过分组的方式，我们可以更见方便的在确认好策略后将需要的格式化器添加到容器中
 	}
 
 }

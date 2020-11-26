@@ -44,6 +44,12 @@ import org.springframework.util.StringUtils;
  * @since 10.03.2004
  * @see FileSystemResourceLoader
  * @see org.springframework.context.support.ClassPathXmlApplicationContext
+ *
+ *   ant-style
+ *   classpath跟classpath*
+ * classpath:用于加载类路径（包括jar包）中的一个且仅一个资源；
+ *
+ * classpath*:用于加载类路径（包括jar包）中的所有匹配的资源，可使用Ant路径模式。
  */
 public class DefaultResourceLoader implements ResourceLoader {
 
@@ -140,6 +146,11 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 
+	/**
+	 * 正常来说protocolResolvers集合是空的，除非我们调用了它的addProtocolResolver方法添加了自定义协议处理器，调用addProtocolResolver方法所添加的协议处理器会覆盖原有的处理逻辑
+	 * @param location the resource location
+	 * @return
+	 */
 	@Override
 	public Resource getResource(String location) {
 		Assert.notNull(location, "Location must not be null");
@@ -151,20 +162,25 @@ public class DefaultResourceLoader implements ResourceLoader {
 			}
 		}
 
+		// 如果是以“/”开头，直接返回一个classpathResource
 		if (location.startsWith("/")) {
 			return getResourceByPath(location);
 		}
+		// 如果是形如：classpath:test.dat也直接返回一个ClassPathResource
 		else if (location.startsWith(CLASSPATH_URL_PREFIX)) {
 			return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()), getClassLoader());
 		}
 		else {
 			try {
 				// Try to parse the location as a URL...
+				// 否则将其解析为一个URL
 				URL url = new URL(location);
+				// 如果是一个文件，直接返回一个FileUrlResource，否则返回一个普通的UrlResource
 				return (ResourceUtils.isFileURL(url) ? new FileUrlResource(url) : new UrlResource(url));
 			}
 			catch (MalformedURLException ex) {
 				// No URL -> resolve as resource path.
+				// 如果URL转换失败，还是作为一个普通的ClassPathResource
 				return getResourceByPath(location);
 			}
 		}

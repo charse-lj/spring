@@ -729,6 +729,8 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	public void bind(PropertyValues pvs) {
 		MutablePropertyValues mpvs = (pvs instanceof MutablePropertyValues ?
 				(MutablePropertyValues) pvs : new MutablePropertyValues(pvs));
+		// 最终调用了doBind方法，如果大家对Spring代码有所了解的话，会发现Spring中有很多doXXX的方法
+		// 形如doXXX这种命名方式的方法往往就是真正“干活”的代码，对于本例来说，肯定就是它来完成数据绑定的
 		doBind(mpvs);
 	}
 
@@ -742,8 +744,11 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #applyPropertyValues
 	 */
 	protected void doBind(MutablePropertyValues mpvs) {
+		// 校验
 		checkAllowedFields(mpvs);
+		// 校验
 		checkRequiredFields(mpvs);
+		// 真正进行数据绑定
 		applyPropertyValues(mpvs);
 	}
 
@@ -847,6 +852,10 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 */
 	protected void applyPropertyValues(MutablePropertyValues mpvs) {
 		try {
+			// 逻辑非常简单，获取一个属性访问器，然后直接通过属性访问器将属性值设置上去
+			// IgnoreUnknownFields：忽略在Bean中找不到的属性
+			// IgnoreInvalidFields：忽略找到，但是没有访问权限的值
+
 			// Bind request parameters onto target object.
 			getPropertyAccessor().setPropertyValues(mpvs, isIgnoreUnknownFields(), isIgnoreInvalidFields());
 		}

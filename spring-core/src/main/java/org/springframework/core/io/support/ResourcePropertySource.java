@@ -41,6 +41,8 @@ import org.springframework.util.StringUtils;
  * @since 3.1
  * @see org.springframework.core.io.Resource
  * @see org.springframework.core.io.support.EncodedResource
+ *
+ * source是一个Properties对象
  */
 public class ResourcePropertySource extends PropertiesPropertySource {
 

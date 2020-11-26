@@ -1265,6 +1265,30 @@ public abstract class ClassUtils {
 	 * @return the specific target method, or the original method if the
 	 * {@code targetClass} does not implement it
 	 * @see #getInterfaceMethodIfPossible
+	 *
+	 *
+	 * 代码的主要目的就是为了处理下面这种情况
+	 * @Component
+	 * public class D extends C {
+	 *
+	 *        @Autowired
+	 *    @Override
+	 *    public void setDmzService(DmzService dmzService) {
+	 * 		dmzService.init();
+	 * 		this.dmzService = dmzService;
+	 *    }
+	 * }
+	 *
+	 * // C不是Spring中的组件
+	 * public class C {
+	 * 	DmzService dmzService;
+	 *     @Autowired
+	 *    public void setDmzService(DmzService dmzService) {
+	 * 		this.dmzService = dmzService;
+	 *    }
+	 * }
+	 *
+	 * 这种情况下，在处理D中的@Autowired注解时，虽然我们要处理父类中的@Autowired注解，但是因为子类中的方法已经复写了父类中的方法，所以此时应该要跳过父类中的这个被复写的方法，这就是第三行代码的作用。
 	 */
 	public static Method getMostSpecificMethod(Method method, @Nullable Class<?> targetClass) {
 		if (targetClass != null && targetClass != method.getDeclaringClass() && isOverridable(method, targetClass)) {

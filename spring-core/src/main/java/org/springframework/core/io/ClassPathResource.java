@@ -40,6 +40,11 @@ import org.springframework.util.StringUtils;
  * @since 28.12.2003
  * @see ClassLoader#getResourceAsStream(String)
  * @see Class#getResourceAsStream(String)
+ *
+ * 使用Class对象的getResource(String path)获取资源URL，getResourceAsStream(String path)获取资源流。 参数既可以是当前class文件相对路径（以文件夹或文件开头），也可以是当前class文件的绝对路径（以“/”开头,相对于当前classpath根目录）
+ * 使用ClassLoader对象的getResource(String path)获取资源URL，getResourceAsStream(String path)获取资源流。参数只能是绝对路径，但不以“/”开头
+ *
+ * ClassPathResource代表classpath路径的资源，将使用给定的Class或ClassLoader进行加载classpath资源。 “isOpen”永远返回false，表示可多次读取资源
  */
 public class ClassPathResource extends AbstractFileResolvingResource {
 

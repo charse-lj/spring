@@ -47,9 +47,22 @@ import java.lang.annotation.Target;
  * @see org.springframework.validation.SmartValidator#validate(Object, org.springframework.validation.Errors, Object...)
  * @see org.springframework.validation.beanvalidation.SpringValidatorAdapter
  * @see org.springframework.validation.beanvalidation.MethodValidationPostProcessor
+ *
+ *	Spring中的校验就是两种
+ *	1.Spring在接口上对JavaBean的校验
+ *		校验失败将抛出org.springframework.web.bind.MethodArgumentNotValidException异常
+ *		对于接口上JavaBean的校验是Spring在对参数进行绑定时做了一层封装，大家可以看看org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor#resolveArgument
+ *	2.Spring在普通方法上的校验
+ *		校验失败将抛出javax.validation.ConstraintViolationException异常
+ *
  */
+
+// Target代表这个注解能使用在类/接口/枚举上，方法上以及方法的参数上
+// 注意注意！！！！ 它不能注解到字段上
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
+// 在运行时期仍然生效（注解不仅被保存到class文件中，jvm加载class文件之后，仍然存在）
 @Retention(RetentionPolicy.RUNTIME)
+// 这个注解应该被 javadoc工具记录. 默认情况下,javadoc是不包括注解的. 但如果声明注解时指定了 @Documented,则它会被 javadoc 之类的工具处理, 所以注解类型信息也会被包括在生成的文档中，是一个标记注解，没有成员。
 @Documented
 public @interface Validated {
 
@@ -61,6 +74,8 @@ public @interface Validated {
 	 * {@link org.springframework.validation.beanvalidation.SpringValidatorAdapter}.
 	 * <p>Other {@link org.springframework.validation.SmartValidator} implementations may
 	 * support class arguments in other ways as well.
+	 *
+	 * 校验时启动的分组
 	 */
 	Class<?>[] value() default {};
 

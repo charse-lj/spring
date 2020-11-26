@@ -77,6 +77,7 @@ public interface Validator {
 	 * @return {@code true} if this {@link Validator} can indeed
 	 * {@link #validate(Object, Errors) validate} instances of the
 	 * supplied {@code clazz}
+	 * 此clazz是否可以被validate
 	 */
 	boolean supports(Class<?> clazz);
 
@@ -89,6 +90,10 @@ public interface Validator {
 	 * @param target the object that is to be validated
 	 * @param errors contextual state about the validation process
 	 * @see ValidationUtils
+	 *
+	 *  执行校验，错误消息放在Errors中
+	 *  如果能执行校验，通常也意味着supports方法返回true
+	 * 	可以参考ValidationUtils这个工具类
 	 */
 	void validate(Object target, Errors errors);
 

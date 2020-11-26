@@ -32,6 +32,8 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 3.2
  * @see SimpleTypeConverter
+ *
+ * 这个接口实现了TypeConverter，所以它具有类型转换的能力，而它这种能力的实现，依赖于它所持有的一个TypeConverterDelegate。
  */
 public abstract class TypeConverterSupport extends PropertyEditorRegistrySupport implements TypeConverter {
 

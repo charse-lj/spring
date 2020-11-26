@@ -69,7 +69,8 @@ public interface ImportSelector {
 	 * Select and return the names of which class(es) should be imported based on
 	 * the {@link AnnotationMetadata} of the importing @{@link Configuration} class.
 	 * @return the class names, or an empty array if none,都必须是类的全类名，才会被注册进去的（若你返回的全类名不存在该类，容器会抛错）
-	 * @param importingClassMetadata 包含配置类上面所有的注解信息，以及该配置类本身;若有需要，可以根据这些其它注解信息，来判断哪些Bean应该注册进去，哪些不需要
+	 * @param importingClassMetadata
+	 * 包含配置类上面所有的注解信息，以及该配置类本身;若有需要，可以根据这些其它注解信息，来判断哪些Bean应该注册进去，哪些不需要
 	 * 容器在会在特定的时机，帮我们调用这个方法，向容器里注入Bean信息
 	 *
 	 * {@link AdviceModeImportSelector}

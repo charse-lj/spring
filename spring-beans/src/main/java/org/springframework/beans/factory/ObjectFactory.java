@@ -35,6 +35,20 @@ import org.springframework.beans.BeansException;
  * @since 1.0.2
  * @param <T> the object type
  * @see FactoryBean
+ * 一个对象工厂
+ * Spring中主要两处用了它
+ * 1.Scope接口中的get方法，需要传入一个ObjectFactory
+ * 		这个方法的目的就是从对于的域中获取到指定名称的对象。为什么要传入一个objectFactory呢？主要是为了方便我们扩展自定义的域，而不是仅仅使用request，session等域
+ * 2.ConfigurableListableBeanFactory类中的registerResolvableDependency方法
+ * 		Spring通过这种方式注入了request,response等对象
+ * 		当我们在某一个类中如果注入了ServletRequest对象，并不会直接创建一个ServletRequest然后注入进去，而是注入一个代理类，代理类中的方法是通过ObjectFactoryDelegatingInvocationHandler实现的，而这个对象中会持有一个RequestObjectFactory对象。基于此，我们可以通过下面这种方式直接注入request对象，并且保证线程安全
+ * @RestController
+ * public class AutowiredRequestController {
+ *
+ *     @Autowired
+ *     private HttpServletRequest request;
+ * }
+ *
  */
 @FunctionalInterface
 public interface ObjectFactory<T> {

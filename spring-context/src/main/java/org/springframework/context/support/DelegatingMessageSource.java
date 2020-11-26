@@ -34,6 +34,8 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @since 1.1.5
  * @see AbstractApplicationContext
+ *
+ * 所有获取消息的请求委托给父类查找，如果父类没有就报错
  */
 public class DelegatingMessageSource extends MessageSourceSupport implements HierarchicalMessageSource {
 

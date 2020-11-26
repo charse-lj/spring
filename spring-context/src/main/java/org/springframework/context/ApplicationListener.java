@@ -37,6 +37,27 @@ import java.util.EventListener;
  * @see org.springframework.context.event.EventListener
  *
  * ApplicationListener实现了JDK的EventListener，但它抽象出一个onApplicationEvent方法，使用更方便
+ *
+ * 事件监听器主要分为两种，一种是我们通过实现接口直接注册到容器中的Bea
+ *
+ * @Component
+ * static class EventListener implements ApplicationListener<MyEvent> {
+ *     @Override
+ *     public void onApplicationEvent(MyEvent event) {
+ *         System.out.println("接收到事件：" + event.getSource());
+ *         System.out.println("处理事件....");
+ *     }
+ * }
+ * 另外一个是通过注解的方式
+ *
+ * @Component
+ * static class Listener {
+ *     @EventListener  -->EventListenerMethodProcessor
+ *     public void listen1(Event event) {
+ *         System.out.println("接收到事件1:" + event);
+ *         System.out.println("处理事件");
+ *     }
+ * }
  */
 @FunctionalInterface
 public interface ApplicationListener<E extends ApplicationEvent> extends EventListener {

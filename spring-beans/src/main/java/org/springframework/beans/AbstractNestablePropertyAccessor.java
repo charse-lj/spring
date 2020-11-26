@@ -68,6 +68,10 @@ import org.springframework.util.StringUtils;
  * @see #getPropertyType
  * @see BeanWrapper
  * @see PropertyEditorRegistrySupport
+ *
+ * 这个类开始真正的将属性访问跟类型转换结合到一起，它真正的实现了setPropertyValue，并在设置属性的时候会进行类型的转换，具体代码就不看了，非常繁杂，但是整体不难。
+ *
+ * 上面我们多次提到了类型转换，但是还没有真正看到类型转换的逻辑，因为上面类最终将类型转换的逻辑委托给了TypeConverterDelegate。接下来我们看看，类型转换到底是怎么完成。
  */
 public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyAccessor {
 
@@ -236,13 +240,20 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 	public void setPropertyValue(String propertyName, @Nullable Object value) throws BeansException {
 		AbstractNestablePropertyAccessor nestedPa;
 		try {
+			// 这里是为了解决嵌套属性的情况，比如一个person对象中，包含一个dog对象，dog对象中有一个name属性
+			// 那么我们可以通过dog.name这种方式来将一个名字直接绑定到person中的dog上
+			// 与此同时，我们不能再使用person的属性访问器了，因为使用dog的属性访问器，这里就是返回dog的属性访问器
 			nestedPa = getPropertyAccessorForPropertyPath(propertyName);
 		}
 		catch (NotReadablePropertyException ex) {
 			throw new NotWritablePropertyException(getRootClass(), this.nestedPath + propertyName,
 					"Nested property in path '" + propertyName + "' does not exist", ex);
 		}
+		// PropertyTokenHolder是什么呢？例如我们的Person对象中有一个List<String> name的属性，
+		// 那么我们在绑定时，需要对List中的元素进行赋值，所有我们会使用name[0],name[1]这种方式来进行绑定，
+		// 而PropertyTokenHolder中有三个属性，其中actualName代表name,canonicalName代表整个表达式name[0],而key则代表0这个下标位置
 		PropertyTokenHolder tokens = getPropertyNameTokens(getFinalPath(nestedPa, propertyName));
+		// 最后通过属性访问器设置值
 		nestedPa.setPropertyValue(tokens, new PropertyValue(propertyName, value));
 	}
 
@@ -272,9 +283,11 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 
 	protected void setPropertyValue(PropertyTokenHolder tokens, PropertyValue pv) throws BeansException {
 		if (tokens.keys != null) {
+			// 前面已经说过了，keys其实就是下标数组，如果你能看到这里的话，肯定会有一个疑问,为什么需要一个数组呢？考虑这种属性List<List<String>> list,这个时候为了表示它,是不是就要list[0][0]这种方式了呢？这个时候就需要用数组存储了，因为一个属性需要多个下标表示
 			processKeyedProperty(tokens, pv);
 		}
 		else {
+			// 我们关注这个方法即可，解析完PropertyTokenHolder后，最终都要调用这个方法
 			processLocalProperty(tokens, pv);
 		}
 	}
@@ -431,6 +444,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		try {
 			Object originalValue = pv.getValue();
 			Object valueToApply = originalValue;
+			// 判断成立，代表需要进行类型转换，conversionNecessary为null或者为true都成立
 			if (!Boolean.FALSE.equals(pv.conversionNecessary)) {
 				if (pv.isConverted()) {
 					valueToApply = pv.getConvertedValue();
@@ -450,6 +464,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 							}
 						}
 					}
+					// 类型转换的部分，之前已经分析过了，这里就没什么好讲的了
 					valueToApply = convertForProperty(
 							tokens.canonicalName, oldValue, originalValue, ph.toTypeDescriptor());
 				}

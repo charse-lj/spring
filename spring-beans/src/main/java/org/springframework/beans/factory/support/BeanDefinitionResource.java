@@ -32,6 +32,8 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 2.5.2
  * @see org.springframework.core.io.DescriptiveResource
+ *
+ * 只是对BeanDefinition进行的一次描述性的封装
  */
 class BeanDefinitionResource extends AbstractResource {
 

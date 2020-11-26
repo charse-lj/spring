@@ -160,6 +160,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	/**
 	 * Return the resolution strategy for expressions in bean definition values.
 	 * @since 3.0
+	 *
+	 * 定义用于解析bean definition的表达式解析器
 	 */
 	@Nullable
 	BeanExpressionResolver getBeanExpressionResolver();

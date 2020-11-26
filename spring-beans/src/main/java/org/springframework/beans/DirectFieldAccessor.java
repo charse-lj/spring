@@ -44,6 +44,8 @@ import org.springframework.util.ReflectionUtils;
  * @see BeanWrapper
  * @see org.springframework.validation.DirectFieldBindingResult
  * @see org.springframework.validation.DataBinder#initDirectFieldAccess()
+ *
+ * 基于反射，不需要提供getter/setter方法
  */
 public class DirectFieldAccessor extends AbstractNestablePropertyAccessor {
 

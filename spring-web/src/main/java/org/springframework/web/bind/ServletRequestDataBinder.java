@@ -98,12 +98,19 @@ public class ServletRequestDataBinder extends WebDataBinder {
 	 * @see #bind(org.springframework.beans.PropertyValues)
 	 */
 	public void bind(ServletRequest request) {
+		// 从request中解析除MutablePropertyValues，用于后面的数据绑定
 		MutablePropertyValues mpvs = new ServletRequestParameterPropertyValues(request);
+		// 如果是一个MultipartRequest，返回一个MultipartRequest
+		// 上传文件时，都是使用MultipartRequest来封装请求
 		MultipartRequest multipartRequest = WebUtils.getNativeRequest(request, MultipartRequest.class);
+		// 说明这个请求对象是一个MultipartRequest
 		if (multipartRequest != null) {
+			// 调用父类方法绑定对应的文件
 			bindMultipart(multipartRequest.getMultiFileMap(), mpvs);
 		}
+		// 留给子类扩展使用
 		addBindValues(mpvs, request);
+		// 调用WebDataBinder的doBind方法进行数据绑定
 		doBind(mpvs);
 	}
 

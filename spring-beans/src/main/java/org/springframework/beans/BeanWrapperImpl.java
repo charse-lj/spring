@@ -59,12 +59,41 @@ import org.springframework.util.ReflectionUtils;
  * @see #getPropertyType
  * @see BeanWrapper
  * @see PropertyEditorRegistrySupport
+ *
+ * 对Bean进行包装
+ * 对Bean的属性进行访问以及设置
+ * 在操作属性的过程中，必然涉及到类型转换，所以还有类型转换的功能
+ *
+ * 在详细了解BeanWrapperImpl前，必须要了解java中的一个机制：内省
+ *  首先可以先了解下JavaBean的概念：一种特殊的类，主要用于传递数据信息。这种类中的方法主要用于访问私有的字段，且方法名符合某种命名规则。
+ *  如果在两个模块之间传递信息，可以将信息封装进JavaBean中，这种对象称为“值对象”(Value Object)，或“VO”
+ *
+ * 因此JavaBean都有如下几个特征：
+ *   属性都是私有的；
+ *   有无参的public构造方法；
+ *   对私有属性根据需要提供公有的getXxx方法以及setXxx方法；
+ *   getters必须有返回值没有方法参数；setter值没有返回值，有方法参数；
+ *   符合这些特征的类，被称为JavaBean；JDK中提供了一套API用来访问某个属性的getter/setter方法，这些API存放在java.beans中，这就是内省(Introspector)。
+ *
+ *   内省和反射的区别:
+ *   反射：Java反射机制是在运行中，对任意一个类，能够获取得到这个类的所有属性和方法；它针对的是任意类
+ * 	内省（Introspector）：是Java语言对JavaBean类属性、事件的处理方法
+ * 		1.反射可以操作各种类的属性，而内省只是通过反射来操作JavaBean的属性
+ * 		2.内省设置属性值肯定会调用setter方法，反射可以不用（反射可直接操作属性Field）
+ * 		3.反射就像照镜子，然后能看到.class的所有，是客观的事实。内省更像主观的判断：比如看到getName()，内省就会认为这个类中有name字段，但事实上并不一定会有name；通过内省可以获取bean的getter/setter
+ *
+ * 	基于内省，依赖getter/setter方法
+ *
+ * 	我们可以思考一个问题，为什么Spring在实现数据绑定的时候不采用DirectFieldAccessor而是BeanWrapperImpl呢？换言之，为什么不直接使用反射而使用内省呢？
+ *
+ * 我个人的理解是：反射容易打破Bean的封装性，基于内省更安全。Spring在很多地方都不推荐使用反射的方式，比如我们在使用@Autowired注解进行字段注入的时候，编译器也会提示，”Field injection is not recommended “，不推荐我们使用字段注入，最好将@Autowired添加到setter方法上。
  */
 public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements BeanWrapper {
 
 	/**
 	 * Cached introspections results for this object, to prevent encountering
 	 * the cost of JavaBeans introspection every time.
+	 * 缓存内省的结果，BeanWrapperImpl就是通过这个对象来完成对包装的Bean的属性的控制
 	 */
 	@Nullable
 	private CachedIntrospectionResults cachedIntrospectionResults;
@@ -144,6 +173,7 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 	public void setBeanInstance(Object object) {
 		this.wrappedObject = object;
 		this.rootObject = object;
+		// 实际进行类型转换的对象：typeConverterDelegate
 		this.typeConverterDelegate = new TypeConverterDelegate(this, this.wrappedObject);
 		setIntrospectionClass(object.getClass());
 	}
@@ -168,6 +198,7 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 	/**
 	 * Obtain a lazily initialized CachedIntrospectionResults instance
 	 * for the wrapped object.
+	 * 最终调用的就是CachedIntrospectionResults的forClass方法进行内省并缓存，底层调用的就是java的内省机制
 	 */
 	private CachedIntrospectionResults getCachedIntrospectionResults() {
 		if (this.cachedIntrospectionResults == null) {

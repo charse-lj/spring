@@ -48,6 +48,8 @@ public interface ConditionalConverter  {
 	 * @param sourceType the type descriptor of the field we are converting from
 	 * @param targetType the type descriptor of the field we are converting to
 	 * @return true if conversion should be performed, false otherwise
+	 *
+	 * 判断是否需要对目标类型转换到原类型，返回true的话代表要执行转换，否则不执行转换
 	 */
 	boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType);
 

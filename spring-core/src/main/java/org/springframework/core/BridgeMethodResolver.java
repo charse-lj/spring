@@ -229,11 +229,30 @@ public final class BridgeMethodResolver {
 	 * introduced in Java 6 to fix https://bugs.java.com/view_bug.do?bug_id=6342411.
 	 * See also https://stas-blogspot.blogspot.com/2010/03/java-bridge-methods-explained.html
 	 * @return whether signatures match as described
+	 *
+	 * // A类跟B类在同一个包下，A不是public的
+	 * class A {
+	 * 	public void test(){
+	 *
+	 *        }
+	 * }
+	 *
+	 * // 在B中会生成一个跟A中的方法描述符（参数+返回值）一模一样的桥接方法
+	 * // 这个桥接方法实际上就是调用父类中的方法
+	 * // 具体可以参考：https://bugs.java.com/bugdatabase/view_bug.do?bug_id=63424113
+	 * public class B extends A {
+	 * }
 	 */
 	public static boolean isVisibilityBridgeMethodPair(Method bridgeMethod, Method bridgedMethod) {
+		// 说明这个方法本身就不是桥接方法，直接返回true
 		if (bridgeMethod == bridgedMethod) {
 			return true;
 		}
+		// 说明是桥接方法，并且方法描述符一致
+		// 当且仅当是上面例子中描述的这种桥接的时候这个判断才会满足
+		// 正常来说桥接方法跟被桥接方法的返回值+参数类型肯定不一致
+		// 所以这个判断会过滤掉其余的所有类型的桥接方法
+		// 只会保留本文提及这种特殊情况下产生的桥接方法
 		return (bridgeMethod.getReturnType().equals(bridgedMethod.getReturnType()) &&
 				bridgeMethod.getParameterCount() == bridgedMethod.getParameterCount() &&
 				Arrays.equals(bridgeMethod.getParameterTypes(), bridgedMethod.getParameterTypes()));

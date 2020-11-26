@@ -34,6 +34,8 @@ import org.springframework.lang.Nullable;
  * @since 2.0
  * @see SimpleTypeConverter
  * @see BeanWrapperImpl
+ *
+ * 定义了进行类型转换时的一些规范，就像名字定义的那样，主要用来做类型转换
  */
 public interface TypeConverter {
 
@@ -50,6 +52,8 @@ public interface TypeConverter {
 	 * @see java.beans.PropertyEditor#getValue()
 	 * @see org.springframework.core.convert.ConversionService
 	 * @see org.springframework.core.convert.converter.Converter
+	 *
+	 * 将指定的值转换成指定的类型
 	 */
 	@Nullable
 	<T> T convertIfNecessary(@Nullable Object value, @Nullable Class<T> requiredType) throws TypeMismatchException;
@@ -69,6 +73,8 @@ public interface TypeConverter {
 	 * @see java.beans.PropertyEditor#getValue()
 	 * @see org.springframework.core.convert.ConversionService
 	 * @see org.springframework.core.convert.converter.Converter
+	 *
+	 * 相对于上面这个方法下面这个三种方法能处理转换过程中的泛型
 	 */
 	@Nullable
 	<T> T convertIfNecessary(@Nullable Object value, @Nullable Class<T> requiredType,

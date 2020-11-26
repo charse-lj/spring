@@ -43,15 +43,28 @@ import org.springframework.util.Assert;
  *
  * @author Juergen Hoeller
  * @since 4.0
+ *
+ * 这个类是最底层的子类，集成了所有的方法，并且额外提供了对依赖进行延迟处理的能力
  */
 public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotationAutowireCandidateResolver {
 
+	/**
+	 * 如果依赖需要进行延迟处理，那么构建一个代理对象先注入到bean中，不会直接去创建依赖对象
+	 * @param descriptor
+	 * @param beanName
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, @Nullable String beanName) {
 		return (isLazy(descriptor) ? buildLazyResolutionProxy(descriptor, beanName) : null);
 	}
 
+	/**
+	 * 依赖是否需要延迟处理
+	 * @param descriptor
+	 * @return
+	 */
 	protected boolean isLazy(DependencyDescriptor descriptor) {
 		for (Annotation ann : descriptor.getAnnotations()) {
 			Lazy lazy = AnnotationUtils.getAnnotation(ann, Lazy.class);

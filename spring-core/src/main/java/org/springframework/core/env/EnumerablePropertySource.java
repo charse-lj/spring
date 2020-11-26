@@ -77,6 +77,9 @@ public abstract class EnumerablePropertySource<T> extends PropertySource<T> {
 	/**
 	 * Return the names of all properties contained by the
 	 * {@linkplain #getSource() source} object (never {@code null}).
+	 *
+	 * 新增了这个方法
+	 * Spring设计这个类的主要目的是为了，让调用者可以不访问其中的Source对象但是能判断这个PropertySource中是否包含了指定的key，所以它多提供了一个getPropertyNames，同时这段javadoc还指出，子类的实现应该考虑去缓存getPropertyNames这个方法的返回值去尽可能的压榨性能
 	 */
 	public abstract String[] getPropertyNames();
 

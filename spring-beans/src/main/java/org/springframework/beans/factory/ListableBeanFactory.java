@@ -77,7 +77,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @return if this bean factory contains a bean definition with the given name
 	 * @see #containsBean
 	 *
-	 * 这三个都是和Bean定义信息有关的方法
+	 * 查找容器中是否包含对应名称的BeanDefinition,忽略层级关系，只在当前容器中查找
 	 */
 	boolean containsBeanDefinition(String beanName);
 
@@ -87,6 +87,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * and ignores any singleton beans that have been registered by
 	 * other means than bean definitions.
 	 * @return the number of beans defined in the factory
+	 *
+	 * 查找容器中包含的BeanDefinition的数量,忽略层级关系，只在当前容器中查找
 	 */
 	int getBeanDefinitionCount();
 
@@ -97,6 +99,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * other means than bean definitions.
 	 * @return the names of all beans defined in this factory,
 	 * or an empty array if none defined
+	 * 获取当前容器中所有的BeanDefinition的名称
+	 * 忽略层级关系，只在当前容器中查找
 	 */
 	String[] getBeanDefinitionNames();
 
@@ -132,6 +136,9 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * 在许多实现中，此方法返回的结果与调用getBeansOfType(type, true, true)一样
 	 * 这个方法返回的bean名称应该尽可能与后台配置的bean定义顺序一样
 	 * 若没有符合条件的，返回的空数组，而不是null
+	 *
+	 * 根据指定类型获取容器中的对应的Bean的名称，可能会有多个
+	 * 既会通过BeanDefinition做判断，也会通过FactoryBean的getObjectType方法判断
 	 */
 	String[] getBeanNamesForType(ResolvableType type);
 
@@ -170,6 +177,12 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * includeNonSingletons：false表示只查单例Bean。true表示包含prototype或者其它Scope的Bean们
 	 * allowEagerInit：主要是解决FactoryBean的情况。若为false，只会去检查FactoryBean本身,若为true，FactoryBean本身和它的产生的对象都会被检查匹配
 	 * 上面的方法底层调用的为：return getBeanNamesForType(type, true, true); 所以上面方法是全拿（一般不建议调用）
+	 *
+	 *  根据指定类型获取容器中的对应的Bean的名称，可能会有多个
+	 *  既会通过BeanDefinition做判断，也会通过FactoryBean的getObjectType方法判断
+	 *  includeNonSingletons：是否能包含非单例的Bean
+	 *  allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean
+	 *  默认是懒加载的，为了推断它的类型可能会进行初始化。
 	 */
 	String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit);
 
@@ -266,6 +279,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * 	此方法返回的结果与调用getBeansOfType(type, true, true)一样
 	 * 	实现者：Map的顺序要尽最大可能的与配置时一样
 	 * 	备注：此方法但凡一调用，即使有些Bean只是Bean定义的话，也会被立马初始化的~~~~~
+	 *
+	 * 	获取指定类型的Bean,返回一个map,key为bean的名称，value为对应的Bean
 	 */
 	<T> Map<String, T> getBeansOfType(@Nullable Class<T> type) throws BeansException;
 
@@ -301,6 +316,11 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @throws BeansException if a bean could not be created
 	 * @see FactoryBean#getObjectType
 	 * @see BeanFactoryUtils#beansOfTypeIncludingAncestors(ListableBeanFactory, Class, boolean, boolean)
+	 *
+	 *   获取指定类型的Bean,返回一个map,key为bean的名称，value为对应的Bean
+	 *   includeNonSingletons：是否能包含非单例的Bean
+	 *   allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean
+	 *   默认是懒加载的，为了推断它的类型可能会进行初始化
 	 */
 	<T> Map<String, T> getBeansOfType(@Nullable Class<T> type, boolean includeNonSingletons, boolean allowEagerInit)
 			throws BeansException;
@@ -317,6 +337,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @see #findAnnotationOnBean
 	 *
 	 *  这个接口会把所有标注有指定注解的Bean的定义信息的BeanName返回
+	 *  获取添加了指定注解的Bean的名称
+	 *  为了确定类型，会对FactoryBean所创建的Bean进行实例化
 	 */
 	String[] getBeanNamesForAnnotation(Class<? extends Annotation> annotationType);
 
@@ -334,6 +356,9 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @see #findAnnotationOnBean
 	 *
 	 * 这个接口会把所有标注有指定注解的Bean的实例
+	 * 获取添加了指定注解的Bean的名称
+	 * 为了确定类型，会对FactoryBean所创建的Bean进行实例化
+	 * 返回一个map,key为bean的名称，value为对应的Bean
 	 */
 	Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType) throws BeansException;
 
@@ -353,6 +378,9 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * 查找指定bean的指定类型的注解。
 	 * 注意：如果本类没找到，还会去它的接口、它的父类里面找，这个厉害了我的哥
 	 * {@link ListableBeanFactory#getBeanNamesForAnnotation 依赖于此接口
+	 *
+	 * 查询指定的Bean上的指定类型的注解，如果没有这个Bean会抛出NoSuchBeanDefinitionException
+	 * 如果指定Bean上不存在这个注解，会从其父类上查找
 	 */
 	@Nullable
 	<A extends Annotation> A findAnnotationOnBean(String beanName, Class<A> annotationType)

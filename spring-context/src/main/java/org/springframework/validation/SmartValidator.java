@@ -39,9 +39,9 @@ public interface SmartValidator extends Validator {
 	 * <p>Note: Validation hints may get ignored by the actual target {@code Validator},
 	 * in which case this method should behave just like its regular
 	 * {@link #validate(Object, Errors)} sibling.
-	 * @param target the object that is to be validated
-	 * @param errors contextual state about the validation process
-	 * @param validationHints one or more hint objects to be passed to the validation engine
+	 * @param target the object that is to be validated 需要校验的对象
+	 * @param errors contextual state about the validation process 封装校验结果
+	 * @param validationHints one or more hint objects to be passed to the validation engine  就是启动的校验组
 	 * @see javax.validation.Validator#validate(Object, Class[])
 	 */
 	void validate(Object target, Errors errors, Object... validationHints);
@@ -57,6 +57,8 @@ public interface SmartValidator extends Validator {
 	 * @param validationHints one or more hint objects to be passed to the validation engine
 	 * @since 5.1
 	 * @see javax.validation.Validator#validateValue(Class, String, Object, Class[])
+	 *
+	 * 假设value将被绑定到指定对象中的指定字段上，并进行校验
 	 */
 	default void validateValue(
 			Class<?> targetType, String fieldName, @Nullable Object value, Errors errors, Object... validationHints) {

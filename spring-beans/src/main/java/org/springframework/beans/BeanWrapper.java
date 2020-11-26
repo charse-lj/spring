@@ -57,6 +57,11 @@ import java.beans.PropertyDescriptor;
  * 1.支持设置嵌套属性
  * 2. 支持属性值的类型转换（设置ConversionService）
  * 3. 提供分析和操作标准JavaBean的操作：获取和设置属性值（单独或批量），获取属性描述符以及查询属性的可读性/可写性的能力
+ *
+ * Spring低级JavaBeans基础设施的中央接口。通常来说并不直接使用BeanWrapper，而是借助BeanFactory或者DataBinder来一起使用,BeanWrapper对Spring中的Bean做了包装，为的是更加方便的操作Bean中的属性
+ * 从上面可以看到，BeanWrapper接口自身对Bean进行了一层包装。
+ * 另外它的几个通过间接继承了几个接口，所以它还能对Bean中的属性进行操作。
+ * PropertyAccessor赋予了BeanWrapper对属性进行访问及设置的能力，在对Bean中属性进行设置时，不可避免的需要对类型进行转换，而恰好PropertyEditorRegistry，TypeConverter就提供了类型转换的统一约束
  */
 public interface BeanWrapper extends ConfigurablePropertyAccessor {
 

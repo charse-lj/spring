@@ -35,6 +35,12 @@ import org.springframework.util.StringUtils;
  * @since 13.05.2003
  * @see Class#forName
  * @see org.springframework.util.ClassUtils#forName(String, ClassLoader)
+ *
+ * PropertyEditor是JavaBean规范定义的接口，这是java.beans中一个接口，其设计的意图是图形化编程上，方便对象与String之间的转换工作，而Spring将其扩展，方便各种对象与String之间的转换工作。
+ *
+ * Spring中对PropertyEditor使用的实例
+ * 我们在通过XML的方式对Spring中的Bean进行配置时，不管Bean中的属性是何种类型，都是直接通过字面值来设置Bean中的属性。那么是什么在这其中做转换呢？这里用到的就是PropertyEditor
+ * SpringMVC在解析请求参数时，也是使用的PropertyEditor
  */
 public class ClassEditor extends PropertyEditorSupport {
 

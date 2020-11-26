@@ -42,6 +42,8 @@ import org.springframework.util.ResourceUtils;
  * 加载资源文件
  *
  * 资源名_语言代码_国/地区代码.properties
+ *
+ * ResourceLoader接口被设计用来从指定的位置加载一个Resource,其接口定义如下
  */
 public interface ResourceLoader {
 
@@ -67,6 +69,11 @@ public interface ResourceLoader {
 	 * @see #CLASSPATH_URL_PREFIX
 	 * @see Resource#exists()
 	 * @see Resource#getInputStream()
+	 *
+	 *核心方法，从指定位置加载一个Resource
+	 * 1.支持权限的的URL格式，如：file:C:/test.dat
+	 * 2.支持classpath的格式,如：classpath:test.dat
+	 * 3.支持文件相对路径，如：WEB-INF/test.dat
 	 */
 	Resource getResource(String location);
 
@@ -79,6 +86,8 @@ public interface ResourceLoader {
 	 * (only {@code null} if even the system ClassLoader isn't accessible)
 	 * @see org.springframework.util.ClassUtils#getDefaultClassLoader()
 	 * @see org.springframework.util.ClassUtils#forName(String, ClassLoader)
+	 *
+	 * 返回用于加载该资源的ClassLoader
 	 */
 	@Nullable
 	ClassLoader getClassLoader();

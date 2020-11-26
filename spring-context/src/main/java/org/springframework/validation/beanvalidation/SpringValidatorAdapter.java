@@ -62,17 +62,24 @@ import org.springframework.validation.SmartValidator;
  * @see SmartValidator
  * @see CustomValidatorBean
  * @see LocalValidatorFactoryBean
+ *
+ * SpringValidatorAdapter就完成了到Bean Validation的对接
+ * 可以看到，这个接口同时实现了Spring中的SmartValidator接口跟JSR中的Validator接口
  */
 public class SpringValidatorAdapter implements SmartValidator, javax.validation.Validator {
 
 	private static final Set<String> internalAnnotationAttributes = new HashSet<>(4);
 
 	static {
+		//@NotEmpty,@NotNull等注解都会有这三个属性
 		internalAnnotationAttributes.add("message");
 		internalAnnotationAttributes.add("groups");
 		internalAnnotationAttributes.add("payload");
 	}
 
+	/**
+	 * targetValidator就是实际完成校验的对象
+	 */
 	@Nullable
 	private javax.validation.Validator targetValidator;
 
@@ -98,11 +105,22 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 	// Implementation of Spring Validator interface
 	//---------------------------------------------------------------------
 
+	/**
+	 * 支持对所有类型的Bean的校验
+	 * @param clazz the {@link Class} that this {@link Validator} is
+	 * being asked if it can {@link #validate(Object, Errors) validate}
+	 * @return
+	 */
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return (this.targetValidator != null);
 	}
 
+	/**
+	 * 调用targetValidator完成校验，并通过processConstraintViolations方法封装校验后的结果到Errors中
+	 * @param target the object that is to be validated
+	 * @param errors contextual state about the validation process
+	 */
 	@Override
 	public void validate(Object target, Errors errors) {
 		if (this.targetValidator != null) {
@@ -110,6 +128,12 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 		}
 	}
 
+	/**
+	 * 完成分组校验
+	 * @param target the object that is to be validated 需要校验的对象
+	 * @param errors contextual state about the validation process 封装校验结果
+	 * @param validationHints one or more hint objects to be passed to the validation engine  就是启动的校验组
+	 */
 	@Override
 	public void validate(Object target, Errors errors, Object... validationHints) {
 		if (this.targetValidator != null) {
@@ -118,6 +142,14 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 		}
 	}
 
+	/**
+	 * 完成对对象上某一个字段及给定值的校验
+	 * @param targetType the target type
+	 * @param fieldName the name of the field
+	 * @param value the candidate value
+	 * @param errors contextual state about the validation process
+	 * @param validationHints one or more hint objects to be passed to the validation engine
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void validateValue(
@@ -132,6 +164,7 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 	/**
 	 * Turn the specified validation hints into JSR-303 validation groups.
 	 * @since 5.1
+	 * 将validationHints转换成JSR中的分组
 	 */
 	private Class<?>[] asValidationGroups(Object... validationHints) {
 		Set<Class<?>> groups = new LinkedHashSet<>(4);

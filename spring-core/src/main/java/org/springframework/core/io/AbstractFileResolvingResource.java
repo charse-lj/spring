@@ -39,6 +39,8 @@ import org.springframework.util.ResourceUtils;
  *
  * @author Juergen Hoeller
  * @since 3.0
+ *
+ * 将URL解析成文件引用，既会处理协议为：“file“的URL，也会处理JBoss的”vfs“协议。然后相应的解析成对应的文件系统引用
  */
 public abstract class AbstractFileResolvingResource extends AbstractResource {
 

@@ -32,6 +32,8 @@ public interface PropertyResolver {
 	/**
 	 * Return whether the given property key is available for resolution,
 	 * i.e. if the value for the given key is not {@code null}.
+	 *
+	 * 当前的环境中是否包含这个属性
 	 */
 	boolean containsProperty(String key);
 
@@ -42,6 +44,8 @@ public interface PropertyResolver {
 	 * @see #getProperty(String, String)
 	 * @see #getProperty(String, Class)
 	 * @see #getRequiredProperty(String)
+	 *
+	 * 获取属性值 如果找不到返回null
 	 */
 	@Nullable
 	String getProperty(String key);
@@ -53,6 +57,8 @@ public interface PropertyResolver {
 	 * @param defaultValue the default value to return if no value is found
 	 * @see #getRequiredProperty(String)
 	 * @see #getProperty(String, Class)
+	 *
+	 * 获取属性值，如果找不到返回默认值
 	 */
 	String getProperty(String key, String defaultValue);
 
@@ -62,6 +68,8 @@ public interface PropertyResolver {
 	 * @param key the property name to resolve
 	 * @param targetType the expected type of the property value
 	 * @see #getRequiredProperty(String, Class)
+	 *
+	 * 获取指定类型的属性值，找不到返回null
 	 */
 	@Nullable
 	<T> T getProperty(String key, Class<T> targetType);
@@ -73,6 +81,8 @@ public interface PropertyResolver {
 	 * @param targetType the expected type of the property value
 	 * @param defaultValue the default value to return if no value is found
 	 * @see #getRequiredProperty(String, Class)
+	 *
+	 * 获取指定类型的属性值，找不到返回默认值
 	 */
 	<T> T getProperty(String key, Class<T> targetType, T defaultValue);
 
@@ -87,6 +97,8 @@ public interface PropertyResolver {
 	 * Return the property value associated with the given key, converted to the given
 	 * targetType (never {@code null}).
 	 * @throws IllegalStateException if the given key cannot be resolved
+	 *
+	 *  获取属性值，找不到抛出异常IllegalStateException
 	 */
 	<T> T getRequiredProperty(String key, Class<T> targetType) throws IllegalStateException;
 
@@ -98,6 +110,8 @@ public interface PropertyResolver {
 	 * @return the resolved String (never {@code null})
 	 * @throws IllegalArgumentException if given text is {@code null}
 	 * @see #resolveRequiredPlaceholders
+	 *
+	 * 替换文本中的占位符（${key}）到属性值，找不到不解析
 	 */
 	String resolvePlaceholders(String text);
 
@@ -108,6 +122,8 @@ public interface PropertyResolver {
 	 * @return the resolved String (never {@code null})
 	 * @throws IllegalArgumentException if given text is {@code null}
 	 * or if any placeholders are unresolvable
+	 *
+	 * 替换文本中的占位符（${key}）到属性值，找不到抛出异常IllegalArgumentException
 	 */
 	String resolveRequiredPlaceholders(String text) throws IllegalArgumentException;
 

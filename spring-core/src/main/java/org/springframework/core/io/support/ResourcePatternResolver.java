@@ -50,6 +50,8 @@ import org.springframework.core.io.ResourceLoader;
  * @see org.springframework.core.io.ResourceLoader
  * @see org.springframework.context.ApplicationContext
  * @see org.springframework.context.ResourceLoaderAware
+ *
+ * ResourcePatternResolver在ResourceLoader的基础上扩展了一个获取多个Resource的方法
  */
 public interface ResourcePatternResolver extends ResourceLoader {
 

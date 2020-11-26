@@ -33,6 +33,8 @@ import org.springframework.lang.Nullable;
  * @since 2.0
  * @see #getPropertyValue
  * @see #setPropertyValue
+ *
+ * 核心的代码其实就是这些，这个类继承了TypeConverterSupport,所以它具备了类型转换的能力。同时它也是一个属性访问器，但是它只是实现了批量设置属性的方法，真正的setPropertyValue还是留待子类实现。可以看到，到这个类为止，还没有将属性的设置跟类型转换的能力结合起来。
  */
 public abstract class AbstractPropertyAccessor extends TypeConverterSupport implements ConfigurablePropertyAccessor {
 
@@ -94,6 +96,7 @@ public abstract class AbstractPropertyAccessor extends TypeConverterSupport impl
 				// This method may throw any BeansException, which won't be caught
 				// here, if there is a critical failure such as no matching field.
 				// We can attempt to deal only with less serious exceptions.
+				// 核心代码就是这一句
 				setPropertyValue(pv);
 			}
 			catch (NotWritablePropertyException ex) {

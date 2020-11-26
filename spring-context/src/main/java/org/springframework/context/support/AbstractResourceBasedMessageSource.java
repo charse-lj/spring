@@ -34,6 +34,8 @@ import org.springframework.util.ObjectUtils;
  * @since 4.3
  * @see ResourceBundleMessageSource
  * @see ReloadableResourceBundleMessageSource
+ *
+ * 供了对Bundle的处理方式
  */
 public abstract class AbstractResourceBasedMessageSource extends AbstractMessageSource {
 

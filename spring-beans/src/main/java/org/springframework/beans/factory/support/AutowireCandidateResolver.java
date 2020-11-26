@@ -42,6 +42,7 @@ public interface AutowireCandidateResolver {
 	 * @see org.springframework.beans.factory.config.BeanDefinition#isAutowireCandidate()
 	 *
 	 * 判断给定的BeanDefinition是否允许被依赖注入（BeanDefinition的默认值都是true）
+	 * 默认情况下直接根据bd中的定义返回，如果没有进行特殊配置的话为true
 	 */
 	default boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		return bdHolder.getBeanDefinition().isAutowireCandidate();
@@ -57,6 +58,7 @@ public interface AutowireCandidateResolver {
 	 * @see DependencyDescriptor#isRequired()
 	 *
 	 * 给定的descriptor是否是必须的
+	 * 指定的依赖是否是必要的
 	 */
 	default boolean isRequired(DependencyDescriptor descriptor) {
 		return descriptor.isRequired();
@@ -71,6 +73,12 @@ public interface AutowireCandidateResolver {
 	 * status beyond the type match
 	 * @since 5.1
 	 * @see org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver#hasQualifier
+	 *
+	 * // QualifierAnnotationAutowireCandidateResolver做了实现，判断是否有@Qualifier注解
+	 *     // 一共有两种注解：
+	 *     // 1.Spring内置的@Qualifier注解，org.springframework.beans.factory.annotation.Qualifier
+	 *     // 2.添加了JSR-330相关依赖，javax.inject.Qualifier注解
+	 *     // 默认情况下返回false
 	 */
 	default boolean hasQualifier(DependencyDescriptor descriptor) {
 		return false;
@@ -83,6 +91,8 @@ public interface AutowireCandidateResolver {
 	 * @return the value suggested (typically an expression String),
 	 * or {@code null} if none found
 	 * @since 3.0
+	 *
+	 * 获取一个该依赖一个建议的值
 	 */
 	@Nullable
 	default Object getSuggestedValue(DependencyDescriptor descriptor) {
@@ -98,6 +108,9 @@ public interface AutowireCandidateResolver {
 	 * @return the lazy resolution proxy for the actual dependency target,
 	 * or {@code null} if straight resolution is to be performed
 	 * @since 4.0
+	 *
+	 * // 对某个依赖我们想要延迟注入，但是在创建Bean的过程中这个依赖又是必须的
+	 *     // 通过下面这个方法就能为延迟注入的依赖先生成一个代理注入到bean中
 	 */
 	@Nullable
 	default Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, @Nullable String beanName) {

@@ -61,6 +61,8 @@ import org.springframework.util.ObjectUtils;
  * @see #resolveCodeWithoutArguments(String, java.util.Locale)
  * @see #setAlwaysUseMessageFormat
  * @see java.text.MessageFormat
+ *
+ * 提供了对消息的通用处理方式，方便子类对具体的消息类型实现特定的策略
  */
 public abstract class AbstractMessageSource extends MessageSourceSupport implements HierarchicalMessageSource {
 

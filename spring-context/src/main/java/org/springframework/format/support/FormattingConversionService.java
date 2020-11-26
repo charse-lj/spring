@@ -49,6 +49,10 @@ import org.springframework.util.StringValueResolver;
  * @author Keith Donald
  * @author Juergen Hoeller
  * @since 3.0
+ *
+ * // 继承了GenericConversionService ，所以它能对Converter进行一系列的操作
+ * // 实现了接口FormatterRegistry，所以它也可以注册格式化器了
+ * // 实现了EmbeddedValueResolverAware，所以它还能有非常强大的功能：处理占位符
  */
 public class FormattingConversionService extends GenericConversionService
 		implements FormatterRegistry, EmbeddedValueResolverAware {
@@ -79,6 +83,11 @@ public class FormattingConversionService extends GenericConversionService
 		addConverter(new ParserConverter(fieldType, parser, this));
 	}
 
+	/**
+	 * // 最终也是交给addFormatterForFieldType去做的
+	 * 	// getFieldType：它会拿到泛型类型。并且支持DecoratingProxy
+	 * @param formatter the formatter to add
+	 */
 	@Override
 	public void addFormatter(Formatter<?> formatter) {
 		addFormatterForFieldType(getFieldType(formatter), formatter);
@@ -90,18 +99,39 @@ public class FormattingConversionService extends GenericConversionService
 		addConverter(new ParserConverter(fieldType, formatter, this));
 	}
 
+	/**
+	 * // 存储都是分开存储的  读写分离
+	 * 	// PrinterConverter和ParserConverter都是一个GenericConverter  采用内部类实现的
+	 * 	// 注意：他们的ConvertiblePair必有一个类型是String.class
+	 * 	// Locale一般都可以这么获取：LocaleContextHolder.getLocale()
+	 *     // 在进行printer之前，会先判断是否能进行类型转换，如果能进行类型转换会先进行类型转换，之后再格式化
+	 * 	// 在parse之后，会判断是否还需要进行类型转换，如果需要类型转换会先进行类型转换
+	 * @param fieldType the field type to format
+	 * @param printer the printing part of the formatter
+	 * @param parser the parsing part of the formatter
+	 */
 	@Override
 	public void addFormatterForFieldType(Class<?> fieldType, Printer<?> printer, Parser<?> parser) {
 		addConverter(new PrinterConverter(fieldType, printer, this));
 		addConverter(new ParserConverter(fieldType, parser, this));
 	}
-
+	/**
+	 * 哪怕你是一个AnnotationFormatterFactory，最终也是被适配成了GenericConverter（ConditionalGenericConverter）
+	 * @param annotationFormatterFactory
+	 * @return
+	 */
 	@Override
 	public void addFormatterForFieldAnnotation(AnnotationFormatterFactory<? extends Annotation> annotationFormatterFactory) {
+		// 若你自定义的实现了EmbeddedValueResolverAware接口，还可以使用占位符哟
+		// AnnotationFormatterFactory是下面的重点内容
 		Class<? extends Annotation> annotationType = getAnnotationType(annotationFormatterFactory);
 		if (this.embeddedValueResolver != null && annotationFormatterFactory instanceof EmbeddedValueResolverAware) {
 			((EmbeddedValueResolverAware) annotationFormatterFactory).setEmbeddedValueResolver(this.embeddedValueResolver);
 		}
+		// 对每一种字段的type  都注册一个AnnotationPrinterConverter去处理
+		// AnnotationPrinterConverter是一个ConditionalGenericConverter
+		// matches方法为：sourceType.hasAnnotation(this.annotationType);
+		// 这个判断是呼应的：因为annotationFormatterFactory只会作用在指定的字段类型上的，不符合类型条件的不用添加
 		Set<Class<?>> fieldTypes = annotationFormatterFactory.getFieldTypes();
 		for (Class<?> fieldType : fieldTypes) {
 			addConverter(new AnnotationPrinterConverter(annotationType, annotationFormatterFactory, fieldType));
@@ -125,6 +155,7 @@ public class FormattingConversionService extends GenericConversionService
 					"]; does the class parameterize the <T> generic type?");
 		return fieldType;
 	}
+
 
 	@SuppressWarnings("unchecked")
 	static Class<? extends Annotation> getAnnotationType(AnnotationFormatterFactory<? extends Annotation> factory) {
@@ -152,8 +183,10 @@ public class FormattingConversionService extends GenericConversionService
 
 		public PrinterConverter(Class<?> fieldType, Printer<?> printer, ConversionService conversionService) {
 			this.fieldType = fieldType;
+			// 会通过解析Printer中的泛型获取具体类型，主要是为了判断是否需要进行类型转换
 			this.printerObjectType = TypeDescriptor.valueOf(resolvePrinterObjectType(printer));
 			this.printer = printer;
+			// 最终也是通过conversionService完成类型转换
 			this.conversionService = conversionService;
 		}
 

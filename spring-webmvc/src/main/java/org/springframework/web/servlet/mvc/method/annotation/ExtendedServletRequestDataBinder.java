@@ -58,11 +58,16 @@ public class ExtendedServletRequestDataBinder extends ServletRequestDataBinder {
 
 	/**
 	 * Merge URI variables into the property values to use for data binding.
+	 * 这个类在ServletRequestDataBinder复写了addBindValues方法，在上面我们说过了，本身这个方法也是ServletRequestDataBinder专门提供了用于子类复写的方法
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	protected void addBindValues(MutablePropertyValues mpvs, ServletRequest request) {
+		// 它会从request获取名为HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE的属性
+		// 我们在使用@PathVariable的时候，解析出来的参数就放在request中的这个属性上，然后由ExtendedServletRequestDataBinder完成数据绑定
 		String attr = HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE;
+		// 它会从request获取名为HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE的属性
+		// 我们在使用@PathVariable的时候，解析出来的参数就放在request中的这个属性上，然后由ExtendedServletRequestDataBinder完成数据绑定
 		Map<String, String> uriVars = (Map<String, String>) request.getAttribute(attr);
 		if (uriVars != null) {
 			uriVars.forEach((name, value) -> {

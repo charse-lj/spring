@@ -38,6 +38,12 @@ import org.springframework.util.ObjectUtils;
  * @since 13 May 2001
  * @see PropertyValues
  * @see BeanWrapper
+ *
+ * 当设置属性值时，少不了两样东西：
+ *
+ * 属性访问表达式：如listMap[0][0]
+ * 属性值：
+ * ProperyValue对象就是用来封装这些信息的。如果某个值要给赋值给bean属性，Spring都会把这个值包装成ProperyValue对象。
  */
 @SuppressWarnings("serial")
 public class PropertyValue extends BeanMetadataAttributeAccessor implements Serializable {

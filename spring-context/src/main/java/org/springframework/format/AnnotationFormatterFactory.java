@@ -34,6 +34,7 @@ public interface AnnotationFormatterFactory<A extends Annotation> {
 
 	/**
 	 * The types of fields that may be annotated with the &lt;A&gt; annotation.
+	 * 可能被添加注解的字段的类型
 	 */
 	Set<Class<?>> getFieldTypes();
 
@@ -45,6 +46,7 @@ public interface AnnotationFormatterFactory<A extends Annotation> {
 	 * @param annotation the annotation instance
 	 * @param fieldType the type of field that was annotated
 	 * @return the printer
+	 * 根据注解及字段类型获取一个格式化器
 	 */
 	Printer<?> getPrinter(A annotation, Class<?> fieldType);
 
@@ -56,6 +58,8 @@ public interface AnnotationFormatterFactory<A extends Annotation> {
 	 * @param annotation the annotation instance
 	 * @param fieldType the type of field that was annotated
 	 * @return the parser
+	 *
+	 * 根据注解及字段类型获取一个解析器
 	 */
 	Parser<?> getParser(A annotation, Class<?> fieldType);
 

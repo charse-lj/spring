@@ -171,6 +171,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	}
 
 	private boolean isAnnotatedMethod(Method method, String annotationName) {
+		//不是桥方法,该方法的上有符合条件的注解
 		return !method.isBridge() && method.getAnnotations().length > 0 &&
 				AnnotatedElementUtils.isAnnotated(method, annotationName);
 	}

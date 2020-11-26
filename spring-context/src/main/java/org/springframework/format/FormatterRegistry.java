@@ -26,6 +26,8 @@ import org.springframework.core.convert.converter.ConverterRegistry;
  * @author Keith Donald
  * @author Juergen Hoeller
  * @since 3.0
+ *
+ * 继承了ConverterRegistry，所以它同时还是一个Converter注册器
  */
 public interface FormatterRegistry extends ConverterRegistry {
 

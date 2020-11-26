@@ -37,6 +37,8 @@ public interface PropertyAccessor {
 	/**
 	 * Path separator for nested properties.
 	 * Follows normal Java conventions: getFoo().getBar() would be "foo.bar".
+	 *
+	 * 嵌套属性的分隔符,比如"foo.bar"将会调用getFoo().getBar()两个方法
 	 */
 	String NESTED_PROPERTY_SEPARATOR = ".";
 
@@ -49,6 +51,8 @@ public interface PropertyAccessor {
 	/**
 	 * Marker that indicates the start of a property key for an
 	 * indexed or mapped property like "person.addresses[0]".
+	 *
+	 * 代表角标index的符号  如person.addresses[0]  这样就可以把值放进集合/数组/Map里了
 	 */
 	String PROPERTY_KEY_PREFIX = "[";
 
@@ -77,6 +81,8 @@ public interface PropertyAccessor {
 	 * @param propertyName the property to check
 	 * (may be a nested path and/or an indexed/mapped property)
 	 * @return whether the property is readable
+	 *
+	 * 该属性是否可读/可写，不存在则返回false
 	 */
 	boolean isReadableProperty(String propertyName);
 
@@ -99,6 +105,8 @@ public interface PropertyAccessor {
 	 * or {@code null} if not determinable
 	 * @throws PropertyAccessException if the property was valid but the
 	 * accessor method failed
+	 *
+	 * 获取/设置属性的方法，基本见名知意
 	 */
 	@Nullable
 	Class<?> getPropertyType(String propertyName) throws BeansException;

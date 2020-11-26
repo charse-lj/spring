@@ -61,8 +61,14 @@ public abstract class PropertySource<T> {
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 属性源名称
+	 */
 	protected final String name;
 
+	/**
+	 * 属性源（比如来自Map，那就是一个Map对象）
+	 */
 	protected final T source;
 
 
@@ -110,6 +116,8 @@ public abstract class PropertySource<T> {
 	 * from {@link #getProperty(String)}. Subclasses may wish to implement
 	 * a more efficient algorithm if possible.
 	 * @param name the property name to find
+	 *
+	 * 是否包含某个属性
 	 */
 	public boolean containsProperty(String name) {
 		return (getProperty(name) != null);
@@ -120,6 +128,8 @@ public abstract class PropertySource<T> {
 	 * or {@code null} if not found.
 	 * @param name the property to find
 	 * @see PropertyResolver#getRequiredProperty(String)
+	 *
+	 * 得到属性名对应的属性值
 	 */
 	@Nullable
 	public abstract Object getProperty(String name);
@@ -185,6 +195,8 @@ public abstract class PropertySource<T> {
 	 * if any methods other than {@code equals(Object)}, {@code hashCode()}, and {@code toString()}
 	 * are called.
 	 * @param name the name of the comparison {@code PropertySource} to be created and returned.
+	 *
+	 * 返回一个ComparisonPropertySource对象，用于比较
 	 */
 	public static PropertySource<?> named(String name) {
 		return new ComparisonPropertySource(name);
@@ -202,6 +214,10 @@ public abstract class PropertySource<T> {
 	 * @see org.springframework.context.support.AbstractApplicationContext#initPropertySources()
 	 * @see org.springframework.web.context.support.StandardServletEnvironment
 	 * @see org.springframework.web.context.support.ServletContextPropertySource
+	 *
+	 * 类主要起到类似一个占位符的作用
+	 * 一个基于ServletContext的PropertySource必须等待，直到ServletContext对象对这个PropertySource所在的上下文可用。
+	 * 在这种情况下，需要用到StubPropertySource来预设这个PropertySource的位置跟顺序，之后在上下文刷新时期，再用一个ServletContextPropertySourc来进行替换
 	 */
 	public static class StubPropertySource extends PropertySource<Object> {
 
