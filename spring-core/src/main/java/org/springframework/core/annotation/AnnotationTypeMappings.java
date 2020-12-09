@@ -61,6 +61,7 @@ final class AnnotationTypeMappings {
 		this.repeatableContainers = repeatableContainers;
 		this.filter = filter;
 		this.mappings = new ArrayList<>();
+		//annotationType -->待检查的注解元素类.
 		addAllMappings(annotationType);
 		this.mappings.forEach(AnnotationTypeMapping::afterAllMappingsSet);
 	}
@@ -104,6 +105,13 @@ final class AnnotationTypeMappings {
 		addIfPossible(queue, source, ann.annotationType(), ann);
 	}
 
+	/**
+	 *
+	 * @param queue  队列,先进先出
+	 * @param source 上一层.
+	 * @param annotationType 待检查的注解元素类.
+	 * @param ann
+	 */
 	private void addIfPossible(Deque<AnnotationTypeMapping> queue, @Nullable AnnotationTypeMapping source,
 							   Class<? extends Annotation> annotationType, @Nullable Annotation ann) {
 
@@ -118,9 +126,18 @@ final class AnnotationTypeMappings {
 		}
 	}
 
+	/**
+	 * @param source         源信息.
+	 * @param metaAnnotation 源信息上的某个注解对象.
+	 * @return .
+	 */
 	private boolean isMappable(AnnotationTypeMapping source, @Nullable Annotation metaAnnotation) {
-		return (metaAnnotation != null && !this.filter.matches(metaAnnotation) &&
+		return (metaAnnotation != null &&
+				//过滤器过滤寻找的注解
+				!this.filter.matches(metaAnnotation) &&
+				//过滤器过滤source
 				!AnnotationFilter.PLAIN.matches(source.getAnnotationType()) &&
+				//循环引用
 				!isAlreadyMapped(source, metaAnnotation));
 	}
 
@@ -195,7 +212,7 @@ final class AnnotationTypeMappings {
 	/**
 	 * Create {@link AnnotationTypeMappings} for the specified annotation type.
 	 *
-	 * @param annotationType   the source annotation type
+	 * @param annotationType   the source annotation type  待检查的注解元素类.
 	 * @param annotationFilter the annotation filter used to limit which
 	 *                         annotations are considered
 	 * @return type mappings for the annotation type

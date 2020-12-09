@@ -57,7 +57,7 @@ final class AnnotationTypeMapping {
 	private final int distance;
 
 	/**
-	 * this所属注解对象类型
+	 * this所属注解类
 	 */
 	private final Class<? extends Annotation> annotationType;
 
@@ -125,17 +125,20 @@ final class AnnotationTypeMapping {
 	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source,
 						  Class<? extends Annotation> annotationType, @Nullable Annotation annotation) {
 
+		//上一层.
 		this.source = source;
+		//上一次为空,this就是根,否则从上一层获取根
 		this.root = (source != null ? source.getRoot() : this);
+		//深度.root深度为0
 		this.distance = (source == null ? 0 : source.getDistance() + 1);
-		//注解类
+		//源注解类
 		this.annotationType = annotationType;
-		//注解的元注解
+		//从root到this的所有注解
 		this.metaTypes = merge(
 				source != null ? source.getMetaTypes() : null,
 				annotationType);
 		this.annotation = annotation;
-		//注解属性方法
+		//注解类的所有属性方法
 		this.attributes = AttributeMethods.forAnnotationType(annotationType);
 		this.mirrorSets = new MirrorSets();
 		this.aliasMappings = filledIntArray(this.attributes.size());
@@ -172,7 +175,7 @@ final class AnnotationTypeMapping {
 			//注解属性方法上的@AliasFor注解对象
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null) {
-				//获取被@aliasFor标注的注解方法-> @aliasFor(value="xx",annotation=B.class)->在B注解中寻找xx()注解属性方法
+				//获取被@aliasFor标注的注解方法-> @aliasFor(value="xx",annotation=B.class)->在B注解对象中寻找xx()方法
 				Method target = resolveAliasTarget(attribute, aliasFor);
 				aliasedBy.computeIfAbsent(target, key -> new ArrayList<>()).add(attribute);
 			}
@@ -180,20 +183,26 @@ final class AnnotationTypeMapping {
 		return Collections.unmodifiableMap(aliasedBy);
 	}
 
+	/**
+	 *
+	 * @param attribute  含有@AliasFor注解的方法.
+	 * @param aliasFor 注解方法上@AliasFor注解对象.
+	 * @return .
+	 */
 	private Method resolveAliasTarget(Method attribute, AliasFor aliasFor) {
 		return resolveAliasTarget(attribute, aliasFor, true);
 	}
 
 	/**
-	 * @param attribute      .
-	 * @param aliasFor       .
+	 * @param attribute      含有@AliasFor注解的方法.
+	 * @param aliasFor       注解方法上@AliasFor注解对象.
 	 * @param checkAliasPair .
 	 * @return
 	 * 获取对应注解的注解属性方法
 	 * @AliasFor(value="test",annotation="A.class") ->找到注解A中的属性test
 	 */
 	private Method resolveAliasTarget(Method attribute, AliasFor aliasFor, boolean checkAliasPair) {
-		//@AliasFor注解中，包含value和attribute,其上又被@AliasFor修饰,互为别名,在使用时,只能存在其一.
+		//@AliasFor注解中，包含value和attribute,这两个属性又被@AliasFor修饰,互为别名,在使用时,只能存在其一.
 		if (StringUtils.hasText(aliasFor.value()) && StringUtils.hasText(aliasFor.attribute())) {
 			throw new AnnotationConfigurationException(String.format(
 					"In @AliasFor declared on %s, attribute 'attribute' and its alias 'value' " +
@@ -201,17 +210,25 @@ final class AnnotationTypeMapping {
 					AttributeMethods.describe(attribute), aliasFor.attribute(),
 					aliasFor.value()));
 		}
+		//目标注解
 		Class<? extends Annotation> targetAnnotation = aliasFor.annotation();
+		//默认值
 		if (targetAnnotation == Annotation.class) {
 			targetAnnotation = this.annotationType;
 		}
+		//attribute属性值
 		String targetAttributeName = aliasFor.attribute();
+		// attribute属性值没有值
 		if (!StringUtils.hasLength(targetAttributeName)) {
+			//获取 value属性值
 			targetAttributeName = aliasFor.value();
 		}
+		//value属性也没有值.
 		if (!StringUtils.hasLength(targetAttributeName)) {
+			//获取方法的名称
 			targetAttributeName = attribute.getName();
 		}
+		//获取目标注解类中的所有方法,并获取特定名称的方法
 		Method target = AttributeMethods.forAnnotationType(targetAnnotation).get(targetAttributeName);
 		if (target == null) {
 			if (targetAnnotation == this.annotationType) {
@@ -224,6 +241,7 @@ final class AnnotationTypeMapping {
 					StringUtils.capitalize(AttributeMethods.describe(attribute)),
 					AttributeMethods.describe(targetAnnotation, targetAttributeName)));
 		}
+		//方法相同
 		if (target.equals(attribute)) {
 			throw new AnnotationConfigurationException(String.format(
 					"@AliasFor declaration on %s points to itself. " +
@@ -236,6 +254,7 @@ final class AnnotationTypeMapping {
 					AttributeMethods.describe(attribute),
 					AttributeMethods.describe(target)));
 		}
+		//要互为alias,否则报错
 		if (isAliasPair(target) && checkAliasPair) {
 			AliasFor targetAliasFor = target.getAnnotation(AliasFor.class);
 			if (targetAliasFor != null) {
@@ -252,6 +271,7 @@ final class AnnotationTypeMapping {
 	}
 
 	private boolean isAliasPair(Method target) {
+		//源注解类和目标注解类相同.
 		return (this.annotationType == target.getDeclaringClass());
 	}
 
@@ -279,8 +299,7 @@ final class AnnotationTypeMapping {
 	}
 
 	/**
-	 * 递归向上处理
-	 * @param aliases
+	 * @param aliases 递归所有层,查找该层的注解方法别名方法.
 	 */
 	private void collectAliases(List<Method> aliases) {
 		AnnotationTypeMapping mapping = this;
@@ -653,6 +672,10 @@ final class AnnotationTypeMapping {
 	}
 
 
+	/**
+	 * @param size 注解方法长度.
+	 * @return 都初始化为-1.
+	 */
 	private static int[] filledIntArray(int size) {
 		int[] array = new int[size];
 		Arrays.fill(array, -1);

@@ -492,19 +492,29 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 *
+	 * @param source
+	 * @param defensive 是否进行clone,true:不克隆;false:克隆
+	 * @return
+	 */
 	static Annotation[] getDeclaredAnnotations(AnnotatedElement source, boolean defensive) {
 		boolean cached = false;
+		//缓存
 		Annotation[] annotations = declaredAnnotationCache.get(source);
 		if (annotations != null) {
 			cached = true;
 		}
 		else {
+			//获取注解信息
 			annotations = source.getDeclaredAnnotations();
 			if (annotations.length != 0) {
 				boolean allIgnored = true;
 				for (int i = 0; i < annotations.length; i++) {
 					Annotation annotation = annotations[i];
+					//忽略元注解
 					if (isIgnorable(annotation.annotationType()) ||
+							//验证有效性
 							!AttributeMethods.forAnnotationType(annotation.annotationType()).isValid(annotation)) {
 						annotations[i] = null;
 					}
@@ -519,6 +529,7 @@ abstract class AnnotationsScanner {
 				}
 			}
 		}
+		//短路.
 		if (!defensive || annotations.length == 0 || !cached) {
 			return annotations;
 		}

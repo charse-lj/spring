@@ -101,6 +101,7 @@ final class AttributeMethods {
 			if (method.getDefaultValue() != null) {
 				foundDefaultValueMethod = true;
 			}
+			//方法的返回值是一个注解
 			if (type.isAnnotation() || (type.isArray() && type.getComponentType().isAnnotation())) {
 				foundNestedAnnotation = true;
 			}
@@ -281,9 +282,11 @@ final class AttributeMethods {
 	}
 
 	private static AttributeMethods compute(Class<? extends Annotation> annotationType) {
+		//获取注解类中的所有方法
 		Method[] methods = annotationType.getDeclaredMethods();
 		int size = methods.length;
 		for (int i = 0; i < methods.length; i++) {
+			//筛选
 			if (!isAttributeMethod(methods[i])) {
 				methods[i] = null;
 				size--;
