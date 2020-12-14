@@ -355,6 +355,7 @@ public abstract class ReflectionUtils {
 	 */
 	public static void doWithMethods(Class<?> clazz, MethodCallback mc, @Nullable MethodFilter mf) {
 		// Keep backing up the inheritance hierarchy.
+		//类中所有方法+接口中所有默认方法
 		Method[] methods = getDeclaredMethods(clazz, false);
 		for (Method method : methods) {
 			if (mf != null && !mf.matches(method)) {
@@ -367,6 +368,7 @@ public abstract class ReflectionUtils {
 				throw new IllegalStateException("Not allowed to access method '" + method.getName() + "': " + ex);
 			}
 		}
+		//父类,递归
 		if (clazz.getSuperclass() != null && (mf != USER_DECLARED_METHODS || clazz.getSuperclass() != Object.class)) {
 			doWithMethods(clazz.getSuperclass(), mc, mf);
 		}
@@ -460,9 +462,12 @@ public abstract class ReflectionUtils {
 		Method[] result = declaredMethodsCache.get(clazz);
 		if (result == null) {
 			try {
+				//获取该类中所有声明的方法
 				Method[] declaredMethods = clazz.getDeclaredMethods();
+				//获取该类所有接口中的默认方法
 				List<Method> defaultMethods = findConcreteMethodsOnInterfaces(clazz);
 				if (defaultMethods != null) {
+					//copy
 					result = new Method[declaredMethods.length + defaultMethods.size()];
 					System.arraycopy(declaredMethods, 0, result, 0, declaredMethods.length);
 					int index = declaredMethods.length;
@@ -474,6 +479,7 @@ public abstract class ReflectionUtils {
 				else {
 					result = declaredMethods;
 				}
+				//缓存
 				declaredMethodsCache.put(clazz, (result.length == 0 ? EMPTY_METHOD_ARRAY : result));
 			}
 			catch (Throwable ex) {
@@ -489,6 +495,7 @@ public abstract class ReflectionUtils {
 		List<Method> result = null;
 		for (Class<?> ifc : clazz.getInterfaces()) {
 			for (Method ifcMethod : ifc.getMethods()) {
+				//在第一个满足条件的时候创建
 				if (!Modifier.isAbstract(ifcMethod.getModifiers())) {
 					if (result == null) {
 						result = new ArrayList<>();

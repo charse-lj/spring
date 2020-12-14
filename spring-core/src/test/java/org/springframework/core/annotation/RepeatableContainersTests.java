@@ -31,6 +31,12 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * Tests for {@link RepeatableContainers}.
  *
  * @author Phillip Webb
+ *
+ * 可重复注解容器对象和可重复注解的限制
+ * 1.容器有且仅有一个vlue(),返回的是可重复注解数组
+ * 2.可重复注解必须有@Repeatable修饰
+ * 以上条件在StandardRepeatableContainers.INSTANCE都会校验
+ *
  */
 class RepeatableContainersTests {
 
@@ -270,6 +276,7 @@ class RepeatableContainersTests {
 
 	}
 
+	//jdk底层会进行合并
 	@StandardRepeatable("a")
 	@StandardRepeatable("b")
 	static class WithStandardRepeatables {

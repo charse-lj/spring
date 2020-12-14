@@ -38,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @author Chris Beams
+ *
+ * https://bugs.java.com/bugdatabase/view_bug.do?bug_id=63424113
  */
 @SuppressWarnings("rawtypes")
 class BridgeMethodResolverTests {
@@ -332,6 +334,7 @@ class BridgeMethodResolverTests {
 
 
 	public static class MyFoo implements Foo<String> {
+
 
 		public void someMethod(Integer theArg, Object otherArg) {
 		}

@@ -64,6 +64,8 @@ public final class BridgeMethodResolver {
 	 * @param bridgeMethod the method to introspect
 	 * @return the original method (either the bridged method or the passed-in method
 	 * if no more specific one could be found)
+	 *
+	 * 通过桥方法找到其原始方法.
 	 */
 	public static Method findBridgedMethod(Method bridgeMethod) {
 		if (!bridgeMethod.isBridge()) {
@@ -98,14 +100,19 @@ public final class BridgeMethodResolver {
 	 * checks and can be used quickly filter for a set of possible matches.
 	 */
 	private static boolean isBridgedCandidateFor(Method candidateMethod, Method bridgeMethod) {
-		return (!candidateMethod.isBridge() && !candidateMethod.equals(bridgeMethod) &&
+		//候选方法不是桥方法
+		return (!candidateMethod.isBridge() &&
+				//候选方法和桥方法不相等
+				!candidateMethod.equals(bridgeMethod) &&
+				//候选方法与桥方法名称相同
 				candidateMethod.getName().equals(bridgeMethod.getName()) &&
+				//候选方法参数个数与桥方法相同
 				candidateMethod.getParameterCount() == bridgeMethod.getParameterCount());
 	}
 
 	/**
 	 * Searches for the bridged method in the given candidates.
-	 * @param candidateMethods the List of candidate Methods
+	 * @param candidateMethods the List of candidate Methods 初步筛选符合桥方法的集合
 	 * @param bridgeMethod the bridge method
 	 * @return the bridged method, or {@code null} if none found
 	 */
@@ -121,6 +128,7 @@ public final class BridgeMethodResolver {
 				return candidateMethod;
 			}
 			else if (previousMethod != null) {
+				//TODO 不太懂
 				sameSig = sameSig &&
 						Arrays.equals(candidateMethod.getGenericParameterTypes(), previousMethod.getGenericParameterTypes());
 			}
@@ -146,23 +154,37 @@ public final class BridgeMethodResolver {
 	 * {@link Method#getGenericParameterTypes() generic Method} and concrete {@link Method}
 	 * are equal after resolving all types against the declaringType, otherwise
 	 * returns {@code false}.
+	 *
+	 * @param genericMethod 被比较者.
+	 * @param candidateMethod 比较者.
+	 * @param declaringClass 被比较方法所在类.
+	 * @return .
 	 */
 	private static boolean isResolvedTypeMatch(Method genericMethod, Method candidateMethod, Class<?> declaringClass) {
+		//获取被比较者方法的泛型话参数
 		Type[] genericParameters = genericMethod.getGenericParameterTypes();
+		//参数长度筛选
 		if (genericParameters.length != candidateMethod.getParameterCount()) {
 			return false;
 		}
+		//获取比较者的参数类型
 		Class<?>[] candidateParameters = candidateMethod.getParameterTypes();
+		//遍历
 		for (int i = 0; i < candidateParameters.length; i++) {
+			//同索引下被比较者的类型
 			ResolvableType genericParameter = ResolvableType.forMethodParameter(genericMethod, i, declaringClass);
+			//同索引下比较者的类型
 			Class<?> candidateParameter = candidateParameters[i];
+			//比较者的类型是数组
 			if (candidateParameter.isArray()) {
 				// An array type: compare the component type.
+				//元素类型不同,返回false
 				if (!candidateParameter.getComponentType().equals(genericParameter.getComponentType().toClass())) {
 					return false;
 				}
 			}
 			// A non-array type: compare the type itself.
+			//两者类不同,返回false
 			if (!candidateParameter.equals(genericParameter.toClass())) {
 				return false;
 			}
@@ -178,6 +200,7 @@ public final class BridgeMethodResolver {
 	@Nullable
 	private static Method findGenericDeclaration(Method bridgeMethod) {
 		// Search parent types for method that has same signature as bridge.
+		//递归搜索桥方法对应的原生定义方法
 		Class<?> superclass = bridgeMethod.getDeclaringClass().getSuperclass();
 		while (superclass != null && Object.class != superclass) {
 			Method method = searchForMatch(superclass, bridgeMethod);
@@ -187,10 +210,18 @@ public final class BridgeMethodResolver {
 			superclass = superclass.getSuperclass();
 		}
 
+		//方法声名类的所有接口
 		Class<?>[] interfaces = ClassUtils.getAllInterfacesForClass(bridgeMethod.getDeclaringClass());
+		//搜索接口中的方法
 		return searchInterfaces(interfaces, bridgeMethod);
 	}
 
+	/**
+	 * 搜索桥方法的原生定义方法.
+	 * @param interfaces 接口.
+	 * @param bridgeMethod 桥方法.
+	 * @return .
+	 */
 	@Nullable
 	private static Method searchInterfaces(Class<?>[] interfaces, Method bridgeMethod) {
 		for (Class<?> ifc : interfaces) {

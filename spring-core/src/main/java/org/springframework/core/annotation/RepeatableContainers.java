@@ -157,6 +157,11 @@ public abstract class RepeatableContainers {
 			super(null);
 		}
 
+		/**
+		 *
+		 * @param annotation 待查找的注解对象,从该注解上查找重复注解容器.
+		 * @return
+		 */
 		@Override
 		@Nullable
 		Annotation[] findRepeatedAnnotations(Annotation annotation) {
