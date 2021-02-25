@@ -52,23 +52,44 @@ import org.springframework.util.ObjectUtils;
 @SuppressWarnings("serial")
 public class DependencyDescriptor extends InjectionPoint implements Serializable {
 
+	/**
+	 * 注入点声名的类对象
+	 */
 	private final Class<?> declaringClass;
 
+	/**
+	 * 方法名称
+	 */
 	@Nullable
 	private String methodName;
 
+	/**
+	 * 参数类对象数组
+	 */
 	@Nullable
 	private Class<?>[] parameterTypes;
 
+	/**
+	 * 参数索引
+	 */
 	private int parameterIndex;
 
+	/**
+	 * 字段名称
+	 */
 	@Nullable
 	private String fieldName;
 
+	/**
+	 * 是否必须
+	 */
 	private final boolean required;
 
 	private final boolean eager;
 
+	/**
+	 * 嵌套等级,默认1
+	 */
 	private int nestingLevel = 1;
 
 	@Nullable
@@ -168,6 +189,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 		if (!this.required) {
 			return false;
 		}
+
 
 		if (this.field != null) {
 			return !(this.field.getType() == Optional.class || hasNullableAnnotation() ||

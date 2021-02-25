@@ -182,6 +182,12 @@ class StubWebApplicationContext implements WebApplicationContext {
 		return this.beanFactory.getBean(requiredType, args);
 	}
 
+	/**
+	 * 延迟查找
+	 * @param requiredType type the bean must match; can be an interface or superclass
+	 * @param <T>
+	 * @return
+	 */
 	@Override
 	public <T> ObjectProvider<T> getBeanProvider(Class<T> requiredType) {
 		return this.beanFactory.getBeanProvider(requiredType);

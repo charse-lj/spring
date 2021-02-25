@@ -73,8 +73,14 @@ public class InjectionMetadata {
 
 	private final Class<?> targetClass;
 
+	/**
+	 * 所有解析的注入点元信息 InjectedElement
+	 */
 	private final Collection<InjectedElement> injectedElements;
 
+	/**
+	 * 需要进行属性注入的注入元信息，剔除 bd.externallyManagedConfigMembers 已经处理的注入点
+	 */
 	@Nullable
 	private volatile Set<InjectedElement> checkedElements;
 
@@ -103,6 +109,11 @@ public class InjectionMetadata {
 		return this.targetClass != clazz;
 	}
 
+	/**
+	 * bd.externallyManagedConfigMembers 缓存已经校验过的注入点，这些缓存的注入点不会再次进行注入，目的就是为了避免重复注入的问题。
+	 * 那问题就来了，字段怎么会进行重复注入呢？比如 CommonAnnotationBeanPostProcessor 同样会解析注入点的元信息，如果 @Autowired 和 @Resource 出现在同一个字段上，此时会出现重复注入的情况
+	 * @param beanDefinition
+	 */
 	public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 		Set<InjectedElement> checkedElements = new LinkedHashSet<>(this.injectedElements.size());
 		for (InjectedElement element : this.injectedElements) {
@@ -118,6 +129,13 @@ public class InjectionMetadata {
 		this.checkedElements = checkedElements;
 	}
 
+	/**
+	 * inject 方法就是循环所有的注入点，依次调用其 inject 进行属性注入。问题的关键是 checkedElements 是什么，也就是说会注入那些字段？在之前分析 postProcessMergedBeanDefinition 时，提到调用 findAutowiringMetadata 解析完注入点元信息后，会调用 InjectionMetadata#checkConfigMembers 校验。校验到底是做什么的呢？
+	 * @param target
+	 * @param beanName
+	 * @param pvs
+	 * @throws Throwable
+	 */
 	public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 		Collection<InjectedElement> checkedElements = this.checkedElements;
 		// 这里是待遍历、待处理的属性Element们（备注，本处的InjectedElement实现类为：AutowiredFieldElement 因为我们是Field注入嘛）

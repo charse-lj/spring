@@ -79,6 +79,9 @@ public abstract class AbstractFactoryBean<T>
 	@Nullable
 	private T singletonInstance;
 
+	/**
+	 * 用于提前将 bean 暴露
+	 */
 	@Nullable
 	private T earlySingletonInstance;
 
@@ -152,10 +155,12 @@ public abstract class AbstractFactoryBean<T>
 	 */
 	@Override
 	public final T getObject() throws Exception {
+		// 单例，解决循环依赖，先生成代理对象，当getObject时才生成对象
 		if (isSingleton()) {
 			return (this.initialized ? this.singletonInstance : getEarlySingletonInstance());
 		}
 		else {
+			// 多例，不会解决循环依赖，直接报错
 			return createInstance();
 		}
 	}

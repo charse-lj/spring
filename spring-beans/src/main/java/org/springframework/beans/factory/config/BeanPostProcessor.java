@@ -101,6 +101,9 @@ import org.springframework.lang.Nullable;
  * FactoryBean，主要用于将一个对象直接放入到Spring容器中，同时可以封装复杂的对象的创建逻辑
  *
  *
+ * 修正 --->
+ * 		postProcessBeforeInitialization是在初始化方法执行后调用
+ * 		postProcessAfterInitialization在postProcessBeforeInitialization后调用
  */
 public interface BeanPostProcessor {
 
@@ -118,7 +121,7 @@ public interface BeanPostProcessor {
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
 	 *
 	 *
-	 * BeanFactory和ApplicationContext注册Bean的后置处理器不通点：
+	 * BeanFactory和ApplicationContext注册Bean的后置处理器不同点：
 	 * ApplicationContext直接使用@Bean注解，就能向容器注册一个后置处理器。
 	 * 原因：它注册Bean的时候，会先检测是否实现了BeanPostProcessor接口，并自动把它们注册为后置处理器。所在在它这部署一个后置处理器和注册一个普通的Bean，是没有区别的
 	 * BeanFactory必须显示的调用：void addBeanPostProcessor(BeanPostProcessor beanPostProcessor才能注册进去。

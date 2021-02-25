@@ -57,6 +57,8 @@ import org.springframework.core.io.support.ResourcePatternResolver;
  * @author Juergen Hoeller
  * @author Chris Beams
  * @since 2.0
+ *
+ * 你配置classpath:xxx.xml用来启动Spring容器的配置文件，String -> Resource转换就是它的功劳喽
  */
 public class ResourceEditorRegistrar implements PropertyEditorRegistrar {
 

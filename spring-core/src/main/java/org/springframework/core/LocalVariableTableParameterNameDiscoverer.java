@@ -53,6 +53,9 @@ import org.springframework.util.ClassUtils;
  * @author Chris Beams
  * @author Sam Brannen
  * @since 2.0
+ *
+ * 通过ASM提供的通过字节码获取方法的参数名称
+ * 这个处理在我们Controller方法入参自动映射时，我们发现我们并不需要写@RequestParam("aaa")这样的注解，也能给自动映射上值，其实底层就运用了它去把这个key分析出来，然后去request里面拿的~
  */
 public class LocalVariableTableParameterNameDiscoverer implements ParameterNameDiscoverer {
 

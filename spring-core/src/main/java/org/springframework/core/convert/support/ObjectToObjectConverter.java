@@ -131,11 +131,13 @@ final class ObjectToObjectConverter implements ConditionalGenericConverter {
 
 	@Nullable
 	private static Member getValidatedMember(Class<?> targetClass, Class<?> sourceClass) {
+		//从缓存中拿到Member，直接判断Member的可用性，可用的话迅速返回
 		Member member = conversionMemberCache.get(targetClass);
 		if (isApplicable(member, sourceClass)) {
 			return member;
 		}
 
+		//若没有返回，就执行三部曲，通过反射尝试找到合适的Member用于创建目标实例,找到一个合适的Member，然后放进缓存内（若没有就返回null）
 		member = determineToMethod(targetClass, sourceClass);
 		if (member == null) {
 			member = determineFactoryMethod(targetClass, sourceClass);
@@ -151,15 +153,23 @@ final class ObjectToObjectConverter implements ConditionalGenericConverter {
 		return member;
 	}
 
+	/**
+	 *
+	 * @param member Member包括Method或者Constructor
+	 * @param sourceClass
+	 * @return
+	 */
 	private static boolean isApplicable(Member member, Class<?> sourceClass) {
 		if (member instanceof Method) {
 			Method method = (Method) member;
+			//若是static静态方法，要求方法的第1个入参类型必须是源类型sourceType；若不是static方法，则要求源类型sourceType必须是method.getDeclaringClass()的子类型/相同类型
 			return (!Modifier.isStatic(method.getModifiers()) ?
 					ClassUtils.isAssignable(method.getDeclaringClass(), sourceClass) :
 					method.getParameterTypes()[0] == sourceClass);
 		}
 		else if (member instanceof Constructor) {
 			Constructor<?> ctor = (Constructor<?>) member;
+			//要求构造器的第1个入参类型必须是源类型sourceType
 			return (ctor.getParameterTypes()[0] == sourceClass);
 		}
 		else {
@@ -174,7 +184,9 @@ final class ObjectToObjectConverter implements ConditionalGenericConverter {
 			return null;
 		}
 
+		//方法名必须叫"to" + targetClass.getSimpleName()，如toPerson()
 		Method method = ClassUtils.getMethodIfAvailable(sourceClass, "to" + targetClass.getSimpleName());
+		//方法的访问权限必须是public;该方法的返回值必须是目标类型或其子类型
 		return (method != null && !Modifier.isStatic(method.getModifiers()) &&
 				ClassUtils.isAssignable(targetClass, method.getReturnType()) ? method : null);
 	}
@@ -186,6 +198,7 @@ final class ObjectToObjectConverter implements ConditionalGenericConverter {
 			return null;
 		}
 
+		//方法名必须为valueOf(sourceClass) 或者 of(sourceClass) 或者from(sourceClass)
 		Method method = ClassUtils.getStaticMethod(targetClass, "valueOf", sourceClass);
 		if (method == null) {
 			method = ClassUtils.getStaticMethod(targetClass, "of", sourceClass);
@@ -198,6 +211,7 @@ final class ObjectToObjectConverter implements ConditionalGenericConverter {
 
 	@Nullable
 	private static Constructor<?> determineFactoryConstructor(Class<?> targetClass, Class<?> sourceClass) {
+		//存在一个参数，且参数类型是sourceClass类型的构造器
 		return ClassUtils.getConstructorIfAvailable(targetClass, sourceClass);
 	}
 

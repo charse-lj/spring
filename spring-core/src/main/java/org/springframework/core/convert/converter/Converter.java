@@ -25,23 +25,27 @@ import org.springframework.lang.Nullable;
  *
  * <p>Implementations may additionally implement {@link ConditionalConverter}.
  *
- * @author Keith Donald
- * @since 3.0
  * @param <S> the source type
  * @param <T> the target type
- *
- *           将一个S类型的数据转换成T类型
+ *            <p>
+ *            将一个S类型的数据转换成T类型
+ *            Source -> Target类型转换接口，适用于1:1转换
+ *           不足：解决1:N转换问题需要写N遍，造成重复冗余代码
+ *           譬如：输入是字符串，它可以转为任意数字类型，包括byte、short、int、long、double等等
+ * @author Keith Donald
+ * @since 3.0
  */
 @FunctionalInterface
 public interface Converter<S, T> {
 
 	/**
 	 * Convert the source object of type {@code S} to target type {@code T}.
+	 *
 	 * @param source the source object to convert, which must be an instance of {@code S} (never {@code null})
 	 * @return the converted object, which must be an instance of {@code T} (potentially {@code null})
 	 * @throws IllegalArgumentException if the source cannot be converted to the desired target type
-	 * S source type
-	 * T target type
+	 *                                  S source type
+	 *                                  T target type
 	 */
 	@Nullable
 	T convert(S source);

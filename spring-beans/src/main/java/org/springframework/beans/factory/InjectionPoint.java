@@ -32,6 +32,10 @@ import org.springframework.util.ObjectUtils;
  * Also available as an argument for factory methods, reacting to the
  * requesting injection point for building a customized bean instance.
  *
+ * 约定 ==> Constructor为特殊的Method
+ *
+ * 注入点：Method的参数 + Field
+ *
  * @author Juergen Hoeller
  * @since 4.3
  * @see UnsatisfiedDependencyException#getInjectionPoint()

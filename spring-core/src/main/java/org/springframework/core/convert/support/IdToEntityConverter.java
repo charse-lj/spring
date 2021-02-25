@@ -39,6 +39,13 @@ import org.springframework.util.ReflectionUtils;
  * @author Keith Donald
  * @author Juergen Hoeller
  * @since 3.0
+ *
+ *
+ * 通过调用静态查找方法将实体ID兑换为实体对象,满足的条件
+ * 1.必须是static静态方法
+ * 2.方法名必须为find + entityName。如Person类的话，那么方法名叫findPerson
+ * 3.方法参数列表必须为1个
+ * 4.返回值类型必须是Entity类型
  */
 final class IdToEntityConverter implements ConditionalGenericConverter {
 
@@ -52,12 +59,14 @@ final class IdToEntityConverter implements ConditionalGenericConverter {
 
 	@Override
 	public Set<ConvertiblePair> getConvertibleTypes() {
+		//ID和Entity都可以是任意类型
 		return Collections.singleton(new ConvertiblePair(Object.class, Object.class));
 	}
 
 	@Override
 	public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
 		Method finder = getFinder(targetType.getType());
+		//存在符合条件的find方法，且source可以转换为ID类型（注意source能转换成id类型就成，并非目标类型哦）
 		return (finder != null &&
 				this.conversionService.canConvert(sourceType, TypeDescriptor.valueOf(finder.getParameterTypes()[0])));
 	}

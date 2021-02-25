@@ -35,6 +35,8 @@ import org.springframework.lang.Nullable;
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
  * @since 4.1
+ *
+ * 一个典型的应用场景：在Controller中可传可不传的参数中，我们不仅可以通过@RequestParam(required = false) Long id来做，还是可以这么写：@RequestParam Optional<Long> id。
  */
 final class ObjectToOptionalConverter implements ConditionalGenericConverter {
 

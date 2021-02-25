@@ -45,9 +45,11 @@ public interface MergedBeanDefinitionPostProcessor extends BeanPostProcessor {
 	 * @param beanName the name of the bean
 	 * @see AbstractAutowireCapableBeanFactory#applyMergedBeanDefinitionPostProcessors
 	 *
+	 * 最后的机会修改 Bean 的定义
+	 *
 	 * 来给后续回调中缓存一些meta信息使用
 	 * Spring内部主要使用这个方法找出了所有需要注入的字段，同时做了缓存
-	 * 这个方法会在对象被创建出来后，属性注入之前执行
+	 * TODO 这个方法会在对象被创建出来后，属性注入之前执行
 	 * 用来将merged BeanDefinition暴露出来的回调。看看它的一些主要实现：
 	 * @see org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor#postProcessMergedBeanDefinition
 	 * @see org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessMergedBeanDefinition

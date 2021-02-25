@@ -43,6 +43,12 @@ import org.springframework.util.StringUtils;
  * @author Juergen Hoeller
  * @author Chris Beams
  * @since 04.07.2003
+ *
+ * 根据 Bean 类型查找实例列表
+ *    单一类型：BeanFactoryUtils#beanOfType
+ *    集合类型：BeanFactoryUtils#beansOfTypeIncludingAncestors
+ * 根据 Java 注解查找名称列表
+ *    BeanFactoryUtils#beanNamesForTypeIncludingAncestors
  */
 public abstract class BeanFactoryUtils {
 
@@ -61,6 +67,8 @@ public abstract class BeanFactoryUtils {
 
 
 	/**
+	 * factory间接引用
+	 * TODO --> 以‘&’开头
 	 * Return whether the given name is a factory dereference
 	 * (beginning with the factory dereference prefix).
 	 * @param name the name of the bean

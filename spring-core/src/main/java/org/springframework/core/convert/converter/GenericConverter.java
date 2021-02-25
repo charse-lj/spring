@@ -37,6 +37,8 @@ import org.springframework.util.Assert;
  *
  * <p>Implementations may additionally implement {@link ConditionalConverter}.
  *
+ * 更为通用的类型转换接口，适用于N:N转换
+ *
  * @author Keith Donald
  * @author Juergen Hoeller
  * @since 3.0

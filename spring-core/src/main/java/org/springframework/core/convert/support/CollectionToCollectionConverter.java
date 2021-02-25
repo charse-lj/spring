@@ -59,6 +59,22 @@ final class CollectionToCollectionConverter implements ConditionalGenericConvert
 				sourceType.getElementTypeDescriptor(), targetType.getElementTypeDescriptor(), this.conversionService);
 	}
 
+	/**
+	 * 该转换步骤稍微有点复杂，我帮你屡清楚后有这几个关键步骤：
+	 *
+	 * 快速返回：对于特殊情况，做快速返回处理
+	 * 		若目标元素类型是源元素类型的子类型（或相同），就没有转换的必要了（copyRequired = false）
+	 * 		若源集合为空，或者目标集合没指定泛型，也不需要做转换动作
+	 * 			源集合为空，还转换个啥
+	 * 			目标集合没指定泛型，那就是Object，因此可以接纳一切，还转换个啥
+	 * 	若没有触发快速返回。给目标创建一个新集合，然后把source的元素一个一个的放进新集合里去，这里又分为两种处理case
+	 * 		若新集合（目标集合）没有指定泛型类型（那就是Object），就直接putAll即可，并不需要做类型转换
+	 * 		若新集合（目标集合指定了泛型类型），就遍历源集合委托conversionService.convert()对元素一个一个的转
+	 * @param source the source object to convert (may be {@code null})
+	 * @param sourceType the type descriptor of the field we are converting from
+	 * @param targetType the type descriptor of the field we are converting to
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public Object convert(@Nullable Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {

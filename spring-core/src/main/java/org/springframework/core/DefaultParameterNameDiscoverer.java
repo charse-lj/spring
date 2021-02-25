@@ -47,6 +47,7 @@ public class DefaultParameterNameDiscoverer extends PrioritizedParameterNameDisc
 	private static final boolean IN_NATIVE_IMAGE = (System.getProperty("org.graalvm.nativeimage.imagecode") != null);
 
 	public DefaultParameterNameDiscoverer() {
+		// LinkedList是先进先出的。所以for循环遍历的时候，会最先执行Kotlin、Standard、Local... 按照这个优先级
 		if (KotlinDetector.isKotlinReflectPresent() && !IN_NATIVE_IMAGE) {
 			addDiscoverer(new KotlinReflectionParameterNameDiscoverer());
 		}

@@ -89,6 +89,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	}
 
 	/**
+	 * (1) 对 FactoryBean 正确确性的验证。
+	 * (2) 对非 FactoryBean不做任何处理
+	 * (3)对 bean 进行转换。
+	 * (4)将从 Factory 中解析 bean 的工作委托给 getObjectFromFactoryBean
 	 * Obtain an object to expose from the given FactoryBean.
 	 * @param factory the FactoryBean instance
 	 * @param beanName the name of the bean
@@ -104,7 +108,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			synchronized (getSingletonMutex()) {
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
-					//通过factory对象获取bean
+					//通过factoryBean对象获取bean
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
@@ -123,6 +127,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 							//单例对象创建前，做一些校验并且往 DefaultSingletonBeanRegistry.singletonsCurrentlyInCreation 中添加beanName
 							beforeSingletonCreation(beanName);
 							try {
+								//applyBeanPostProcessorsAfterInitialization
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
@@ -145,6 +150,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			}
 		}
 		else {
+			// 非单例
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (shouldPostProcess) {
 				try {

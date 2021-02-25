@@ -72,9 +72,9 @@ import org.springframework.util.ReflectionUtils;
  * for annotation-driven injection of named beans.
  *
  * @author Juergen Hoeller
- * @since 2.5
  * @see #setInitAnnotationType
  * @see #setDestroyAnnotationType
+ * @since 2.5
  */
 @SuppressWarnings("serial")
 public class InitDestroyAnnotationBeanPostProcessor
@@ -85,12 +85,15 @@ public class InitDestroyAnnotationBeanPostProcessor
 				@Override
 				public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 				}
+
 				@Override
 				public void invokeInitMethods(Object target, String beanName) {
 				}
+
 				@Override
 				public void invokeDestroyMethods(Object target, String beanName) {
 				}
+
 				@Override
 				public boolean hasDestroyMethods() {
 					return false;
@@ -147,6 +150,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 		LifecycleMetadata metadata = findLifecycleMetadata(beanType);
+		//为beanDefinition设置externallyManagedInitMethods 、externallyManagedDestroyMethods
 		metadata.checkConfigMembers(beanDefinition);
 	}
 
@@ -155,11 +159,9 @@ public class InitDestroyAnnotationBeanPostProcessor
 		LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
 		try {
 			metadata.invokeInitMethods(bean, beanName);
-		}
-		catch (InvocationTargetException ex) {
+		} catch (InvocationTargetException ex) {
 			throw new BeanCreationException(beanName, "Invocation of init method failed", ex.getTargetException());
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			throw new BeanCreationException(beanName, "Failed to invoke init method", ex);
 		}
 		return bean;
@@ -175,17 +177,14 @@ public class InitDestroyAnnotationBeanPostProcessor
 		LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
 		try {
 			metadata.invokeDestroyMethods(bean, beanName);
-		}
-		catch (InvocationTargetException ex) {
+		} catch (InvocationTargetException ex) {
 			String msg = "Destroy method on bean with name '" + beanName + "' threw an exception";
 			if (logger.isDebugEnabled()) {
 				logger.warn(msg, ex.getTargetException());
-			}
-			else {
+			} else {
 				logger.warn(msg + ": " + ex.getTargetException());
 			}
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			logger.warn("Failed to invoke destroy method on bean with name '" + beanName + "'", ex);
 		}
 	}
@@ -232,6 +231,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 			final List<LifecycleElement> currDestroyMethods = new ArrayList<>();
 
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
+				//方法上包含@PostConstruct注解
 				if (this.initAnnotationType != null && method.isAnnotationPresent(this.initAnnotationType)) {
 					//包含initAnnotationType,创建一个LifecycleElement,添加到容器中
 					LifecycleElement element = new LifecycleElement(method);
@@ -240,6 +240,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 						logger.trace("Found init method on class [" + clazz.getName() + "]: " + method);
 					}
 				}
+				//方法上包含@PreDestroy注解
 				if (this.destroyAnnotationType != null && method.isAnnotationPresent(this.destroyAnnotationType)) {
 					//包含destroyAnnotationType,创建一个LifecycleElement,添加到容器中
 					currDestroyMethods.add(new LifecycleElement(method));
@@ -249,9 +250,9 @@ public class InitDestroyAnnotationBeanPostProcessor
 				}
 			});
 
-			//是List,先定义的,后执行
+			//是List,父类中的@PostConstruct方法先执行
 			initMethods.addAll(0, currInitMethods);
-			//后定义的，后执行
+			//后定义的，子类中的@PreDestroy执行
 			destroyMethods.addAll(currDestroyMethods);
 			//父类.
 			targetClass = targetClass.getSuperclass();
@@ -294,7 +295,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 		private volatile Set<LifecycleElement> checkedDestroyMethods;
 
 		public LifecycleMetadata(Class<?> targetClass, Collection<LifecycleElement> initMethods,
-				Collection<LifecycleElement> destroyMethods) {
+								 Collection<LifecycleElement> destroyMethods) {
 
 			this.targetClass = targetClass;
 			this.initMethods = initMethods;
@@ -303,7 +304,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 		public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 			Set<LifecycleElement> checkedInitMethods = new LinkedHashSet<>(this.initMethods.size());
-			//initMethods 处理方式
+			//@PostConstruct 注解方法处理
 			for (LifecycleElement element : this.initMethods) {
 				//获取方法的方法名(内部类复杂点)
 				String methodIdentifier = element.getIdentifier();
@@ -333,7 +334,13 @@ public class InitDestroyAnnotationBeanPostProcessor
 			this.checkedDestroyMethods = checkedDestroyMethods;
 		}
 
-		/**执行初始化方法*/
+		/**
+		 * 执行初始化方法
+		 *
+		 * @param target   bean对象.
+		 * @param beanName bean名称.
+		 * @throws Throwable .
+		 */
 		public void invokeInitMethods(Object target, String beanName) throws Throwable {
 			Collection<LifecycleElement> checkedInitMethods = this.checkedInitMethods;
 			Collection<LifecycleElement> initMethodsToIterate =
@@ -348,7 +355,13 @@ public class InitDestroyAnnotationBeanPostProcessor
 			}
 		}
 
-		/**执行销毁方法*/
+		/**
+		 * 执行销毁方法
+		 *
+		 * @param target   bean对象.
+		 * @param beanName bean 对象名称.
+		 * @throws Throwable
+		 */
 		public void invokeDestroyMethods(Object target, String beanName) throws Throwable {
 			Collection<LifecycleElement> checkedDestroyMethods = this.checkedDestroyMethods;
 			Collection<LifecycleElement> destroyMethodsToUse =

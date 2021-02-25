@@ -36,6 +36,8 @@ public interface Parser<T> {
 	 * @return an instance of T
 	 * @throws ParseException when a parse exception occurs in a java.text parsing library
 	 * @throws IllegalArgumentException when a parse exception occurs
+	 *
+	 * 解析接口。将String类型转到T类型，Locale用于控制国际化。
 	 */
 	T parse(String text, Locale locale) throws ParseException;
 

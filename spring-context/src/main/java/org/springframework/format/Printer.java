@@ -33,6 +33,7 @@ public interface Printer<T> {
 	 * @param object the instance to print
 	 * @param locale the current user locale
 	 * @return the printed text string
+	 * 格式化显示（输出）接口。将T类型转为String形式，Locale用于控制国际化
 	 */
 	String print(T object, Locale locale);
 

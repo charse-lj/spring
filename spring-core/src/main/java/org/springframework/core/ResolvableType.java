@@ -523,7 +523,7 @@ public class ResolvableType implements Serializable {
 			Type[] genericIfcs = resolved.getGenericInterfaces();
 			interfaces = new ResolvableType[genericIfcs.length];
 			for (int i = 0; i < genericIfcs.length; i++) {
-				//
+				//该类的接口类转换为RT
 				interfaces[i] = forType(genericIfcs[i], this);
 			}
 			this.interfaces = interfaces;

@@ -54,6 +54,8 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	/**
 	 * 1、需要避免循环别名和name之间循环引用的问题。比如a->b b->c c->a这就循环引用了，是需要避免的，否则很容易出问题
 	 * 2、不能出现并发问题直接出现如下情况。a -> b b->a (其实也是一种循环引用嘛)
+	 *
+	 * bean的名称只有一个,别名可以有多个
 	 * @param name the canonical name
 	 * @param alias the alias to be registered
 	 */
@@ -80,7 +82,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 						//若已经存在对应的name了，而且还和传进俩的name相同，那啥都不做就行
 						return;
 					}
-					//若存在对应的name了，切还不让复写此别名（让其指向别的name），那就跑错吧
+					//若存在对应的name了，且还不让复写此别名（让其指向别的name），那就报错吧
 					if (!allowAliasOverriding()) {
 						throw new IllegalStateException("Cannot define alias '" + alias + "' for name '" +
 								name + "': It is already registered for name '" + registeredName + "'.");

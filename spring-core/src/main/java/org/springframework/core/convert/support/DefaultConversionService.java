@@ -132,9 +132,9 @@ public class DefaultConversionService extends GenericConversionService {
 	}
 
 	private static void addScalarConverters(ConverterRegistry converterRegistry) {
-		converterRegistry.addConverterFactory(new NumberToNumberConverterFactory()); //数->数
+		converterRegistry.addConverterFactory(new NumberToNumberConverterFactory());
 
-		converterRegistry.addConverterFactory(new StringToNumberConverterFactory()); //string -> 数
+		converterRegistry.addConverterFactory(new StringToNumberConverterFactory());
 		converterRegistry.addConverter(Number.class, String.class, new ObjectToStringConverter());
 
 		converterRegistry.addConverter(new StringToCharacterConverter());

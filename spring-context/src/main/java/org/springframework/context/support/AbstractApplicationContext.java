@@ -749,6 +749,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// 这也是为什么我们可以通过依赖注入的方式，直接注入这几个对象比如ApplicationContext可以直接依赖注入
 		// 但是需要注意的是：这些Bean，Spring的IOC容器里其实是没有的。beanFactory.getBeanDefinitionNames()和beanFactory.getSingletonNames()都是找不到他们的，所以特别需要理解这一点
 		// 至于容器中没有，但是我们还是可以@Autowired直接注入的有哪些，请看下图：
+		// 默认设置了如下内部依赖：BeanFactory、ResourceLoader、ApplicationEventPublisher、ApplicationContext
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);

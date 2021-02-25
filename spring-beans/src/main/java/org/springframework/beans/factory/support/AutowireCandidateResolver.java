@@ -28,6 +28,8 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @author Mark Fisher
  * @since 2.5
+ *
+ * 策略接口，对特定的依赖，这个接口决定一个特定的bean definition是否满足作为自动绑定的备选项
  */
 public interface AutowireCandidateResolver {
 
@@ -41,7 +43,7 @@ public interface AutowireCandidateResolver {
 	 * @return whether the bean definition qualifies as autowire candidate
 	 * @see org.springframework.beans.factory.config.BeanDefinition#isAutowireCandidate()
 	 *
-	 * 判断给定的BeanDefinition是否允许被依赖注入（BeanDefinition的默认值都是true）
+	 * 判断给定的BeanDefinition是否允许被依赖注入descriptor(注入点)
 	 * 默认情况下直接根据bd中的定义返回，如果没有进行特殊配置的话为true
 	 */
 	default boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
@@ -57,8 +59,9 @@ public interface AutowireCandidateResolver {
 	 * @since 5.0
 	 * @see DependencyDescriptor#isRequired()
 	 *
-	 * 给定的descriptor是否是必须的
+	 * 给定的descriptor是否是必须的注入
 	 * 指定的依赖是否是必要的
+	 * 如果是字段类型是 Optional 或有 @Null 注解时为 false
 	 */
 	default boolean isRequired(DependencyDescriptor descriptor) {
 		return descriptor.isRequired();
@@ -74,11 +77,11 @@ public interface AutowireCandidateResolver {
 	 * @since 5.1
 	 * @see org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver#hasQualifier
 	 *
-	 * // QualifierAnnotationAutowireCandidateResolver做了实现，判断是否有@Qualifier注解
-	 *     // 一共有两种注解：
-	 *     // 1.Spring内置的@Qualifier注解，org.springframework.beans.factory.annotation.Qualifier
-	 *     // 2.添加了JSR-330相关依赖，javax.inject.Qualifier注解
-	 *     // 默认情况下返回false
+	 *    QualifierAnnotationAutowireCandidateResolver做了实现，判断是否有@Qualifier或者自定义注解
+	 *      一共有两种注解：
+	 *      1.Spring内置的@Qualifier注解，org.springframework.beans.factory.annotation.Qualifier
+	 *      2.添加了JSR-330相关依赖，javax.inject.Qualifier注解
+	 *      默认情况下返回false
 	 */
 	default boolean hasQualifier(DependencyDescriptor descriptor) {
 		return false;
@@ -92,7 +95,7 @@ public interface AutowireCandidateResolver {
 	 * or {@code null} if none found
 	 * @since 3.0
 	 *
-	 * 获取一个该依赖一个建议的值
+	 * 获取一个该依赖一个建议的值、@Value 时直接返回
 	 */
 	@Nullable
 	default Object getSuggestedValue(DependencyDescriptor descriptor) {

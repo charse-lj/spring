@@ -74,27 +74,24 @@ final class PostProcessorRegistrationDelegate {
 		// 所以BeanDefinitionRegistryPostProcessors，它可以让我们介入，改变Bean的一些定义信息
 		Set<String> processedBeans = new HashSet<>();
 
-		// 只有此beanFactory 是BeanDefinitionRegistry  才能执行BeanDefinitionRegistryPostProcessor，才能修改Bean的定义嘛~
+		// beanFactory 是BeanDefinitionRegistry子类,才能管理BeanDefinition
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 
-			// 存储只需要执行BeanFactoryPostProcessor接口的后置处理器
+			//自定义的BeanFactoryPostProcessor执行并分组
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
-			// 存储了实现了BeanDefinitionRegistryPostProcessor接口的后置处理器
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
-			// 从此处可以看出，我们手动set进去的，最最最最优先执行的
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
-					// 执行实现了BeanDefinitionRegistryPostProcessor接口的后置处理器的postProcessBeanDefinitionRegistry方法
+					// 执行postProcessBeanDefinitionRegistry()方法
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
-					//放入容器
+					//放入容器 -->还有BeanFactoryPostProcessor的postProcessBeanFactory()方法未执行,所以需要保存等待合适机会执行
 					registryProcessors.add(registryProcessor);
 				}
 				else {
-					// 缓冲起来常规的处理器
 					regularPostProcessors.add(postProcessor);
 				}
 			}

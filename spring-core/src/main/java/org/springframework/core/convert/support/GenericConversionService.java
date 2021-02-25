@@ -41,6 +41,10 @@ import java.util.*;
  * @author Phillip Webb
  * @author David Haraburda
  * @since 3.0
+ *
+ * 提供模版实现，如转换器的注册、删除、匹配查找等，但并不内置转换器实现
+ *
+ * 对于三种转换器Converter、ConverterFactory、GenericConverter在添加到Converters之前都统一被适配为了GenericConverter，这样做的目的是方便统一管理。对应的两个适配器是ConverterAdapter和ConverterFactoryAdapter，它俩都是ConditionalGenericConverter的内部类
  */
 public class GenericConversionService implements ConfigurableConversionService {
 
@@ -58,6 +62,9 @@ public class GenericConversionService implements ConfigurableConversionService {
 
 	private final Converters converters = new Converters();
 
+	/**
+	 * converterCache是缓存用于加速查找
+	 */
 	private final Map<ConverterCacheKey, GenericConverter> converterCache = new ConcurrentReferenceHashMap<>(64);
 
 
@@ -171,15 +178,18 @@ public class GenericConversionService implements ConfigurableConversionService {
 			Assert.isTrue(source == null, "Source must be [null] if source type == [null]");
 			return handleResult(null, targetType, convertNullSource(null, targetType));
 		}
+		// 校验：source必须是sourceType的实例
 		if (source != null && !sourceType.getObjectType().isInstance(source)) {
 			throw new IllegalArgumentException("Source to convert from must be an instance of [" +
 					sourceType + "]; instead it was a [" + source.getClass().getName() + "]");
 		}
+		//拿到转换器，执行转换
 		GenericConverter converter = getConverter(sourceType, targetType);
 		if (converter != null) {
 			Object result = ConversionUtils.invokeConverter(converter, source, sourceType, targetType);
 			return handleResult(sourceType, targetType, result);
 		}
+		// 若没进行canConvert的判断直接调动，可能出现此种状况：一般抛出ConverterNotFoundException异常
 		return handleConverterNotFound(source, sourceType, targetType);
 	}
 
@@ -243,18 +253,21 @@ public class GenericConversionService implements ConfigurableConversionService {
 	 */
 	@Nullable
 	protected GenericConverter getConverter(TypeDescriptor sourceType, TypeDescriptor targetType) {
+		// 1、查缓存
 		ConverterCacheKey key = new ConverterCacheKey(sourceType, targetType);
 		GenericConverter converter = this.converterCache.get(key);
 		if (converter != null) {
 			return (converter != NO_MATCH ? converter : null);
 		}
 
+		// 2、去converters里查找
 		converter = this.converters.find(sourceType, targetType);
 		if (converter == null) {
 			converter = getDefaultConverter(sourceType, targetType);
 		}
 
 		if (converter != null) {
+			// 把结果装进缓存converterCache里
 			this.converterCache.put(key, converter);
 			return converter;
 		}
@@ -495,9 +508,15 @@ public class GenericConversionService implements ConfigurableConversionService {
 
 	/**
 	 * Manages all converters registered with the service.
+	 *
+	 * 所有通用converter集合
 	 */
 	private static class Converters {
 
+		/**
+		 * 这里使用的集合/Map均为LinkedHashXXX，都是有序的（存入顺序和遍历取出顺序保持一致）
+		 * 存取通用的转换器，并不限定转换类型，一般用于兜底
+		 */
 		private final Set<GenericConverter> globalConverters = new LinkedHashSet<>();
 
 		private final Map<ConvertiblePair, ConvertersForPair> converters = new LinkedHashMap<>(36);
@@ -538,11 +557,14 @@ public class GenericConversionService implements ConfigurableConversionService {
 		@Nullable
 		public GenericConverter find(TypeDescriptor sourceType, TypeDescriptor targetType) {
 			// Search the full type hierarchy
+			// 找到该类型的类层次接口（父类 + 接口），注意：结果是有序列表
 			List<Class<?>> sourceCandidates = getClassHierarchy(sourceType.getType());
 			List<Class<?>> targetCandidates = getClassHierarchy(targetType.getType());
+			//双重遍历
 			for (Class<?> sourceCandidate : sourceCandidates) {
 				for (Class<?> targetCandidate : targetCandidates) {
 					ConvertiblePair convertiblePair = new ConvertiblePair(sourceCandidate, targetCandidate);
+					//从converters、globalConverters里匹配到一个合适转换器后立马返回
 					GenericConverter converter = getRegisteredConverter(sourceType, targetType, convertiblePair);
 					if (converter != null) {
 						return converter;

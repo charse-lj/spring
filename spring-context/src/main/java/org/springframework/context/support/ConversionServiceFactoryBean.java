@@ -62,6 +62,7 @@ public class ConversionServiceFactoryBean implements FactoryBean<ConversionServi
 	 * implementing {@link org.springframework.core.convert.converter.Converter},
 	 * {@link org.springframework.core.convert.converter.ConverterFactory},
 	 * or {@link org.springframework.core.convert.converter.GenericConverter}.
+	 * 自定义转换器可以通过setConverters()方法添加进来
 	 */
 	public void setConverters(Set<?> converters) {
 		this.converters = converters;

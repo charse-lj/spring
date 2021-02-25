@@ -103,6 +103,17 @@ class BeanDefinitionValueResolver {
 	 * @param argName the name of the argument that the value is defined for
 	 * @param value the value object to resolve
 	 * @return the resolved object
+	 *
+	 * 解析 value 的真实类型，value 的类型不同，处理的结果也不同。本质就是进行依赖查找
+	 * RuntimeBeanReference 类型：引用类型，根据 ref.beanType 或 ref.beanName 从容器中获取。
+	 * RuntimeBeanNameReference 类型：Spring EL 表达式解析 ref.beanName。
+	 * BeanDefinitionHolder 或 BeanDefinition 类型：根据 BeanDefinition 实例化 bean。
+	 * DependencyDescriptor：采用 beanFactory#resolveDependency 进行依赖查找。
+	 * ManagedList 等集合类型：规则和上述完全类似，只是返回集合而已。
+	 * 其它类型：如果是 String，则 Spring EL 表达式解析，其余的直接返回 originalValue。
+	 *
+	 * 如 applyPropertyValues 中的 AutowiredPropertyMarker.INSTANCE 类型：表示使用 beanFactory#resolveDependency 进行依赖查找。
+	 * BeanDefinitionBuilder 添加属性时就会使用这些类型。
 	 */
 	@Nullable
 	public Object resolveValueIfNecessary(Object argName, @Nullable Object value) {

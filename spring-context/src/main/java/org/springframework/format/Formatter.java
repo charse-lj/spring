@@ -23,6 +23,8 @@ package org.springframework.format;
  * @author Keith Donald
  * @since 3.0
  * @param <T> the type of object this Formatter formats
+ *
+ * 格式化器： String <-> Java类型,这么一看它似乎和PropertyEditor类似，但是它的关注点是字符串的格式
  */
 public interface Formatter<T> extends Printer<T>, Parser<T> {
 

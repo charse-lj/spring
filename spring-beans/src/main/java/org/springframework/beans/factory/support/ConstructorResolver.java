@@ -123,6 +123,31 @@ class ConstructorResolver {
 	 * @return a BeanWrapper for the new instance
 	 *
 	 * 这个方法作用是获取被包装后的bean，包装后的对象是BeanWrapper对象，这个对象的实现类是BeanWrapperImpl。其中包含被封装后待处理的bean，和设置bean属性的属性编辑器
+	 * 了解构造器注入后，工厂注入基本上如出一辙。无论是构造器注入还是工厂方法注入都会面临如下问题：
+	 * 1.外部化参数 explicitArgs 覆盖配置参数 bd.args。如果调用 beanFactory#getBean(beanName, args) 时，实例化对象时，只会使用外部参数。
+	 * 同时外部化参数只支持精确匹配，即方法参数个数和外部化参数个数必须完全一致。但我们还是推荐使用配置参数，而不推荐使用外部化参数。
+	 * 这一思想贯穿了整个参数匹配的过程，阅读源码代码时要首先要有这么一个印象。
+	 * 2.（缓存）快速实例化对象。只要执行过一次对象创建，bd 会缓存匹配的构造器和参数。注意，如果使用外部化参数，那么不会使用缓存，因为外部化参数发生变化后，匹配的构造器和参数会改变。
+	 * 还有一点，如果是单例，会直接从缓存中命中对象，根本不会再次调用 autowireConstructor 方法创建对象，此时外部化参数不会生效，这可能会让使用者非常困惑，为什么外部化参数就是不生效呢？
+	 *     mbd.constructorArgumentLock：同步锁
+	 *     mbd.resolvedConstructorOrFactoryMethod：缓存构造器或工厂方法。
+	 *     mbd.constructorArgumentsResolved：参数是否解析，boolean 值。
+	 *     mbd.resolvedConstructorArguments：缓存解析后的参数。
+	 *     mbd.preparedConstructorArguments：缓存参数，使用进还需要进一步解析。
+	 * 3.（非缓存）匹配无参构造器。外部化参数和配置参数匹配规则相同：外部化参数和配置参数都为 null，且只有一个无参的构造器。
+	 * 4.（非缓存）匹配有参构造器。先计算实际可用的参数，进行参数匹配。如果匹配成功，则计算每个构造器的权重，权重越小优先级越高。如果无法匹配或有多个权重相同的构造器，则抛出异常。
+	 * 最后缓存匹配成功的构造器和参数。外部化参数和默认配置参数匹配规则的最大不同是：
+	 *     外部化参数匹配：实际参数全部来源于外部化参数。也是就是说，必须精确匹配外部化参数个数，匹配规则非常简单。
+	 *     默认配置参数匹配：实际参数除了来源于默认的配置参数外，不足的参数还可以根据其参数类型和参数名称从 Spring IoC 容器中查找（仅当autowiring=true）。也是就是说，构造参数的个数可以大于实际参数个数。当然，如果 Spring IoC 容器中查找不到对应的参数，则该构造器方法肯定无法匹配。
+	 *
+	 *
+	 * 外部化参数：精确匹配参数个数。
+	 * 默认配置参数匹配：允许构造器参数大于默认配置参数个数，只要不足的参数能从 Spring IoC容器中解析即可。其实最关键的就是两个参数解析函数：
+	 *     resolveConstructorArguments：解析已经有默认参数 bd.constructorArgumentValues。
+	 *     createArgumentArray：除了已有的默认参数外，还会从容器中解析（仅当autowiring=true），并将解析的结果包装成 ArgumentsHolder。
+	 * 我们重点分析一下 autowiring=true 是什么场景，也就是允许从 Spring IoC 容器中查找依赖自动注入？
+	 *     构造器自动注入模式：即 bd.autowireMode=AUTOWIRE_CONSTRUCTOR。我们知道，除了 XML 显示配置构造器自动注入外，一般情况下 bd.autowireMode=NO，也就是返回 false。
+	 *     显示的指定构造器：即 chosenCtors!=null，还记得我们之前分析的 createBeanInstance 方法吗？通过后置处理器 ibp#determineCandidateConstructors 可以指定实例化的构造器 ctors。如果装载AutowiredAnnotationBeanPostProcessor 后，会使用构造器自动注入。
 	 */
 	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
@@ -132,6 +157,7 @@ class ConstructorResolver {
 		// initBeanWrapper做了一些事，比如注册解析器、value解析器等等  这是个比较大的概念，后面会有专题再说吧
 		this.beanFactory.initBeanWrapper(bw);
 
+		// 1. 使用缓存，快速实例化对象
 		Constructor<?> constructorToUse = null;
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
@@ -157,10 +183,12 @@ class ConstructorResolver {
 				}
 			}
 			// 如果上面没有解析过，显然这里参数就是null了,argsToUse也就还为null Spring下面继续解析
+			//可以很清楚的看到外部化参数没有使用缓存，每次都需要重新解析。至于参数的解析 resolvePreparedArguments 会在下方进行分析
 			if (argsToResolve != null) {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve, true);
 			}
 		}
+		// 非缓存，进行参数匹配
 		//如果缓存的构造器不存在，就说明没有bean进行过解析，需要去关联对应的bean的构造器
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
@@ -180,6 +208,7 @@ class ConstructorResolver {
 				}
 			}
 
+			// 2. （非缓存）匹配无参构造器
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
 				if (uniqueCandidate.getParameterCount() == 0) {
@@ -193,18 +222,27 @@ class ConstructorResolver {
 				}
 			}
 
+			//有参构造器匹配
+			//首先，实际参数解析。对于外部化参数而言，只能使用指定的参数。而对于默认配置参数而言，除了配置参数外，还可以根据根据其参数类型和参数名称从 Spring IoC 容器中查找（仅当autowiring=true）。也就是说外部化参数必须精确匹配外部化参数个数，而默认配置参数则构造参数的个数可以大于实际参数个数，只要可以从容器中解析到参数即可。
+			//其次，权值计算。权重越小优先级越高。如果无法匹配或有多个权重相同的构造器，则抛出异常。
+			//最后，缓存解析的构造器和参数，返回实例化的对象
+
+			//对于外部化参数就不多说了，我们重点说一下绝大多数场景，默认配置参数。首先，解析已有的配置参数；其次，根据构造器参数类型和参数名称从 Spring IoC 容器中解析剩余的参数。如果能成功解析，则命中该构造器
 			// Need to resolve the constructor.
 			// 我们的传值chosenCtors 显然不为null，所以此值为true
+			// autowiring表示是否允许从 Spring IoC 容器查找依赖
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			ConstructorArgumentValues resolvedValues = null;
 
 			int minNrOfArgs;
 			//若传入的构造参数不为空，那最小参数长度一塔为准
+			// 1.1 外部化参数，不需要解析
 			if (explicitArgs != null) {
 				minNrOfArgs = explicitArgs.length;
 			}
 			else {
+				// 1.2 默认配置参数，先解析已有的配置参数
 				// 这里相当于要解析出构造函数的参数了
 				//解析对应的构造参数然后添加到ConstructorArgumentValues中
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
@@ -221,6 +259,7 @@ class ConstructorResolver {
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
 
+			// 3. （非缓存）匹配有参构造器
 			// 开始遍历排序后的构造器了
 			for (Constructor<?> candidate : candidates) {
 				int parameterCount = candidate.getParameterCount();
@@ -237,6 +276,7 @@ class ConstructorResolver {
 				ArgumentsHolder argsHolder;
 				// 拿到构造器参数的类型们
 				Class<?>[] paramTypes = candidate.getParameterTypes();
+				// 1.3 默认配置参数，如果配置参数不足，从Spring IoC中继续解析参数。如果能解析则匹配成功
 				if (resolvedValues != null) {
 					try {
 						//兼容JDK6提供的@ConstructorProperties这个注解，如果它标注了参数名，那就以它的名字为准
@@ -267,6 +307,7 @@ class ConstructorResolver {
 						continue;
 					}
 				}
+				// 1.4 外部化参数，只需要参数个数相等即可。此时resolvedValues=null
 				else {
 					// Explicit arguments given -> arguments length must match exactly.
 					if (parameterCount != explicitArgs.length) {
@@ -278,11 +319,14 @@ class ConstructorResolver {
 				//lenientConstructorResolution的值ture与false有什么区别：
 				//这个属性默认值是true，在大部分情况下都是使用[宽松模式]，即使多个构造函数的参数数量相同、类型存在父子类、接口实现类关系也能正常创建bean。
 				// false表示严格模式。与上面相反
-				// typeDiffWeight:返回不同的个数的权重（权重概念？）
+				// typeDiffWeight:返回不同的个数的权重（权重概念?）
+				// constructorToUse 表示权重最高的构造器，ambiguousConstructors 表示有多个权重最高的构造器。如果没有匹配的构造器（constructorToUse=null）或有多个权重相等的构造器（ambiguousConstructors!=null）都需要抛出异常
+				// 下面我们看一下权重的计算，以 getAssignabilityWeight 为例，权重值越小优先级越高
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
 				// 根据权重，选择一个最为合适的构造器
+				// 权重最高的构造器
 				if (typeDiffWeight < minTypeDiffWeight) {
 					// 大都进这里来，然后是木有ambiguousConstructors 的
 					constructorToUse = candidate;
@@ -291,6 +335,7 @@ class ConstructorResolver {
 					minTypeDiffWeight = typeDiffWeight;
 					ambiguousConstructors = null;
 				}
+				// 多个权重最高的构造器
 				else if (constructorToUse != null && typeDiffWeight == minTypeDiffWeight) {
 					if (ambiguousConstructors == null) {
 						ambiguousConstructors = new LinkedHashSet<>();
@@ -320,12 +365,15 @@ class ConstructorResolver {
 						ambiguousConstructors);
 			}
 
+			//实例化对象
+			// 1. 缓存解析后的构造器和参数
 			if (explicitArgs == null && argsHolderToUse != null) {
 				argsHolderToUse.storeCache(mbd, constructorToUse);
 			}
 		}
 
 		Assert.state(argsToUse != null, "Unresolved constructor arguments");
+		// 2. 调用InstantiationStrategy实例化参数
 		bw.setBeanInstance(instantiate(beanName, mbd, constructorToUse, argsToUse));
 		return bw;
 	}
@@ -423,6 +471,7 @@ class ConstructorResolver {
 	}
 
 	/**
+	 * 一般表示注解驱动（ @Bean 注册），通过工厂方法实例化。委托给 ConstructorResolver#instantiateUsingFactoryMethod。
 	 * Instantiate the bean using a named factory method. The method may be static, if the
 	 * bean definition parameter specifies a class, rather than a "factory-bean", or
 	 * an instance variable on a factory object itself configured using Dependency Injection.
@@ -447,14 +496,17 @@ class ConstructorResolver {
 		Class<?> factoryClass;
 		boolean isStatic;
 
+		//TODO ?? 是否为静态工厂方法如何区分?
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+			//工厂bean名不能和需要实例化的beanName同名
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
 			}
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {
+				//需要实例化的单例对象已经存在
 				throw new ImplicitlyAppearedSingletonException();
 			}
 			factoryClass = factoryBean.getClass();
@@ -509,6 +561,7 @@ class ConstructorResolver {
 					candidates = Collections.singletonList(factoryMethodToUse);
 				}
 			}
+			//遍历筛选符合条件的工厂方法
 			if (candidates == null) {
 				candidates = new ArrayList<>();
 				Method[] rawCandidates = getCandidateMethods(factoryClass, mbd);
@@ -519,11 +572,13 @@ class ConstructorResolver {
 				}
 			}
 
+			//候选工厂方法唯一,外置参数为null,mbd无构造参数
 			if (candidates.size() == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Method uniqueCandidate = candidates.get(0);
 				if (uniqueCandidate.getParameterCount() == 0) {
 					mbd.factoryMethodToIntrospect = uniqueCandidate;
 					synchronized (mbd.constructorArgumentLock) {
+						//缓存
 						mbd.resolvedConstructorOrFactoryMethod = uniqueCandidate;
 						mbd.constructorArgumentsResolved = true;
 						mbd.resolvedConstructorArguments = EMPTY_ARGS;
@@ -533,7 +588,8 @@ class ConstructorResolver {
 				}
 			}
 
-			if (candidates.size() > 1) {  // explicitly skip immutable singletonList
+			// explicitly skip immutable singletonList
+			if (candidates.size() > 1) {
 				candidates.sort(AutowireUtils.EXECUTABLE_COMPARATOR);
 			}
 
@@ -552,6 +608,7 @@ class ConstructorResolver {
 				if (mbd.hasConstructorArgumentValues()) {
 					ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 					resolvedValues = new ConstructorArgumentValues();
+					//解析内置参数
 					minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 				}
 				else {
@@ -561,7 +618,9 @@ class ConstructorResolver {
 
 			LinkedList<UnsatisfiedDependencyException> causes = null;
 
+			//遍历符合条件的工厂方法
 			for (Method candidate : candidates) {
+				//工厂方法参数个数
 				int parameterCount = candidate.getParameterCount();
 
 				if (parameterCount >= minNrOfArgs) {
@@ -569,6 +628,7 @@ class ConstructorResolver {
 
 					Class<?>[] paramTypes = candidate.getParameterTypes();
 					if (explicitArgs != null) {
+						//外置参数必须和工厂方法需要的参数个数相同 --> 精确匹配
 						// Explicit arguments given -> arguments length must match exactly.
 						if (paramTypes.length != explicitArgs.length) {
 							continue;
@@ -578,11 +638,13 @@ class ConstructorResolver {
 					else {
 						// Resolved constructor arguments: type conversion and/or autowiring necessary.
 						try {
+							//获取工厂方法参数名
 							String[] paramNames = null;
 							ParameterNameDiscoverer pnd = this.beanFactory.getParameterNameDiscoverer();
 							if (pnd != null) {
 								paramNames = pnd.getParameterNames(candidate);
 							}
+							//
 							argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw,
 									paramTypes, paramNames, candidate, autowiring, candidates.size() == 1);
 						}
@@ -709,6 +771,7 @@ class ConstructorResolver {
 	 * Resolve the constructor arguments for this bean into the resolvedValues object.
 	 * This may involve looking up other beans.
 	 * <p>This method is also used for handling invocations of static factory methods.
+	 * 解析默认的配置参数 mbd.constructorArgumentValues
 	 */
 	private int resolveConstructorArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 			ConstructorArgumentValues cargs, ConstructorArgumentValues resolvedValues) {
@@ -734,6 +797,7 @@ class ConstructorResolver {
 				resolvedValues.addIndexedArgumentValue(index, valueHolder);
 			}
 			else {
+				// 核心代码就这么一句，将参数解析全部委托给valueResolver
 				Object resolvedValue =
 						valueResolver.resolveValueIfNecessary("constructor argument", valueHolder.getValue());
 				ConstructorArgumentValues.ValueHolder resolvedValueHolder =
@@ -763,6 +827,14 @@ class ConstructorResolver {
 	/**
 	 * Create an array of arguments to invoke a constructor or factory method,
 	 * given the resolved constructor argument values.
+	 * @param resolvedValues 表示bd.constructorArgumentValues中已经解析的参数
+	 * @param paramTypes 表示当前的构造器或方法的参数类型列表
+	 * @param paramNames 方法的参数名称
+	 * @param executable 方法或构造器
+	 * @param autowiring 是否采用构造器自动注入，如果是则会从Spring IoC容器中查找参数
+	 * @param fallback 如果已经有多个构造器或方法匹配，则fallback=false
+	 * 先到 resolveConstructorArguments 方法已经解析过的参数中查找参数，如果查找到就使用配置的参数。当然如果查找不到，这时就判断是否允许自行注入，如果允许，则从 Spring IoC 容器中查找依赖，即调用 beanFactory#resolveDependency 方法
+	 * 除了已有的默认参数外，还会从容器中解析（仅当 autowiring=true），并将解析的结果包装成 ArgumentsHolder。
 	 */
 	private ArgumentsHolder createArgumentArray(
 			String beanName, RootBeanDefinition mbd, @Nullable ConstructorArgumentValues resolvedValues,
@@ -780,6 +852,7 @@ class ConstructorResolver {
 			Class<?> paramType = paramTypes[paramIndex];
 			String paramName = (paramNames != null ? paramNames[paramIndex] : "");
 			// Try to find matching constructor argument value, either indexed or generic.
+			// 1. 从默认的配置参数中查找参数
 			ConstructorArgumentValues.ValueHolder valueHolder = null;
 			if (resolvedValues != null) {
 				valueHolder = resolvedValues.getArgumentValue(paramIndex, paramType, paramName, usedValueHolders);
@@ -787,9 +860,11 @@ class ConstructorResolver {
 				// let's try the next generic, untyped argument value as fallback:
 				// it could match after type conversion (for example, String -> int).
 				if (valueHolder == null && (!autowiring || paramTypes.length == resolvedValues.getArgumentCount())) {
+					// 1.1 查找已经有参数，可以根据参数的索引或名称查找
 					valueHolder = resolvedValues.getGenericArgumentValue(null, null, usedValueHolders);
 				}
 			}
+			// 2. 已经从配置该参数，这部分代码省略
 			if (valueHolder != null) {
 				// We found a potential match - let's give it a try.
 				// Do not consider the same value definition multiple times!
@@ -800,6 +875,7 @@ class ConstructorResolver {
 					convertedValue = valueHolder.getConvertedValue();
 					args.preparedArguments[paramIndex] = convertedValue;
 				}
+				// 3. 没有配置该参数，尝试从Spring IoC容器中查找
 				else {
 					MethodParameter methodParam = MethodParameter.forExecutable(executable, paramIndex);
 					try {
@@ -833,9 +909,11 @@ class ConstructorResolver {
 							"] - did you specify the correct bean references as arguments?");
 				}
 				try {
+					// 3.1 核心代码，调用 beanFactory#resolveDependency
 					Object autowiredArgument = resolveAutowiredArgument(
 							methodParam, beanName, autowiredBeanNames, converter, fallback);
 					args.rawArguments[paramIndex] = autowiredArgument;
+					// 3.2 自动注入标记位
 					args.arguments[paramIndex] = autowiredArgument;
 					args.preparedArguments[paramIndex] = autowiredArgumentMarker;
 					args.resolveNecessary = true;
@@ -861,6 +939,8 @@ class ConstructorResolver {
 
 	/**
 	 * Resolve the prepared arguments stored in the given bean definition.
+	 *
+	 * resolvePreparedArguments 方法是对 mbd.preparedConstructorArguments 中还需要解析的参数调用 BeanDefinitionValueResolver#resolveValueIfNecessary 进行解析
 	 */
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 			Executable executable, Object[] argsToResolve, boolean fallback) {
@@ -882,6 +962,7 @@ class ConstructorResolver {
 			Object argValue = argsToResolve[argIndex];
 			//同位置的方法参数类型
 			MethodParameter methodParam = MethodParameter.forExecutable(executable, argIndex);
+			// createArgumentArray 方法设置的自动注入标记
 			if (argValue == autowiredArgumentMarker) {
 				argValue = resolveAutowiredArgument(methodParam, beanName, null, converter, fallback);
 			}
@@ -977,10 +1058,19 @@ class ConstructorResolver {
 	 */
 	private static class ArgumentsHolder {
 
+		/**
+		 * 原始的参数，这个主要是用来计算构造器的权重。
+		 */
 		public final Object[] rawArguments;
 
+		/**
+		 * 已经解析后的参数，不需要再进行解析，直接可以注入。
+		 */
 		public final Object[] arguments;
 
+		/**
+		 * 已部分解析后的参数，这个主要是用来解析注入的实际参数。
+		 */
 		public final Object[] preparedArguments;
 
 		public boolean resolveNecessary = false;
@@ -1008,11 +1098,13 @@ class ConstructorResolver {
 		}
 
 		public int getAssignabilityWeight(Class<?>[] paramTypes) {
+			// 1. arguments表示解析后的参数
 			for (int i = 0; i < paramTypes.length; i++) {
 				if (!ClassUtils.isAssignableValue(paramTypes[i], this.arguments[i])) {
 					return Integer.MAX_VALUE;
 				}
 			}
+			// 2. arguments表示解析前的参数，如配置参数
 			for (int i = 0; i < paramTypes.length; i++) {
 				if (!ClassUtils.isAssignableValue(paramTypes[i], this.rawArguments[i])) {
 					return Integer.MAX_VALUE - 512;
@@ -1021,6 +1113,11 @@ class ConstructorResolver {
 			return Integer.MAX_VALUE - 1024;
 		}
 
+		/**
+		 * 在构造器实例化对象开始前，第一步就是从 bd 缓存中快速实例化对象。其中无参构造器已经在匹配无参构造器时缓存，此时需要缓存有参构造器匹配的变量。
+		 * @param mbd .
+		 * @param constructorOrFactoryMethod .
+		 */
 		public void storeCache(RootBeanDefinition mbd, Executable constructorOrFactoryMethod) {
 			synchronized (mbd.constructorArgumentLock) {
 				mbd.resolvedConstructorOrFactoryMethod = constructorOrFactoryMethod;

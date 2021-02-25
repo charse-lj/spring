@@ -61,10 +61,10 @@ import org.springframework.lang.Nullable;
  * 1.如果同时实现了HierarchicalBeanFactory,返回值不会考虑父类BeanFactory,只考虑当前factory定义的类.
  * 当然也可以使用BeanFactoryUtils辅助类来查找祖先工厂中的类。
  * 除了getBeanNamesOfType和getBeansOfType这两个方法，其余方法的逻辑都不会考虑父容器的Bean，只会考虑本容器自己的Bean
- * 2.getBeanDefinitionCount和containsBeanDefinition的实现方法因为效率比较低,还是频繁使用为好.
+ * 2.getBeanDefinitionCount和containsBeanDefinition的实现方法因为效率比较低,还是不频繁使用为好.
  *
  * 这个工厂接口最大的特点就是可以列出工厂可以生产的所有实例。
- * 这个工厂作为二级接口，有多个个独有的方法，扩展了跟BeanDefinition的功能，提供了BeanDefinition、BeanName、注解有关的各种操作
+ * 这个工厂作为二级接口，有多个独有的方法，扩展了BeanDefinition的功能，提供了BeanDefinition、BeanName、注解有关的各种操作
  */
 public interface ListableBeanFactory extends BeanFactory {
 
@@ -181,8 +181,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 *  根据指定类型获取容器中的对应的Bean的名称，可能会有多个
 	 *  既会通过BeanDefinition做判断，也会通过FactoryBean的getObjectType方法判断
 	 *  includeNonSingletons：是否能包含非单例的Bean
-	 *  allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean
-	 *  默认是懒加载的，为了推断它的类型可能会进行初始化。
+	 *  allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean默认是懒加载的，为了推断它的类型可能会进行初始化。
 	 */
 	String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit);
 
@@ -319,8 +318,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 *
 	 *   获取指定类型的Bean,返回一个map,key为bean的名称，value为对应的Bean
 	 *   includeNonSingletons：是否能包含非单例的Bean
-	 *   allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean
-	 *   默认是懒加载的，为了推断它的类型可能会进行初始化
+	 *   allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean默认是懒加载的，为了推断它的类型可能会进行初始化
 	 */
 	<T> Map<String, T> getBeansOfType(@Nullable Class<T> type, boolean includeNonSingletons, boolean allowEagerInit)
 			throws BeansException;

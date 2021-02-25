@@ -362,7 +362,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 	private InjectionMetadata buildResourceMetadata(final Class<?> clazz) {
-		//预处理
+		//预处理@Resource注解
 		if (!AnnotationUtils.isCandidateClass(clazz, resourceAnnotationTypes)) {
 			return InjectionMetadata.EMPTY;
 		}
@@ -631,6 +631,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		private final boolean lazyLookup;
 
 		public ResourceElement(Member member, AnnotatedElement ae, @Nullable PropertyDescriptor pd) {
+			//member = Method|Field
 			super(member, pd);
 			//获取element上的@Resource 注解信息
 			Resource resource = ae.getAnnotation(Resource.class);
@@ -650,10 +651,12 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 				resourceName = embeddedValueResolver.resolveStringValue(resourceName);
 			}
 			if (Object.class != resourceType) {
+				//resourceType 必须和 Field|Method(Parameter)类型相同
 				checkResourceType(resourceType);
 			}
 			else {
 				// No resource type specified... check field/method.
+				//Field 的类型或方法的第一个参数名称
 				resourceType = getResourceType();
 			}
 			//@Resource注解中的name属性值,为空的话,spring会为其设置一个值
