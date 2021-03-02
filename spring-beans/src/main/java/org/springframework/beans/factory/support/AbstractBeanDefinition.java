@@ -111,12 +111,11 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Deprecated
 	public static final int AUTOWIRE_AUTODETECT = AutowireCapableBeanFactory.AUTOWIRE_AUTODETECT;
 
-	//检查依赖是否合法，在本类中，默认不进行依赖检查
 	/**
 	 * Constant that indicates no dependency check at all.
 	 *
 	 * @see #setDependencyCheck
-	 * 不进行检查
+	 * 检查依赖是否合法，在本类中，默认不进行依赖检查
 	 */
 	public static final int DEPENDENCY_CHECK_NONE = 0;
 
@@ -171,23 +170,27 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * 默认的scope是单例
+	 * bean 的作用域，对应 bean 属性 scope
 	 */
 	@Nullable
 	private String scope = SCOPE_DEFAULT;
 
 	/**
 	 * 默认不为抽象类
+	 * 是否为抽象，对应 bean 属性 abstract
 	 */
 	private boolean abstractFlag = false;
 
 	/**
 	 * 默认不是懒加载
+	 * 是否延迟初始化，对应 bean 属性 lazy-init
 	 */
 	@Nullable
 	private Boolean lazyInit;
 
 	/**
 	 * 默认不进行自动装配
+	 * 自动注入模式，对应 bean 属性 autowire
 	 */
 	private int autowireMode = AUTOWIRE_NO;
 
@@ -197,6 +200,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
 	/**
+	 * 用来表示一个 bean 的实例化依靠另一个 bean 先实例化，对应 bean 属性 depend-on
 	 * @DependsOn 依赖的 Bean 列表，默认没有
 	 */
 	@Nullable
@@ -210,18 +214,11 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * 默认不是首选的
+	 * 自动装配时当出现多个 bean 候选者时，将作为首先者，对应 bean 属性 primary
 	 */
 	private boolean primary = false;
 	/**
-	 * 用于记录Qualifier，对应子元素qualifier=======这个字段有必要解释一下
-	 * 唯一向这个字段放值的方法为本类的：public void addQualifier(AutowireCandidateQualifier qualifier)    copyQualifiersFrom这个不算，那属于拷贝
-	 * 调用处：AnnotatedBeanDefinitionReader#doRegisterBean  但是Spring所有调用处，qualifiers字段传的都是null~~~~~~~~~尴尬
-	 * 通过我多放跟踪发现，此处这个字段目前【永远】不会被赋值（除非我们手动调用对应方法为其赋值）   但是有可能我才疏学浅，若有知道的  请告知，非常非常感谢  我考虑到它可能是预留字段~~~~
-	 * 我起初以为这样可以赋值：
-	 *
-	 * @Qualifier("aaa")
-	 * @Service public class HelloServiceImpl   没想到，也是不好使的，Bean定义里面也不会有值
-	 * 因此对应的方法getQualifier和getQualifiers 目前应该基本上都返回null或者[]
+	 * 用于记录 Qualifier，对应 bean 属性 qualifier
 	 */
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
 	/**
@@ -265,6 +262,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * 工厂类名（注意是String类型，不是Class类型）;对应bean属性factory-method
+	 *  <bean id="test" factory-bean="factory" factory-method="init"/>
 	 */
 	@Nullable
 	private String factoryBeanName;
@@ -293,13 +291,13 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private MethodOverrides methodOverrides = new MethodOverrides();
 
 	/**
-	 * init函数的名字
+	 * 初始化方法，对应 bean 属性 init-method @PostConstruct
 	 */
 	@Nullable
 	private String initMethodName;
 
 	/**
-	 * destroy函数的名字
+	 * 销毁方法，对应 bean 属性 destory-method @PreDestroy
 	 */
 	@Nullable
 	private String destroyMethodName;
@@ -1271,7 +1269,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Validate this bean definition.
-	 *
+	 * 注册前后最后一次校验，这里的校验不同于之前的 XML 文件校验
+	 * 主要是对于 AbstractBeanDefiniton 属性中的 methodOverrides 校验
+	 * 校验 methodOverrides 是否与工厂方法并存或者 methodOverrides 对应的方法根本不存在
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
 	public void validate() throws BeanDefinitionValidationException {

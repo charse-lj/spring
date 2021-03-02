@@ -67,7 +67,7 @@ import org.springframework.web.util.WebUtils;
  * @since 06.12.2003
  *
  * 能够确保在一次请求中只通过一次filter
- * 此方法是为了兼容不同的web container，也就是说并不是所有的container都入我们期望的只过滤一次，servlet版本不同，执行过程也不同
+ * 此方法是为了兼容不同的web container，也就是说并不是所有的container都如我们期望的只过滤一次，servlet版本不同，执行过程也不同
  * 适配了不同的web容器，以及对异步请求，也只过滤一次的需求
  *
  * 继承自OncePerRequestFilter的Filter,采用@WebFilter以及Spring Bean的方式都是ok好使的
@@ -119,6 +119,7 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 		if (skipDispatch(httpRequest) || shouldNotFilter(httpRequest)) {
 
 			// Proceed without invoking this filter...
+			// 直接放行，不执行此过滤器的过滤操作
 			filterChain.doFilter(request, response);
 		}
 		else if (hasAlreadyFilteredAttribute) {

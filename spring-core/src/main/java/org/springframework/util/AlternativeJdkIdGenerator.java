@@ -27,6 +27,8 @@ import java.util.UUID;
  * time as {@link org.springframework.util.JdkIdGenerator JdkIdGenerator} does.
  * This provides a better balance between securely random ids and performance.
  *
+ * 它使用了SecureRandom作为种子，来替换调用UUID#randomUUID()。它提供了一个更好、更高性能的表现
+ *
  * @author Rossen Stoyanchev
  * @author Rob Winch
  * @since 4.0

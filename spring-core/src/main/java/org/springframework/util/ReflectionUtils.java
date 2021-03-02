@@ -58,6 +58,7 @@ public abstract class ReflectionUtils {
 	 * Pre-built FieldFilter that matches all non-static, non-final fields.
 	 */
 	public static final FieldFilter COPYABLE_FIELDS =
+			//Field不是static且不是final
 			(field -> !(Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())));
 
 

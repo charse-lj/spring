@@ -79,10 +79,10 @@ public class PropertyPlaceholderHelper {
 	 * @param valueSeparator the separating character between the placeholder variable
 	 * and the associated default value, if any
 	 * @param ignoreUnresolvablePlaceholders indicates whether unresolvable placeholders should
-	 * be ignored ({@code true}) or cause an exception ({@code false})
+	 * be ignored ({@code true}) or cause an exception ({@code false}) 是否忽略未解析的
 	 */
 	public PropertyPlaceholderHelper(String placeholderPrefix, String placeholderSuffix,
-			@Nullable String valueSeparator, boolean ignoreUnresolvablePlaceholders) {// ignoreUnresolvablePlaceholders,是否忽略未解析的
+			@Nullable String valueSeparator, boolean ignoreUnresolvablePlaceholders) {
 
 		Assert.notNull(placeholderPrefix, "'placeholderPrefix' must not be null");
 		Assert.notNull(placeholderSuffix, "'placeholderSuffix' must not be null");
@@ -123,53 +123,74 @@ public class PropertyPlaceholderHelper {
 		Assert.notNull(value, "'value' must not be null");
 		return parseStringValue(value, placeholderResolver, null);
 	}
-	//value 1)123${ab:456}789${cd:${ef:102}}  1.1)ab:456  2)cd:${ef:102}
-	// visitedPlaceholders 1.1)[ab:456]  2)[ab:456,cd:${ef:102}]
+
+	/**
+	 *
+	 * @param value 待解析的字符串
+	 * @param placeholderResolver .
+	 * @param visitedPlaceholders 所有访问的待解析的字符串.
+	 * @return 转换后的字符串.
+	 */
 	protected String parseStringValue(
 			String value, PlaceholderResolver placeholderResolver, @Nullable Set<String> visitedPlaceholders) {
 
-		int startIndex = value.indexOf(this.placeholderPrefix); //startIndex 1)3 1.1)-1  2) 3
+		//'{'的索引位置
+		int startIndex = value.indexOf(this.placeholderPrefix);
+		//没有'{'的索引,直接返回
 		if (startIndex == -1) {
 			return value;
 		}
 
-		StringBuilder result = new StringBuilder(value); //result 1) 123${ab:456}789${cd:${ef:102}} 2)123456789${cd:${ef:102}} 2.1)cd:${ef:102}
+		StringBuilder result = new StringBuilder(value);
 		while (startIndex != -1) {
-			int endIndex = findPlaceholderEndIndex(result, startIndex);//endIndex 1)11 1.1)23  2.1)11
+			//对应结束占位符的索引
+			int endIndex = findPlaceholderEndIndex(result, startIndex);
 			if (endIndex != -1) {
-				String placeholder = result.substring(startIndex + this.placeholderPrefix.length(), endIndex);//placeholder 1)ab:456 2)cd:${ef:102} 2.1)ef:102
+				//对应占位符中的内容
+				String placeholder = result.substring(startIndex + this.placeholderPrefix.length(), endIndex);
+				 //待解析的字符串
 				String originalPlaceholder = placeholder;
+				//所有访问的待解析的字符串
 				if (visitedPlaceholders == null) {
 					visitedPlaceholders = new HashSet<>(4);
 				}
-				if (!visitedPlaceholders.add(originalPlaceholder)) { //visitedPlaceholders 2)[ab:456,cd:${ef:102}] 2.1)[ab:456,cd:${ef:102},ef:102]
+				if (!visitedPlaceholders.add(originalPlaceholder)) {
 					throw new IllegalArgumentException(
 							"Circular placeholder reference '" + originalPlaceholder + "' in property definitions");
 				}
 				// Recursive invocation, parsing placeholders contained in the placeholder key.
-				placeholder = parseStringValue(placeholder, placeholderResolver, visitedPlaceholders); // placeholder 1)ab:456 2.1)ef:102
+				placeholder = parseStringValue(placeholder, placeholderResolver, visitedPlaceholders);
 				// Now obtain the value for the fully resolved key...
-				String propVal = placeholderResolver.resolvePlaceholder(placeholder);//propVal null
+				//占位符解析器,解析
+				String propVal = placeholderResolver.resolvePlaceholder(placeholder);
 				if (propVal == null && this.valueSeparator != null) {
-					int separatorIndex = placeholder.indexOf(this.valueSeparator); //separatorIndex  2
+					//valueSeparator的索引位置
+					int separatorIndex = placeholder.indexOf(this.valueSeparator);
+					//有valueSeparator字符
 					if (separatorIndex != -1) {
-						String actualPlaceholder = placeholder.substring(0, separatorIndex);//actualPlaceholder 1)ab
-						String defaultValue = placeholder.substring(separatorIndex + this.valueSeparator.length());//defaultValue 456
-						propVal = placeholderResolver.resolvePlaceholder(actualPlaceholder);// propVal null
+						//真正的key
+						String actualPlaceholder = placeholder.substring(0, separatorIndex);
+						//默认值
+						String defaultValue = placeholder.substring(separatorIndex + this.valueSeparator.length());
+						//通过key获取value
+						propVal = placeholderResolver.resolvePlaceholder(actualPlaceholder);
+						//如果为空,赋默认值
 						if (propVal == null) {
-							propVal = defaultValue; //propVal 456
+							propVal = defaultValue;
 						}
 					}
 				}
 				if (propVal != null) {
-					// Recursive invocation, parsing placeholders contained in the
-					// previously resolved placeholder value.
-					propVal = parseStringValue(propVal, placeholderResolver, visitedPlaceholders);//propVal 1)456 2)102
-					result.replace(startIndex, endIndex + this.placeholderSuffix.length(), propVal); //result 1)123456789${cd:${ef:102}} 2.1)cd:102
+					// Recursive invocation, parsing placeholders contained in the previously resolved placeholder value.
+					//解析propVal中的占位符
+					propVal = parseStringValue(propVal, placeholderResolver, visitedPlaceholders);
+					//用propVal替换开始到结束的索引的内容
+					result.replace(startIndex, endIndex + this.placeholderSuffix.length(), propVal);
 					if (logger.isTraceEnabled()) {
 						logger.trace("Resolved placeholder '" + placeholder + "'");
 					}
-					startIndex = result.indexOf(this.placeholderPrefix, startIndex + propVal.length()); //startIndex 1)9
+					//更新startIndex
+					startIndex = result.indexOf(this.placeholderPrefix, startIndex + propVal.length());
 				}
 				else if (this.ignoreUnresolvablePlaceholders) {
 					// Proceed with unprocessed value.
@@ -181,30 +202,45 @@ public class PropertyPlaceholderHelper {
 				}
 				visitedPlaceholders.remove(originalPlaceholder);
 			}
+			//没有对应结束占位符
 			else {
 				startIndex = -1;
 			}
 		}
 		return result.toString();
 	}
-	//buf 1) 123${ab:456}789${cd:${ef:102}}  2)123456789${cd:${ef:102}}
-	//startIndex 1)3  2)9
+
+
+	/**
+	 * 找到placeholderPrefix对应的结束索引.
+	 * @param buf
+	 * @param startIndex '{'的索引位置
+	 * @return
+	 */
 	private int findPlaceholderEndIndex(CharSequence buf, int startIndex) {
-		int index = startIndex + this.placeholderPrefix.length(); //index 1)2  2)9
+		//占位符placeholderPrefix中第一个字符的索引
+		int index = startIndex + this.placeholderPrefix.length();
+		//内嵌的占位符数
 		int withinNestedPlaceholder = 0;
 		while (index < buf.length()) {
-			//buf的index位置开始,是否找到placeholderSuffix
-			if (StringUtils.substringMatch(buf, index, this.placeholderSuffix)) { //index 22
+			//buf的index位置和placeholderSuffix相等
+			if (StringUtils.substringMatch(buf, index, this.placeholderSuffix)) {
+				//内嵌>0
 				if (withinNestedPlaceholder > 0) {
+					//-1
 					withinNestedPlaceholder--;
-					index = index + this.placeholderSuffix.length(); //index 23
+					//更新index位置
+					index = index + this.placeholderSuffix.length();
 				}
 				else {
 					return index;
 				}
 			}
-			else if (StringUtils.substringMatch(buf, index, this.simplePrefix)) { //index 2)15
-				withinNestedPlaceholder++;    //withinNestedPlaceholder 2)1
+			//buf的index位置和simplePrefix相等
+			else if (StringUtils.substringMatch(buf, index, this.simplePrefix)) {
+				//内嵌的占位符数+1
+				withinNestedPlaceholder++;
+				//更新index位置
 				index = index + this.simplePrefix.length();
 			}
 			else {

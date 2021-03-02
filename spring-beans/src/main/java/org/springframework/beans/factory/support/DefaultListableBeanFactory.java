@@ -1148,9 +1148,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		//beanDefinitionMap --> {beanName:beanDefinition}
+		// 因为 beanDefinitionMap 是全局变量，这里定会存在并发访问的情况
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
+		// 处理注册已经注册的 beanName 情况
 		if (existingDefinition != null) {
-			//beanFactory是否允许 allowBeanDefinitionOverriding
+			//beanFactory是否允许 allowBeanDefinitionOverriding,如果对应的 beanName 已经注册且在配置中配置了 bean 不允许覆盖，则抛出异常
 			if (!isAllowBeanDefinitionOverriding()) {
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			}
@@ -1183,7 +1185,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
 		else {
-			//beanFactory 中Set<String> alreadyCreated 不为空
+			// 程序已经启动，不能再修改集合元素(用于稳定迭代)
 			if (hasBeanCreationStarted()) {
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
@@ -1199,6 +1201,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			else {
+				// 仍处于启动注册阶段
+				// 注册 beanDefinition，并记录 beanName
 				// Still in startup registration phase
 				this.beanDefinitionMap.put(beanName, beanDefinition);
 				this.beanDefinitionNames.add(beanName);

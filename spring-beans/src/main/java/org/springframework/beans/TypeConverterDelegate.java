@@ -117,6 +117,7 @@ class TypeConverterDelegate {
 
 		// 查看是否为当前这个类型配置了定制的PropertyEditor
 		// Custom editor for this type?
+		// 1. 用户自定义属性编辑器
 		PropertyEditor editor = this.propertyEditorRegistry.findCustomEditor(requiredType, propertyName);
 
 		ConversionFailedException conversionAttemptEx = null;

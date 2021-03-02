@@ -55,6 +55,7 @@ import org.springframework.util.StringUtils;
 public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	/**
+	 *  为 true 时 getSystemEnvironment() 返回空集合，屏蔽 OS 相关信息
 	 * System property that instructs Spring to ignore system environment variables,
 	 * i.e. to never attempt to retrieve such a variable via {@link System#getenv()}.
 	 * <p>The default is "false", falling back to system environment variable checks if a
@@ -103,13 +104,21 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 剖面信息，查找时先从 activeProfiles 再从 defaultProfiles 中查找
+	 */
 	private final Set<String> activeProfiles = new LinkedHashSet<>();
 
 	private final Set<String> defaultProfiles = new LinkedHashSet<>(getReservedDefaultProfiles());
 
-	//PropertySource<?> 的一个List容器
+	/**
+	 * PropertySource<?> 的一个List容器 -->List<PropertySource<?>>
+	 */
 	private final MutablePropertySources propertySources = new MutablePropertySources();
 
+	/**
+	 * propertyResolver 用于解析属性占位符和类型转换
+	 */
 	private final ConfigurablePropertyResolver propertyResolver =
 			new PropertySourcesPropertyResolver(this.propertySources);
 
@@ -353,6 +362,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	 * @throws IllegalArgumentException per {@link #validateProfile(String)}
 	 */
 	protected boolean isProfileActive(String profile) {
+		// 只要 profile 不为空且不以 ! 开头
 		validateProfile(profile);
 		Set<String> currentActiveProfiles = doGetActiveProfiles();
 		return (currentActiveProfiles.contains(profile) ||

@@ -553,17 +553,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			// Tell the subclass to refresh the internal bean factory.
 			// 获取新的beanFactory，销毁原有beanFactory、为每个bean生成BeanDefinition等  注意，此处是获取新的，销毁旧的，这就是刷新的意义
-			// 现在BeanFactory已经创建了,Config配置文件的Bean定义已经注册完成了
+			// 现在BeanFactory已经创建了,初始化 BeanFactory,并进行 XML 文件读取、Config配置文件的Bean定义已经注册完成了
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
-			// 设置EL表达式解析器（Bean初始化完成后填充属性时会用到）
-			// spring3增加了表达式语言的支持，默认可以使用#{bean.xxx}的形式来调用相关属性值
+			// 对 BeanFactory 进行各种功能填充
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
-				//模板方法，允许在子类中对beanFactory进行后置处理。
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
@@ -575,6 +573,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				 * 完成了@Configuration配置文件的解析，并且把扫描到的、配置的Bean定义信息都加载进容器里
 				 * Full模式下，完成了对@Configuration配置文件的加强，使得管理Bean依赖关系更加的方便了
 				*/
+				// 激活各种 BeanFactory 处理器
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
@@ -583,6 +582,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//AutowiredAnnotationBeanPostProcessor(处理被@Autowired注解修饰的bean并注入)
 				//RequiredAnnotationBeanPostProcessor(处理被@Required注解修饰的方法)
 				//CommonAnnotationBeanPostProcessor(处理@PreDestroy、@PostConstruct、@Resource等多个注解的作用)等。
+				//注册拦截 bean 创建的处理器，这里只是注册，真正的调用是在 getBean 时候
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -673,7 +673,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
-		//这里有两步，getEnvironment()，然后是是验证是否系统环境中有RequiredProperties参数值 如下详情
+		// 这里有两步，getEnvironment()，然后是是验证是否系统环境中有RequiredProperties参数值 如下详情
 		// 然后管理Environment#validateRequiredProperties 后面在讲到环境的时候再专门讲解吧
 		// 这里其实就干了一件事，验证是否存在需要的属性
 		getEnvironment().validateRequiredProperties();

@@ -41,6 +41,8 @@ import org.springframework.web.context.ConfigurableWebEnvironment;
  * @author Chris Beams
  * @since 3.1
  * @see StandardEnvironment
+ *
+ *  ServletConfig（DispatcherServlet）、ServletContext 及 JNDI 实例到环境
  */
 public class StandardServletEnvironment extends StandardEnvironment implements ConfigurableWebEnvironment {
 
@@ -82,6 +84,7 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 	 */
 	@Override
 	protected void customizePropertySources(MutablePropertySources propertySources) {
+		//占位符
 		propertySources.addLast(new StubPropertySource(SERVLET_CONFIG_PROPERTY_SOURCE_NAME));
 		propertySources.addLast(new StubPropertySource(SERVLET_CONTEXT_PROPERTY_SOURCE_NAME));
 		if (JndiLocatorDelegate.isDefaultJndiEnvironmentAvailable()) {
@@ -92,6 +95,7 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 
 	@Override
 	public void initPropertySources(@Nullable ServletContext servletContext, @Nullable ServletConfig servletConfig) {
+		//调用 initPropertySources 替换对应的占位符
 		WebApplicationContextUtils.initServletPropertySources(getPropertySources(), servletContext, servletConfig);
 	}
 

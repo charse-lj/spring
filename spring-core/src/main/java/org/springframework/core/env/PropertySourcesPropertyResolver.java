@@ -82,7 +82,8 @@ public class PropertySourcesPropertyResolver extends AbstractPropertyResolver {
 					logger.trace("Searching for key '" + key + "' in PropertySource '" +
 							propertySource.getName() + "'");
 				}
-				Object value = propertySource.getProperty(key); //MapPropertySource -->从map中查找;StubPropertySource -->直接返回null
+				//MapPropertySource -->从map中查找;StubPropertySource -->直接返回null
+				Object value = propertySource.getProperty(key);
 				if (value != null) {
 					if (resolveNestedPlaceholders && value instanceof String) {
 						value = resolveNestedPlaceholders((String) value);

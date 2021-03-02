@@ -428,11 +428,11 @@ public class ContextLoader {
 		// The wac environment's #initPropertySources will be called in any case when the context
 		// is refreshed; do it eagerly here to ensure servlet property sources are in place for
 		// use in any post-processing or initialization that occurs below prior to #refresh
-		//这里有一个注意的地方，ConfigurableEnvironment生成的地方
-		//====wac.setConfigLocation(configLocationParam);
+		// 这里有一个注意的地方，ConfigurableEnvironment生成的地方
+		// ====wac.setConfigLocation(configLocationParam);
 		// 时根据 configLocationParam设置配置参数路径时就会初始化StandardServletEnvironment（ConfigurableEnvironment的子类)
-
-		//StandardServletEnvironment符合条件，因此会执行initPropertySources方法。只与此方法的作用，后面再有相关文章详解
+		// StandardServletEnvironment符合条件，因此会执行initPropertySources方法。只与此方法的作用，后面再有相关文章详解
+		// #refresh 调用之前将 ServletContext 注入到 Environment 中，这样就可以提前使用
 		ConfigurableEnvironment env = wac.getEnvironment();
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);

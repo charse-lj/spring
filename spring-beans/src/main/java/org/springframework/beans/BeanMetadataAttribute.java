@@ -34,6 +34,9 @@ public class BeanMetadataAttribute implements BeanMetadataElement {
 	@Nullable
 	private final Object value;
 
+	/**
+	 * 属性所属的对象
+	 */
 	@Nullable
 	private Object source;
 

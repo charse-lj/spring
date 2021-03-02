@@ -340,6 +340,7 @@ public abstract class StringUtils {
 	 */
 	public static boolean startsWithIgnoreCase(@Nullable String str, @Nullable String prefix) {
 		return (str != null && prefix != null && str.length() >= prefix.length() &&
+				//忽略大小写的比较指定位置的字符是否相等,toffset是str的偏移量,offset是prefix的偏移量,len是两个字符比较的长度
 				str.regionMatches(true, 0, prefix, 0, prefix.length()));
 	}
 
@@ -358,6 +359,7 @@ public abstract class StringUtils {
 	/**
 	 * Test whether the given string matches the given substring
 	 * at the given index.
+	 * 从str的index位置,比较是否全等于substring
 	 * @param str the original string (or StringBuilder)
 	 * @param index the index in the original string to start matching against
 	 * @param substring the substring to match at the given index
@@ -376,6 +378,8 @@ public abstract class StringUtils {
 
 	/**
 	 * Count the occurrences of the substring {@code sub} in string {@code str}.
+	 *
+	 * str中有多少个sub
 	 * @param str string to search in
 	 * @param sub string to search for
 	 */
@@ -405,24 +409,29 @@ public abstract class StringUtils {
 		if (!hasLength(inString) || !hasLength(oldPattern) || newPattern == null) {
 			return inString;
 		}
+		//inString是否存在oldPattern
 		int index = inString.indexOf(oldPattern);
 		if (index == -1) {
 			// no occurrence -> can return input as-is
 			return inString;
 		}
 
+		//存在
 		int capacity = inString.length();
+		//如果待替换的字符长度小于用于替换的字符,扩容
 		if (newPattern.length() > oldPattern.length()) {
 			capacity += 16;
 		}
 		StringBuilder sb = new StringBuilder(capacity);
 
+		//不需要替换的第一个字符索引
 		int pos = 0;  // our position in the old string
 		int patLen = oldPattern.length();
 		while (index >= 0) {
 			sb.append(inString, pos, index);
 			sb.append(newPattern);
 			pos = index + patLen;
+			//下一个oldPattern的索引
 			index = inString.indexOf(oldPattern, pos);
 		}
 
@@ -447,6 +456,8 @@ public abstract class StringUtils {
 	 * @param charsToDelete a set of characters to delete.
 	 * E.g. "az\n" will delete 'a's, 'z's and new lines.
 	 * @return the resulting {@code String}
+	 *
+	 * 删除inString中所有charsToDelete出现的字符
 	 */
 	public static String deleteAny(String inString, @Nullable String charsToDelete) {
 		if (!hasLength(inString) || !hasLength(charsToDelete)) {
@@ -476,6 +487,7 @@ public abstract class StringUtils {
 	 * @param str the input {@code String} (e.g. "myString")
 	 * @return the quoted {@code String} (e.g. "'myString'"),
 	 * or {@code null} if the input was {@code null}
+	 * 给str加单引号
 	 */
 	@Nullable
 	public static String quote(@Nullable String str) {
@@ -488,6 +500,7 @@ public abstract class StringUtils {
 	 * @param obj the input Object (e.g. "myString")
 	 * @return the quoted {@code String} (e.g. "'myString'"),
 	 * or the input object as-is if not a {@code String}
+	 * 给字符串加单引号
 	 */
 	@Nullable
 	public static Object quoteIfString(@Nullable Object obj) {
@@ -504,6 +517,7 @@ public abstract class StringUtils {
 	}
 
 	/**
+	 * this:name:is:qualified --> qualified
 	 * Unqualify a string qualified by a separator character. For example,
 	 * "this:name:is:qualified" returns "qualified" if using a ':' separator.
 	 * @param qualifiedName the qualified name
@@ -519,6 +533,8 @@ public abstract class StringUtils {
 	 * No other letters are changed.
 	 * @param str the {@code String} to capitalize
 	 * @return the capitalized {@code String}
+	 *
+	 * 首字母大写
 	 */
 	public static String capitalize(String str) {
 		return changeFirstCharacterCase(str, true);
@@ -530,6 +546,8 @@ public abstract class StringUtils {
 	 * No other letters are changed.
 	 * @param str the {@code String} to uncapitalize
 	 * @return the uncapitalized {@code String}
+	 *
+	 * 首字母小写
 	 */
 	public static String uncapitalize(String str) {
 		return changeFirstCharacterCase(str, false);
@@ -562,6 +580,8 @@ public abstract class StringUtils {
 	 * e.g. {@code "mypath/myfile.txt" -> "myfile.txt"}.
 	 * @param path the file path (may be {@code null})
 	 * @return the extracted filename, or {@code null} if none
+	 *
+	 * 获取文件名称
 	 */
 	@Nullable
 	public static String getFilename(@Nullable String path) {
@@ -578,6 +598,8 @@ public abstract class StringUtils {
 	 * e.g. "mypath/myfile.txt" -> "txt".
 	 * @param path the file path (may be {@code null})
 	 * @return the extracted filename extension, or {@code null} if none
+	 *
+	 * 获取文件类型
 	 */
 	@Nullable
 	public static String getFilenameExtension(@Nullable String path) {
@@ -603,6 +625,9 @@ public abstract class StringUtils {
 	 * e.g. "mypath/myfile.txt" -> "mypath/myfile".
 	 * @param path the file path
 	 * @return the path with stripped filename extension
+	 *
+	 * 去除文件后缀
+	 * mypath/myfile.txt -> mypath/myfile
 	 */
 	public static String stripFilenameExtension(String path) {
 		int extIndex = path.lastIndexOf(EXTENSION_SEPARATOR);
@@ -625,6 +650,8 @@ public abstract class StringUtils {
 	 * @param relativePath the relative path to apply
 	 * (relative to the full file path above)
 	 * @return the full file path that results from applying the relative path
+	 *
+	 * 替换path最后一个‘/’后的内容为relativePath
 	 */
 	public static String applyRelativePath(String path, String relativePath) {
 		int separatorIndex = path.lastIndexOf(FOLDER_SEPARATOR);
@@ -654,14 +681,17 @@ public abstract class StringUtils {
 	 * file:///C:/Users/lijun/.gradle/wrapper/dists/gradle-6.5.1-all/cdund22i8guosqylfo49op4dv/
 	 *
 	 * 标准 url scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]本地文件没有 host，就直接省略了，只剩下最后的斜线后就是路径，看起来就是三个连起来了
+	 * 可以看到，如果有host的时候，前面是要加 // 的，文件因为没有 host 啊，所以中间的部分就不要了,要加///
 	 */
 	public static String cleanPath(String path) {
 		if (!hasLength(path)) {
 			return path;
 		}
+		//將'\\'替換成'/'
 		String pathToUse = replace(path, WINDOWS_FOLDER_SEPARATOR, FOLDER_SEPARATOR);
 
 		// Shortcut if there is no work to do
+		//如果path中沒有'.',直接返回
 		if (pathToUse.indexOf('.') == -1) {
 			return pathToUse;
 		}
@@ -670,24 +700,31 @@ public abstract class StringUtils {
 		// first path element. This is necessary to correctly parse paths like
 		// "file:core/../core/io/Resource.class", where the ".." should just
 		// strip the first "core" directory while keeping the "file:" prefix.
+
+		//':'字符的索引
 		int prefixIndex = pathToUse.indexOf(':');
+		//协议
 		String prefix = "";
 		if (prefixIndex != -1) {
+			//path中含有':'
 			prefix = pathToUse.substring(0, prefixIndex + 1);
-			//prefix 是协议,如果包含"/"
+			//prefix 是协议,如果包含"/",説明是錯誤的,设置协议为空
 			if (prefix.contains(FOLDER_SEPARATOR)) {
 				prefix = "";
 			}
 			else {
+				//取':'后的字符串
 				pathToUse = pathToUse.substring(prefixIndex + 1);
 			}
 		}
-		
+		//具体内容以'/'开头
 		if (pathToUse.startsWith(FOLDER_SEPARATOR)) {
+			//协议+'/'
 			prefix = prefix + FOLDER_SEPARATOR;
+			//具体内容去除'/'
 			pathToUse = pathToUse.substring(1);
 		}
-
+		//以'/'分隔具体内容
 		String[] pathArray = delimitedListToStringArray(pathToUse, FOLDER_SEPARATOR);
 		LinkedList<String> pathElements = new LinkedList<>();
 		int tops = 0;
@@ -695,9 +732,11 @@ public abstract class StringUtils {
 		//反序遍历,统计..数量,并进行过滤
 		for (int i = pathArray.length - 1; i >= 0; i--) {
 			String element = pathArray[i];
+			//分隔内容为'.'
 			if (CURRENT_PATH.equals(element)) {
 				// Points to current directory - drop it.
 			}
+			//分隔内容为'..'
 			else if (TOP_PATH.equals(element)) {
 				// Registering top path found.
 				tops++;
@@ -705,6 +744,7 @@ public abstract class StringUtils {
 			else {
 				if (tops > 0) {
 					// Merging path element with element corresponding to top path.
+					//需要忽略掉tops个目录
 					tops--;
 				}
 				else {
@@ -715,15 +755,19 @@ public abstract class StringUtils {
 		}
 
 		// All path elements stayed the same - shortcut
+		// 路径中没有'.'或者'..'
 		if (pathArray.length == pathElements.size()) {
 			return prefix + pathToUse;
 		}
 		// Remaining top paths need to be retained.
+		// 往开头添加tops个'..',大部分时候,tops为0
 		for (int i = 0; i < tops; i++) {
 			pathElements.add(0, TOP_PATH);
 		}
 		// If nothing else left, at least explicitly point to current path.
+		// pathElements只有一个元素,且为空,协议不以'/'结尾
 		if (pathElements.size() == 1 && "".equals(pathElements.getLast()) && !prefix.endsWith(FOLDER_SEPARATOR)) {
+			//pathElements头添加一个'.'
 			pathElements.add(0, CURRENT_PATH);
 		}
 
@@ -915,6 +959,8 @@ public abstract class StringUtils {
 	 * @param collection the {@code Collection} to copy
 	 * (potentially {@code null} or empty)
 	 * @return the resulting {@code String} array
+	 *
+	 * collection 2 array
 	 */
 	public static String[] toStringArray(@Nullable Collection<String> collection) {
 		return (!CollectionUtils.isEmpty(collection) ? collection.toArray(EMPTY_STRING_ARRAY) : EMPTY_STRING_ARRAY);
@@ -938,6 +984,8 @@ public abstract class StringUtils {
 	 * @param array the array to append to (can be {@code null})
 	 * @param str the {@code String} to append
 	 * @return the new array (never {@code null})
+	 *
+	 * 往array中添加元素str
 	 */
 	public static String[] addStringToArray(@Nullable String[] array, String str) {
 		if (ObjectUtils.isEmpty(array)) {
@@ -957,6 +1005,8 @@ public abstract class StringUtils {
 	 * @param array1 the first array (can be {@code null})
 	 * @param array2 the second array (can be {@code null})
 	 * @return the new array ({@code null} if both given arrays were {@code null})
+	 *
+	 * 合并两个数组内容
 	 */
 	@Nullable
 	public static String[] concatenateStringArrays(@Nullable String[] array1, @Nullable String[] array2) {
@@ -984,6 +1034,8 @@ public abstract class StringUtils {
 	 * @return the new array ({@code null} if both given arrays were {@code null})
 	 * @deprecated as of 4.3.15, in favor of manual merging via {@link LinkedHashSet}
 	 * (with every entry included at most once, even entries within the first array)
+	 *
+	 * 合并两个数组,去重
 	 */
 	@Deprecated
 	@Nullable
@@ -1042,6 +1094,8 @@ public abstract class StringUtils {
 	 * <p>As of 4.2, it preserves the original order, as it uses a {@link LinkedHashSet}.
 	 * @param array the {@code String} array (potentially empty)
 	 * @return an array without duplicates, in natural sort order
+	 *
+	 * 去重
 	 */
 	public static String[] removeDuplicateStrings(String[] array) {
 		if (ObjectUtils.isEmpty(array)) {
@@ -1060,6 +1114,8 @@ public abstract class StringUtils {
 	 * @return a two element array with index 0 being before the delimiter, and
 	 * index 1 being after the delimiter (neither element includes the delimiter);
 	 * or {@code null} if the delimiter wasn't found in the given input {@code String}
+	 *
+	 * 分隔
 	 */
 	@Nullable
 	public static String[] split(@Nullable String toSplit, @Nullable String delimiter) {
@@ -1085,6 +1141,8 @@ public abstract class StringUtils {
 	 * @param delimiter to split each element using (typically the equals symbol)
 	 * @return a {@code Properties} instance representing the array contents,
 	 * or {@code null} if the array to process was {@code null} or empty
+	 *
+	 * 将array中的内容放入Properties中
 	 */
 	@Nullable
 	public static Properties splitArrayElementsIntoProperties(String[] array, String delimiter) {
@@ -1229,7 +1287,9 @@ public abstract class StringUtils {
 			return new String[] {str};
 		}
 
+		//str不为null,delimiter不为null
 		List<String> result = new ArrayList<>();
+		//delimiter为“”
 		if (delimiter.isEmpty()) {
 			for (int i = 0; i < str.length(); i++) {
 				result.add(deleteAny(str.substring(i, i + 1), charsToDelete));
@@ -1242,6 +1302,7 @@ public abstract class StringUtils {
 				result.add(deleteAny(str.substring(pos, delPos), charsToDelete));
 				pos = delPos + delimiter.length();
 			}
+			//处理末尾
 			if (str.length() > 0 && pos <= str.length()) {
 				// Add rest of String, but not in case of empty input.
 				result.add(deleteAny(str.substring(pos), charsToDelete));
@@ -1281,6 +1342,8 @@ public abstract class StringUtils {
 	 * @param prefix the {@code String} to start each element with
 	 * @param suffix the {@code String} to end each element with
 	 * @return the delimited {@code String}
+	 *
+	 * prefix+coll[index]+suffix+delim
 	 */
 	public static String collectionToDelimitedString(
 			@Nullable Collection<?> coll, String delim, String prefix, String suffix) {
@@ -1327,6 +1390,7 @@ public abstract class StringUtils {
 	 * @param arr the array to display (potentially {@code null} or empty)
 	 * @param delim the delimiter to use (typically a ",")
 	 * @return the delimited {@code String}
+	 *
 	 */
 	public static String arrayToDelimitedString(@Nullable Object[] arr, String delim) {
 		if (ObjectUtils.isEmpty(arr)) {

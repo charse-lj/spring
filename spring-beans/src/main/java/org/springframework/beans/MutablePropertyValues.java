@@ -46,6 +46,9 @@ public class MutablePropertyValues implements PropertyValues, Serializable {
 
 	private final List<PropertyValue> propertyValueList;
 
+	/**
+	 * 已经解析过的 PropertyValue
+	 */
 	@Nullable
 	private Set<String> processedProperties;
 
@@ -137,6 +140,7 @@ public class MutablePropertyValues implements PropertyValues, Serializable {
 	 * referenced by individual PropertyValue objects.
 	 * @param other the PropertyValues to copy
 	 * @return this in order to allow for adding multiple property values in a chain
+	 *
 	 */
 	public MutablePropertyValues addPropertyValues(@Nullable PropertyValues other) {
 		if (other != null) {
@@ -167,6 +171,8 @@ public class MutablePropertyValues implements PropertyValues, Serializable {
 	 * corresponding property or getting merged with it (if applicable).
 	 * @param pv the PropertyValue object to add
 	 * @return this in order to allow for adding multiple property values in a chain
+	 *
+	 * 所有类型的属性键值对都会转换成 PropertyValue 后进行存储
 	 */
 	public MutablePropertyValues addPropertyValue(PropertyValue pv) {
 		for (int i = 0; i < this.propertyValueList.size(); i++) {

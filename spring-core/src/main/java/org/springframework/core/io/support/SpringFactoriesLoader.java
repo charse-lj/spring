@@ -94,6 +94,7 @@ public final class SpringFactoriesLoader {
 	 */
 	public static <T> List<T> loadFactories(Class<T> factoryType, @Nullable ClassLoader classLoader) {
 		Assert.notNull(factoryType, "'factoryType' must not be null");
+		//获取ClassLoader,进行资源加载的关键
 		ClassLoader classLoaderToUse = classLoader;
 		if (classLoaderToUse == null) {
 			classLoaderToUse = SpringFactoriesLoader.class.getClassLoader();
@@ -104,8 +105,10 @@ public final class SpringFactoriesLoader {
 		}
 		List<T> result = new ArrayList<>(factoryImplementationNames.size());
 		for (String factoryImplementationName : factoryImplementationNames) {
+			//实例化
 			result.add(instantiateFactory(factoryImplementationName, factoryType, classLoaderToUse));
 		}
+		//排序
 		AnnotationAwareOrderComparator.sort(result);
 		return result;
 	}
@@ -128,11 +131,13 @@ public final class SpringFactoriesLoader {
 		if (classLoaderToUse == null) {
 			classLoaderToUse = SpringFactoriesLoader.class.getClassLoader();
 		}
+		//类的全限定名称为key
 		String factoryTypeName = factoryType.getName();
 		return loadSpringFactories(classLoaderToUse).getOrDefault(factoryTypeName, Collections.emptyList());
 	}
 
 	private static Map<String, List<String>> loadSpringFactories(ClassLoader classLoader) {
+		//缓存获取
 		Map<String, List<String>> result = cache.get(classLoader);
 		if (result != null) {
 			return result;
@@ -140,13 +145,16 @@ public final class SpringFactoriesLoader {
 
 		result = new HashMap<>();
 		try {
+			// 读取到资源文件，遍历
 			Enumeration<URL> urls = classLoader.getResources(FACTORIES_RESOURCE_LOCATION);
 			while (urls.hasMoreElements()) {
 				URL url = urls.nextElement();
 				UrlResource resource = new UrlResource(url);
 				Properties properties = PropertiesLoaderUtils.loadProperties(resource);
 				for (Map.Entry<?, ?> entry : properties.entrySet()) {
+					//获取文件中的key
 					String factoryTypeName = ((String) entry.getKey()).trim();
+					//文件中的value进行分隔
 					String[] factoryImplementationNames =
 							StringUtils.commaDelimitedListToStringArray((String) entry.getValue());
 					for (String factoryImplementationName : factoryImplementationNames) {
@@ -157,8 +165,10 @@ public final class SpringFactoriesLoader {
 			}
 
 			// Replace all lists with unmodifiable lists containing unique elements
+			//替换
 			result.replaceAll((factoryType, implementations) -> implementations.stream().distinct()
 					.collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)));
+			//缓存
 			cache.put(classLoader, result);
 		}
 		catch (IOException ex) {

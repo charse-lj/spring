@@ -72,6 +72,7 @@ import java.util.Map;
 public interface ConfigurableEnvironment extends Environment, ConfigurablePropertyResolver {
 
 	/**
+	 *  设置剖面
 	 * Specify the set of profiles active for this {@code Environment}. Profiles are
 	 * evaluated during container bootstrap to determine whether bean definitions
 	 * should be registered with the container.
@@ -115,6 +116,7 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	 * sources such as the set of system properties or the set of system environment
 	 * variables.
 	 * @see AbstractEnvironment#customizePropertySources
+	 * 属性源
 	 */
 	MutablePropertySources getPropertySources();
 
@@ -165,6 +167,8 @@ public interface ConfigurableEnvironment extends Environment, ConfigurableProper
 	 * @param parent the environment to merge with
 	 * @since 3.1.2
 	 * @see org.springframework.context.support.AbstractApplicationContext#setParent
+	 *
+	 *  合并两个环境信息
 	 */
 	void merge(ConfigurableEnvironment parent);
 

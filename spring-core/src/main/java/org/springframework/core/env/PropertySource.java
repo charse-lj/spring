@@ -56,13 +56,15 @@ import org.springframework.util.ObjectUtils;
  * @see PropertySourcesPropertyResolver
  * @see MutablePropertySources
  * @see org.springframework.context.annotation.PropertySource
+ *
+ * PropertySource 的顺序非常重要，因为 Spring 只要读到属性值就返回
  */
 public abstract class PropertySource<T> {
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	/**
-	 * 属性源名称
+	 * 给数据源起个名称
 	 */
 	protected final String name;
 
@@ -239,6 +241,8 @@ public abstract class PropertySource<T> {
 	/**
 	 * A {@code PropertySource} implementation intended for collection comparison
 	 * purposes.
+	 *
+	 * 用于集合排序，不允许获取属性值
 	 *
 	 * @see PropertySource#named(String)
 	 */

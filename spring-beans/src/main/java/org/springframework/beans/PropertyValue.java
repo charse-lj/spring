@@ -48,23 +48,31 @@ import org.springframework.util.ObjectUtils;
 @SuppressWarnings("serial")
 public class PropertyValue extends BeanMetadataAttributeAccessor implements Serializable {
 
+	/** 1.1 属性名称*/
 	private final String name;
-
+	/** 1.1 属性值*/
 	@Nullable
 	private final Object value;
-
+	/** 2.1 属性值是否为 Optional*/
 	private boolean optional = false;
-
+	/** 2.2 属性值是否已经进行了类型转换*/
 	private boolean converted = false;
 
+	/**
+	 * 2.3 类型转换后的属性值
+	 */
 	@Nullable
 	private Object convertedValue;
 
-	/** Package-visible field that indicates whether conversion is necessary. */
+	/** Package-visible field that indicates whether conversion is necessary.
+	 * /3.1 属性值是否需要进行类型转换，如果转换前后对象都是同一个，说明不用转换
+	 * */
 	@Nullable
 	volatile Boolean conversionNecessary;
 
-	/** Package-visible field for caching the resolved property path tokens. */
+	/** Package-visible field for caching the resolved property path tokens.
+	 * 3.2 缓存解析后的属性名称，如 attr['info']['name']
+	 * */
 	@Nullable
 	transient volatile Object resolvedTokens;
 

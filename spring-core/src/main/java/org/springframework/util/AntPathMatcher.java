@@ -74,6 +74,9 @@ import org.springframework.lang.Nullable;
  * 1.?（匹配任何单字符）
  * 2.*（匹配0或者任意数量的字符）
  * 3.**（匹配0或者更多的目录）
+ * eg.
+ *   /app/*.x --> 匹配app路径下的以.x结尾文件
+ *   /app/p?ttern --> 不匹配/app/pttern
  */
 public class AntPathMatcher implements PathMatcher {
 
@@ -209,7 +212,7 @@ public class AntPathMatcher implements PathMatcher {
 	 * @param pattern the pattern to match against
 	 * @param path the path to test
 	 * @param fullMatch whether a full pattern match is required (else a pattern match
-	 * as far as the given base path goes is sufficient)
+	 * as far as the given base path goes is sufficient) 是否完全匹配
 	 * @return {@code true} if the supplied {@code path} matched, {@code false} if it didn't
 	 */
 	protected boolean doMatch(String pattern, @Nullable String path, boolean fullMatch,
@@ -219,6 +222,7 @@ public class AntPathMatcher implements PathMatcher {
 			return false;
 		}
 
+		//以分隔符分隔pattern的结果
 		String[] pattDirs = tokenizePattern(pattern);
 		if (fullMatch && this.caseSensitive && !isPotentialMatch(path, pattDirs)) {
 			return false;
@@ -341,11 +345,20 @@ public class AntPathMatcher implements PathMatcher {
 		return true;
 	}
 
+	/**
+	 *
+	 * @param path 路径.
+	 * @param pattDirs pattern的token集合
+	 * @return
+	 */
 	private boolean isPotentialMatch(String path, String[] pattDirs) {
+		//不需要trim() token
 		if (!this.trimTokens) {
 			int pos = 0;
 			for (String pattDir : pattDirs) {
+				//跳过的长度
 				int skipped = skipSeparator(path, pos, this.pathSeparator);
+				//现在的位置
 				pos += skipped;
 				skipped = skipSegment(path, pos, pattDir);
 				if (skipped < pattDir.length()) {
@@ -357,17 +370,30 @@ public class AntPathMatcher implements PathMatcher {
 		return true;
 	}
 
+	/**
+	 * 可以跳过的部分
+	 * @param path 路径
+	 * @param pos 当前遍历到的位置
+	 * @param prefix pattern.
+	 * @return 可向前遍历的字符长度.
+	 */
 	private int skipSegment(String path, int pos, String prefix) {
 		int skipped = 0;
+		//遍历pattern中的字符
 		for (int i = 0; i < prefix.length(); i++) {
+			//pattern中的字符
 			char c = prefix.charAt(i);
+			//如果是通配符,直接返回
 			if (isWildcardChar(c)) {
 				return skipped;
 			}
+			//当前遍历到路径中的位置
 			int currPos = pos + skipped;
+			//超过路径字符长度,返回0
 			if (currPos >= path.length()) {
 				return 0;
 			}
+			//当前遍历位置对应的字符和c相等
 			if (c == path.charAt(currPos)) {
 				skipped++;
 			}
@@ -377,6 +403,7 @@ public class AntPathMatcher implements PathMatcher {
 
 	private int skipSeparator(String path, int pos, String separator) {
 		int skipped = 0;
+		//path从pos+skipped位置开始是否以separator开头
 		while (path.startsWith(separator, pos + skipped)) {
 			skipped += separator.length();
 		}
@@ -406,6 +433,7 @@ public class AntPathMatcher implements PathMatcher {
 			tokenized = this.tokenizedPatternCache.get(pattern);
 		}
 		if (tokenized == null) {
+			//以分隔符分隔pattern
 			tokenized = tokenizePath(pattern);
 			if (cachePatterns == null && this.tokenizedPatternCache.size() >= CACHE_TURNOFF_THRESHOLD) {
 				// Try to adapt to the runtime situation that we're encountering:
