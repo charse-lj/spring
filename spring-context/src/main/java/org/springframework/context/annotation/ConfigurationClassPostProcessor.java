@@ -84,6 +84,7 @@ import org.springframework.util.ClassUtils;
  * @since 3.0
  *
  * ConfigurationClassPostProcessor是Spring内部对BeanDefinitionRegistryPostProcessor接口的唯一实现。
+ * 用于@EnableXXX / @Import等注解的解析上
  */
 public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPostProcessor,
 		PriorityOrdered, ResourceLoaderAware, BeanClassLoaderAware, EnvironmentAware {

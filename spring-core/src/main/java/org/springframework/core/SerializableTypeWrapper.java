@@ -139,7 +139,7 @@ final class SerializableTypeWrapper {
 				// SerializableTypeProxy：标记接口，标志是一个代理类
 				// Serializable：代表可以被序列化
 				Class<?>[] interfaces = new Class<?>[] {type, SerializableTypeProxy.class, Serializable.class};
-				// 核心代码：TypeProxyInvocationHandler是什么？
+				// 核心代码：TypeProxyInvocationHandler JDK动态代理
 				InvocationHandler handler = new TypeProxyInvocationHandler(provider);
 				// 依赖于先前的InvocationHandler，以当前的type为目标对象创建了一个代理对象
 				cached = (Type) Proxy.newProxyInstance(classLoader, interfaces, handler);

@@ -60,6 +60,8 @@ public interface HandlerAdapter {
 	 * @param handler the handler object to check
 	 * @return whether or not this object can use the given handler
 	 *
+	 * handler 的四种表现形式：controller接口,HttpRequestHandler,servlet,@RequestMapping
+	 *
 	 * 当前 HandlerAdapter 是否支持这个 Handler
 	 */
 	boolean supports(Object handler);

@@ -283,6 +283,7 @@ public class TypeDescriptor implements Serializable {
 		//typeDescriptor代表的Class是否为this.typeDescriptor代表的Class的父类
 		boolean typesAssignable = typeDescriptor.getObjectType().isAssignableFrom(getObjectType());
 		if (!typesAssignable) {
+			//不是子父类关系,直接返回false
 			return false;
 		}
 		//this.typeDescriptor代表的Class和typeDescriptor 都为数组类型

@@ -551,6 +551,7 @@ public class MethodParameter {
 	 * @since 3.0
 	 */
 	public Type getGenericParameterType() {
+		//参数的类型
 		Type paramType = this.genericParameterType;
 		if (paramType == null) {
 			if (this.parameterIndex < 0) {
@@ -560,8 +561,11 @@ public class MethodParameter {
 						KotlinDelegate.getGenericReturnType(method) : method.getGenericReturnType()) : void.class);
 			}
 			else {
+				//该方法的所有参数类型
 				Type[] genericParameterTypes = this.executable.getGenericParameterTypes();
+				//参数下标
 				int index = this.parameterIndex;
+				//构造函数的特殊处理
 				if (this.executable instanceof Constructor &&
 						ClassUtils.isInnerClass(this.executable.getDeclaringClass()) &&
 						genericParameterTypes.length == this.executable.getParameterCount() - 1) {
@@ -570,6 +574,7 @@ public class MethodParameter {
 					// so access it with the actual parameter index lowered by 1
 					index = this.parameterIndex - 1;
 				}
+				//下标处的参数类型
 				paramType = (index >= 0 && index < genericParameterTypes.length ?
 						genericParameterTypes[index] : computeParameterType());
 			}

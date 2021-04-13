@@ -65,6 +65,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public final class RequestMappingInfo implements RequestCondition<RequestMappingInfo> {
 
+	// 这些个匹配器都继承自AbstractRequestCondition，会进行各自的匹配工作
 	private static final PathPatternsRequestCondition EMPTY_PATH_PATTERNS = new PathPatternsRequestCondition();
 
 	private static final PatternsRequestCondition EMPTY_PATTERNS = new PatternsRequestCondition();
@@ -313,6 +314,7 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	}
 
 	/**
+	 * 因为类上和方法上都可能会有@RequestMapping注解，所以这里是把语意思合并  该方法来自顶层接口
 	 * Combine "this" request mapping info (i.e. the current instance) with
 	 * another request mapping info instance.
 	 * <p>Example: combine type- and method-level request mappings.

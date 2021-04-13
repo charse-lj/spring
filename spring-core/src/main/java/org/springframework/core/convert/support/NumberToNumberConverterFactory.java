@@ -47,6 +47,7 @@ final class NumberToNumberConverterFactory implements ConverterFactory<Number, N
 		return new NumberToNumber<>(targetType);
 	}
 
+	//TODO 不懂? 相同不能转?
 	@Override
 	public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
 		return !sourceType.equals(targetType);

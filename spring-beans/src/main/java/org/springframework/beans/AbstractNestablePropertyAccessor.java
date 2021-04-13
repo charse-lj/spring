@@ -144,6 +144,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 	 */
 	protected AbstractNestablePropertyAccessor(Class<?> clazz) {
 		registerDefaultEditors();
+		//创建一个对象
 		setWrappedInstance(BeanUtils.instantiateClass(clazz));
 	}
 
@@ -847,7 +848,9 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		// 2.2 再获取 info 属性所在类的 directorBeanWrapper
 		// 2.3 依此类推，获取最后一个属性 name 属性所在类的 infoBeanWrapper
 		if (pos > -1) {
+			//nestedProperty 对应这一个对象
 			String nestedProperty = propertyPath.substring(0, pos);
+			//nestedPath 剩余对象组成的path
 			String nestedPath = propertyPath.substring(pos + 1);
 			AbstractNestablePropertyAccessor nestedPa = getNestedPropertyAccessor(nestedProperty);
 			return nestedPa.getPropertyAccessorForPropertyPath(nestedPath);
@@ -877,6 +880,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		// Get value of bean property.
 		// 1. 获取属性对应的 token 值，主要用于解析 attrs['key'][0] 这样 Map/Array/Collection 循环嵌套的属性
 		PropertyTokenHolder tokens = getPropertyNameTokens(nestedProperty);
+		//去掉 ' 和 " 后的数据
 		String canonicalName = tokens.canonicalName;
 		Object value = getPropertyValue(tokens);
 		// 2. 属性不存在则根据 autoGrowNestedPaths 决定是否自动创建
@@ -976,7 +980,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 
 	/**
 	 * Parse the given property name into the corresponding property name tokens.
-	 * @param propertyName the property name to parse
+	 * @param propertyName the property name to parse 单个对象名称
 	 * @return representation of the parsed property tokens
 	 */
 	private PropertyTokenHolder getPropertyNameTokens(String propertyName) {
@@ -984,22 +988,27 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		List<String> keys = new ArrayList<>(2);
 		int searchIndex = 0;
 		while (searchIndex != -1) {
+			// searchIndex 后 '['位置
 			int keyStart = propertyName.indexOf(PROPERTY_KEY_PREFIX, searchIndex);
 			searchIndex = -1;
+			//存在‘[’
 			if (keyStart != -1) {
+				//对应的']'位置
 				int keyEnd = getPropertyNameKeyEnd(propertyName, keyStart + PROPERTY_KEY_PREFIX.length());
 				if (keyEnd != -1) {
-					// 1. actualName 对应 bean 中的属性名称
+					// 1. actualName 对应 [ 前的字符
 					if (actualName == null) {
 						actualName = propertyName.substring(0, keyStart);
 					}
-					// 2. 删除每个 key 中间的单引和双引
+					// '[]'中内容
 					String key = propertyName.substring(keyStart + PROPERTY_KEY_PREFIX.length(), keyEnd);
+					// 2. 删除每个 key 中间的单引和双引
 					if (key.length() > 1 && (key.startsWith("'") && key.endsWith("'")) ||
 							(key.startsWith("\"") && key.endsWith("\""))) {
 						key = key.substring(1, key.length() - 1);
 					}
 					keys.add(key);
+					//更新searchIndex
 					searchIndex = keyEnd + PROPERTY_KEY_SUFFIX.length();
 				}
 			}
@@ -1015,6 +1024,12 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		return tokens;
 	}
 
+	/**
+	 * propertyName 的startIndex位置开始,遇到'[',计数器+1,遇到']',若此时计数器不为0,计数器-1
+	 * @param propertyName .
+	 * @param startIndex .
+	 * @return .
+	 */
 	private int getPropertyNameKeyEnd(String propertyName, int startIndex) {
 		int unclosedPrefixes = 0;
 		int length = propertyName.length();

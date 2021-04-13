@@ -91,9 +91,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		ALLOW_CORS_CONFIG.setAllowCredentials(true);
 	}
 
-
+	// 默认不会去祖先容器里面找Handlers
 	private boolean detectHandlerMethodsInAncestorContexts = false;
 
+	// 为处HandlerMethod的映射分配名称的策略接口   只有一个方法getName()
+	// 唯一实现为：RequestMappingInfoHandlerMethodMappingNamingStrategy
+	// 策略为：@RequestMapping指定了name属性，那就以指定的为准  否则策略为：取出Controller所有的`大写字母` + # + method.getName()
+	// 如：AppoloController#match方法  最终的name为：AC#match
+	// 当然这个你也可以自己实现这个接口，然后set进来即可（只是一般没啥必要这么去干~~）
 	@Nullable
 	private HandlerMethodMappingNamingStrategy<T> namingStrategy;
 
@@ -148,6 +153,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	}
 
 	/**
+	 * 此处是根据mappingName来获取一个Handler
 	 * Return the handler methods for the given mapping name.
 	 * @param mappingName the mapping name
 	 * @return a list of matching HandlerMethod's or {@code null}; the returned
@@ -386,17 +392,29 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	@Nullable
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
+		// Match是一个private class，内部就两个属性：T mapping和HandlerMethod handlerMethod
 		List<Match> matches = new ArrayList<>();
+		// 根据lookupPath去注册中心里查找mappingInfos，因为一个具体的url可能匹配上多个MappingInfo的
+		// 至于为何是多值？有这么一种情况  URL都是/api/v1/hello  但是有的是get post delete等方法
+		// 当然还有可能是headers/consumes等等不一样，都算多个的  所以有可能是会匹配到多个MappingInfo的
+		// 所有这个里可以匹配出多个出来。比如/hello 匹配出GET、POST、PUT都成，所以size可以为3
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByDirectPath(lookupPath);
 		if (directPathMatches != null) {
+			// 依赖于子类实现的抽象方法：getMatchingMapping()  看看到底匹不匹配，而不仅仅是URL匹配就行
+			// 比如还有method、headers、consumes等等这些不同都代表着不同的MappingInfo的
+			// 最终匹配上的，会new Match()放进matches里面去
 			addMatchingMappings(directPathMatches, matches, request);
 		}
+		// 当还没有匹配上的时候，别无选择，只能浏览所有映射
+		// 这里为何要浏览所有的mappings呢？而不是报错404呢？这里我有点迷糊，愿有知道的指明这个设计意图~~~
 		if (matches.isEmpty()) {
 			addMatchingMappings(this.mappingRegistry.getRegistrations().keySet(), matches, request);
 		}
 		if (!matches.isEmpty()) {
 			Match bestMatch = matches.get(0);
 			if (matches.size() > 1) {
+				// getMappingComparator这个方法也是抽象方法由子类去实现的。
+				// 比如：`RequestMappingInfoHandlerMapping`的实现为先比较Method，patterns、params
 				Comparator<Match> comparator = new MatchComparator(getMappingComparator(request));
 				matches.sort(comparator);
 				bestMatch = matches.get(0);
@@ -406,7 +424,11 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				if (CorsUtils.isPreFlightRequest(request)) {
 					return PREFLIGHT_AMBIGUOUS_MATCH;
 				}
+				// 次最佳匹配
 				Match secondBestMatch = matches.get(1);
+				//如果发现次最佳匹配和最佳匹配  比较是相等的  那就报错吧~~~~
+				// Ambiguous handler methods mapped for~~~
+				// 注意：这个是运行时的检查，在启动的时候是检查不出来的~~~  所以运行期的这个检查也是很有必要的~~~   否则就会出现意想不到的效果
 				if (comparator.compare(bestMatch, secondBestMatch) == 0) {
 					Method m1 = bestMatch.handlerMethod.getMethod();
 					Method m2 = secondBestMatch.handlerMethod.getMethod();
@@ -415,8 +437,10 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 							"Ambiguous handler methods mapped for '" + uri + "': {" + m1 + ", " + m2 + "}");
 				}
 			}
+			// 把最最佳匹配的方法  放进request的属性里面~~~
 			request.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, bestMatch.handlerMethod);
 			handleMatch(bestMatch.mapping, lookupPath, request);
+			// 最终返回的是HandlerMethod~~~
 			return bestMatch.handlerMethod;
 		}
 		else {
@@ -424,8 +448,17 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		}
 	}
 
+	/**
+	 * 因为上面说了mappings可能会有多个，比如get post put的都算~~~这里就是要进行筛选出所有match上的
+	 * @param mappings
+	 * @param matches
+	 * @param request
+	 */
 	private void addMatchingMappings(Collection<T> mappings, List<Match> matches, HttpServletRequest request) {
 		for (T mapping : mappings) {
+			// 只有RequestMappingInfoHandlerMapping 实现了一句话：return info.getMatchingCondition(request);
+			// 因此RequestMappingInfo#getMatchingCondition() 方法里大有文章可为~~~
+			// 它会对所有的methods、params、headers... 都进行匹配  但凡匹配不上的就返回null
 			T match = getMatchingMapping(mapping, request);
 			if (match != null) {
 				matches.add(new Match(match,

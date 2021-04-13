@@ -638,6 +638,10 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	}
 
 	/**
+	 * handler 对应Controller
+	 * handlerMethod 对应Controller中方法
+	 * HandlerMethodArgument 对应Controller中方法的参数
+	 *
 	 * Return the list of argument resolvers to use including built-in resolvers
 	 * and custom resolvers provided via {@link #setCustomArgumentResolvers}.
 	 */

@@ -81,19 +81,24 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	@Nullable
 	private PathPatternParser patternParser;
 
+	// url路径计算的辅助类、工具类
 	private UrlPathHelper urlPathHelper = new UrlPathHelper();
 
+	// Ant风格的Path匹配模式~  解决如/books/{id}场景
 	private PathMatcher pathMatcher = new AntPathMatcher();
 
 	private final List<Object> interceptors = new ArrayList<>();
 
+	//拦截器
 	private final List<HandlerInterceptor> adaptedInterceptors = new ArrayList<>();
 
+	//跨域相关的配置
 	@Nullable
 	private CorsConfigurationSource corsConfigurationSource;
 
 	private CorsProcessor corsProcessor = new DefaultCorsProcessor();
 
+	// 最低的顺序
 	private int order = Ordered.LOWEST_PRECEDENCE;  // default: same as non-Ordered
 
 	@Nullable
@@ -369,8 +374,12 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 */
 	@Override
 	protected void initApplicationContext() throws BeansException {
+		// 给子类扩展：增加拦截器，默认为空实现
 		extendInterceptors(this.interceptors);
+		// 找到所有MappedInterceptor类型的bean添加到adaptedInterceptors中
 		detectMappedInterceptors(this.adaptedInterceptors);
+		// 将interceptors中的拦截器取出放入adaptedInterceptors
+		// 如果是WebRequestInterceptor类型的拦截器  需要用WebRequestHandlerInterceptorAdapter进行包装适配
 		initInterceptors();
 	}
 
@@ -443,6 +452,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	}
 
 	/**
+	 * 它只会返回MappedInterceptor这种类型的，上面是返回adaptedInterceptors所有
 	 * Return the adapted interceptors as {@link HandlerInterceptor} array.
 	 * @return the array of {@link HandlerInterceptor HandlerInterceptors}, or
 	 * {@code null} if none
@@ -500,6 +510,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 			return null;
 		}
 		// Bean name or resolved handler?
+		// 意思是如果是个String类型的名称，那就去容器内找这个Bean，当作一个Handler~
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
 			handler = obtainApplicationContext().getBean(handlerName);

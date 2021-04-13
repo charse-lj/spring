@@ -258,9 +258,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * spring中的工厂bean分两种
 	 * 1.BD中factoryMethodName所代表的方法实例化的一个对象,该对象存在于单例池singleObjects中,同时bd存在于beanDefinitionMap中
 	 * 2.实现了FactoryBean的接口,getObject()方法可生成对象,该对象不在单例池中,也没有对象的bd
-	 */
 
-	/**
 	 * 工厂类名（注意是String类型，不是Class类型）;对应bean属性factory-method
 	 *  <bean id="test" factory-bean="factory" factory-method="init"/>
 	 */

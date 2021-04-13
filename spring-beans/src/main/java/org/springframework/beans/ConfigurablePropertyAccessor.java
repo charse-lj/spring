@@ -70,7 +70,9 @@ public interface ConfigurablePropertyAccessor extends PropertyAccessor, Property
 	 * {@link NullValueInNestedPathException}.
 	 * <p>Default is {@code false} on a plain PropertyAccessor instance.
 	 *
-	 * 当设置（dog.name）这种嵌套属性的情况下，如果dog属性为null是否会报错,为true的话不会，为false会抛出NullValueInNestedPathException
+	 * 当设置（dog.name）这种嵌套属性的情况下，如果dog属性为null是否会报错,
+	 * true：为null的值会自动被填充为一个默认的value值
+	 * false：会抛出NullValueInNestedPathException
 	 */
 	void setAutoGrowNestedPaths(boolean autoGrowNestedPaths);
 

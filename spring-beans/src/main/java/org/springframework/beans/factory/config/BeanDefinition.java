@@ -103,8 +103,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 */
 	String SCOPE_PROTOTYPE = ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
-	//Bean角色
 	/**
+	 * Bean角色
 	 * Role hint indicating that a {@code BeanDefinition} is a major part
 	 * of the application. Typically corresponds to a user-defined bean.
 	 * 用户定义的 Bean
@@ -243,6 +243,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 	/**
 	 * Return whether this bean is a candidate for getting autowired into some other bean.
+	 * 这个Bean是否允许被自动注入到别的地方去（默认都是被允许的）
+	 * 注意：此标志只影响按类型装配，不影响byName的注入方式的~~~~
 	 */
 	boolean isAutowireCandidate();
 

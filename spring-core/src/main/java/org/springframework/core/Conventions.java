@@ -66,7 +66,9 @@ public final class Conventions {
 		Class<?> valueClass;
 		boolean pluralize = false;
 
+		//数组类型
 		if (value.getClass().isArray()) {
+			//数组元素类型
 			valueClass = value.getClass().getComponentType();
 			pluralize = true;
 		}
@@ -76,6 +78,7 @@ public final class Conventions {
 				throw new IllegalArgumentException(
 						"Cannot generate variable name for an empty Collection");
 			}
+			//校验并获取Collection的第一个元素
 			Object valueToCheck = peekAhead(collection);
 			valueClass = getClassForValue(valueToCheck);
 			pluralize = true;
@@ -84,6 +87,7 @@ public final class Conventions {
 			valueClass = getClassForValue(value);
 		}
 
+		//类的简短名称
 		String name = ClassUtils.getShortNameAsProperty(valueClass);
 		return (pluralize ? pluralize(name) : name);
 	}
@@ -266,17 +270,21 @@ public final class Conventions {
 	 */
 	private static Class<?> getClassForValue(Object value) {
 		Class<?> valueClass = value.getClass();
+		//被代理过的
 		if (Proxy.isProxyClass(valueClass)) {
 			Class<?>[] ifcs = valueClass.getInterfaces();
 			for (Class<?> ifc : ifcs) {
+				//获取第一个满足条件的接口
 				if (!ClassUtils.isJavaLanguageInterface(ifc)) {
 					return ifc;
 				}
 			}
 		}
+		//不是成员内部类
 		else if (valueClass.getName().lastIndexOf('$') != -1 && valueClass.getDeclaringClass() == null) {
 			// '$' in the class name but no inner class -
 			// assuming it's a special subclass (e.g. by OpenJPA)
+			//获取其父类
 			valueClass = valueClass.getSuperclass();
 		}
 		return valueClass;

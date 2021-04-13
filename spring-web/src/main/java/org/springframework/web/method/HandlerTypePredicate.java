@@ -74,16 +74,21 @@ public final class HandlerTypePredicate implements Predicate<Class<?>> {
 			return true;
 		}
 		else if (controllerType != null) {
+			// 2、注意此处的basePackage只是简单的startsWith前缀匹配而已~~~
+			// 说明：basePackageClasses属性最终都是转为它来匹配的，
+			// 如果写了一个Controller类匹配上了，那它所在的包下所有的都是匹配的（因为同包嘛）
 			for (String basePackage : this.basePackages) {
 				if (controllerType.getName().startsWith(basePackage)) {
 					return true;
 				}
 			}
+			// 3、指定具体的Class类型，只会匹配数组里面的这些类型，精确匹配。
 			for (Class<?> clazz : this.assignableTypes) {
 				if (ClassUtils.isAssignable(clazz, controllerType)) {
 					return true;
 				}
 			}
+			// 4、根据类上的注解类型来匹配（若你想个性化灵活配置，可以使用这种方式）
 			for (Class<? extends Annotation> annotationClass : this.annotations) {
 				if (AnnotationUtils.findAnnotation(controllerType, annotationClass) != null) {
 					return true;
@@ -94,6 +99,7 @@ public final class HandlerTypePredicate implements Predicate<Class<?>> {
 	}
 
 	private boolean hasSelectors() {
+		//所有属性都未指定时，才返回false -->default,作用于所有controller
 		return (!this.basePackages.isEmpty() || !this.assignableTypes.isEmpty() || !this.annotations.isEmpty());
 	}
 
@@ -166,11 +172,13 @@ public final class HandlerTypePredicate implements Predicate<Class<?>> {
 		 * @param packages one or more base package classes
 		 */
 		public Builder basePackage(String... packages) {
+			//判空过滤器
 			Arrays.stream(packages).filter(StringUtils::hasText).forEach(this::addBasePackage);
 			return this;
 		}
 
 		/**
+		 * packageClass 转化为basePackage
 		 * Type-safe alternative to {@link #forBasePackage(String...)} to specify a
 		 * base package through a class.
 		 * @param packageClasses one or more base package names
@@ -180,6 +188,10 @@ public final class HandlerTypePredicate implements Predicate<Class<?>> {
 			return this;
 		}
 
+		/**
+		 *
+		 * @param basePackage 都必须以.结尾
+		 */
 		private void addBasePackage(String basePackage) {
 			this.basePackages.add(basePackage.endsWith(".") ? basePackage : basePackage + ".");
 		}

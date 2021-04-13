@@ -968,9 +968,9 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Keep a snapshot of the request attributes in case of an include,
 		// to be able to restore the original attributes after the include.
+		Map<String, Object> attributesSnapshot = null;
 		// 如果该请求是include的请求（请求包含） 那么就把request域中的数据保存一份快照版本
 		// 等doDispatch结束之后，会把这个快照版本的数据覆盖到新的request里面去
-		Map<String, Object> attributesSnapshot = null;
 		if (WebUtils.isIncludeRequest(request)) {
 			attributesSnapshot = new HashMap<>();
 			Enumeration<?> attrNames = request.getAttributeNames();
@@ -990,6 +990,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		request.setAttribute(THEME_RESOLVER_ATTRIBUTE, this.themeResolver);
 		request.setAttribute(THEME_SOURCE_ATTRIBUTE, getThemeSource());
 		// 如果是重定向，放置得更多一些~~~~
+		//重定向前设置一些信息，重定向后获取使用应该怎么办法呢？这就是 FlashMap存在的意义
 		if (this.flashMapManager != null) {
 			FlashMap inputFlashMap = this.flashMapManager.retrieveAndUpdate(request, response);
 			if (inputFlashMap != null) {

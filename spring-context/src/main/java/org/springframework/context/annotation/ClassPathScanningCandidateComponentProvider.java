@@ -83,6 +83,8 @@ import org.springframework.util.ClassUtils;
  * @see org.springframework.core.type.AnnotationMetadata
  * @see ScannedGenericBeanDefinition
  * @see CandidateComponentsIndex
+ *
+ * 它用于@ComponentScan的时候解析，拿到元数据判断是否是@Component的派生注解
  */
 public class ClassPathScanningCandidateComponentProvider implements EnvironmentCapable, ResourceLoaderAware {
 

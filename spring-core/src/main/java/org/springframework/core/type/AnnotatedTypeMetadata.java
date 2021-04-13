@@ -44,7 +44,8 @@ import org.springframework.util.MultiValueMap;
  * @see MethodMetadata
  *
  * 对注解元素的封装适配
- * 什么叫注解元素(AnnotatedElement)？比如我们常见的Class、Method、Constructor、Parameter等等都属于它的子类,都属于注解元素;单理解：只要能在上面标注注解都属于这种元素
+ * 什么叫注解元素(AnnotatedElement)？比如我们常见的Class、Method、Constructor、Parameter等等都属于它的子类,都属于注解元素
+ * 单理解：只要能在上面标注注解都属于这种元素
  */
 public interface AnnotatedTypeMetadata {
 
@@ -102,6 +103,7 @@ public interface AnnotatedTypeMetadata {
 	 * @return a Map of attributes, with the attribute name as key (e.g. "value")
 	 * and the defined attribute value as Map value. This return value will be
 	 * {@code null} if no matching annotation is defined.
+	 * 若是true表示 Class用它的字符串的全类名来表示。这样可以避免Class被提前加载
 	 */
 	@Nullable
 	default Map<String, Object> getAnnotationAttributes(String annotationName,
