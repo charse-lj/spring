@@ -57,6 +57,8 @@ import org.springframework.web.util.pattern.PathPatternParser;
  * @author Rossen Stoyanchev
  * @author Brian Clozel
  * @since 3.0
+ *
+ * final类。所以扩展它并不是像通过继承HandlerInterceptorAdapter这样去扩展，而是通过了类似代理的方式
  */
 public final class MappedInterceptor implements HandlerInterceptor {
 
@@ -69,8 +71,10 @@ public final class MappedInterceptor implements HandlerInterceptor {
 	@Nullable
 	private final PathPattern[] excludePatterns;
 
+	// 注意：该类允许你自己指定路径的匹配规则。但是Spring里，不管哪个上层服务，默认使用的都是Ant风格的匹配
 	private PathMatcher pathMatcher = defaultPathMatcher;
 
+	// 持有一个interceptor的引用，类似于目标类~
 	private final HandlerInterceptor interceptor;
 
 

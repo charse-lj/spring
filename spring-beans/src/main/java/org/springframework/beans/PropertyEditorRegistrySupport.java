@@ -111,24 +111,24 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 
 	private boolean configValueEditorsActive = false;
 
-	//默认编辑器组：defaultEditors和overriddenDefaultEditors,overriddenDefaultEditors优先级 高于 defaultEditors
 	/**
-	 * 装载【默认的】编辑器们，初始化的时候会注册好
+	 * 装载默认的编辑器们，初始化的时候会注册好
+	 * Key:该PropertyEditor可处理的类型
 	 */
 	@Nullable
 	private Map<Class<?>, PropertyEditor> defaultEditors;
 
 	/**
-	 * 如果想覆盖掉【默认行为】，可通过此Map覆盖（比如处理Charset类型你不想用默认的编辑器处理）
-	 * 通过API：overrideDefaultEditor(...)放进此Map里
+	 * 如果想覆盖掉默认行为,通过API{@link #overrideDefaultEditor(Class, PropertyEditor)}
+	 * 执行查找的顺序决定调用的过程
 	 */
 	@Nullable
 	private Map<Class<?>, PropertyEditor> overriddenDefaultEditors;
 
 
-	//自定义编辑器组：customEditors和customEditorsForPath,它俩为互斥关系
 	/**
 	 * 通过API：registerCustomEditor(...)放进此Map里（若没指定propertyPath）
+	 * {@link #registerCustomEditor(Class, PropertyEditor)}
 	 * customEditors：粒度较粗，通用性强。key为类型，即该类型的转换全部交给此编辑器处理
 	 * 如：registerCustomEditor(UUID.class,new UUIDEditor())，那么此编辑器就能处理全天下所有的String <-> UUID 转换工作
 	 */
@@ -136,7 +136,7 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	private Map<Class<?>, PropertyEditor> customEditors;
 
 	/**
-	 * 通过API：registerCustomEditor(...)放进此Map里（若指定了propertyPath）
+	 * 通过API{@link #registerCustomEditor(Class, String, PropertyEditor)}
 	 * 实现更精准匹配,针对属性级别精准处理
 	 * 如：registerCustomEditor(Person.class, "cat.uuid" , new UUIDEditor())，那么此编辑器就有且仅能处理Person.cat.uuid属性，其它的一概不管
 	 */
@@ -333,6 +333,7 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 
 	@Override
 	public void registerCustomEditor(@Nullable Class<?> requiredType, @Nullable String propertyPath, PropertyEditor propertyEditor) {
+		//requiredType、propertyPath 不能都为null
 		if (requiredType == null && propertyPath == null) {
 			throw new IllegalArgumentException("Either requiredType or propertyPath is required");
 		}
@@ -346,6 +347,7 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 				this.customEditors = new LinkedHashMap<>(16);
 			}
 			this.customEditors.put(requiredType, propertyEditor);
+			//每次调用API向customEditors添加新元素时，customEditorCache就会被清空，因此因尽量避免在运行期注册编辑器，以避免缓存失效而降低性能
 			this.customEditorCache = null;
 		}
 	}
@@ -354,6 +356,7 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	@Nullable
 	public PropertyEditor findCustomEditor(@Nullable Class<?> requiredType, @Nullable String propertyPath) {
 		Class<?> requiredTypeToUse = requiredType;
+		//精确查找
 		if (propertyPath != null) {
 			if (this.customEditorsForPath != null) {
 				// Check property-specific editor first.
@@ -544,6 +547,7 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	 * @param strippedPaths the result list to add to
 	 * @param nestedPath    the current nested path
 	 * @param propertyPath  the property path to check for keys/indexes to strip
+	 *                      name[1][2][3] ->7中情况
 	 */
 	private void addStrippedPropertyPaths(List<String> strippedPaths, String nestedPath, String propertyPath) {
 		int startIndex = propertyPath.indexOf(PropertyAccessor.PROPERTY_KEY_PREFIX_CHAR);
@@ -598,11 +602,10 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 			// (If not registered for Collection or array, it is assumed to be intended
 			// for elements.)
 			if (this.registeredType == null ||
-					(requiredType != null &&
-							(ClassUtils.isAssignable(this.registeredType, requiredType) ||
-									ClassUtils.isAssignable(requiredType, this.registeredType))) ||
-					(requiredType == null &&
-							(!Collection.class.isAssignableFrom(this.registeredType) && !this.registeredType.isArray()))) {
+					//requiredType不为null，且registeredType、requiredType 互为子父类
+					(requiredType != null && (ClassUtils.isAssignable(this.registeredType, requiredType) || ClassUtils.isAssignable(requiredType, this.registeredType))) ||
+					//requiredType 为null,且registeredType既不是Collection子类,也不是数组类型
+					(requiredType == null && (!Collection.class.isAssignableFrom(this.registeredType) && !this.registeredType.isArray()))) {
 				return this.propertyEditor;
 			} else {
 				return null;

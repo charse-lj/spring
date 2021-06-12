@@ -57,7 +57,7 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		// but we need to preserve order in the ultimate list.
 		AdvisorAdapterRegistry registry = GlobalAdvisorAdapterRegistry.getInstance();
 
-		//拿到代理里面所有的通知们：getAdvisors
+		//拿到代理里面所有的通知器：getAdvisors
 		Advisor[] advisors = config.getAdvisors();
 		//容器：用于存放拦截器链
 		List<Object> interceptorList = new ArrayList<>(advisors.length);
@@ -65,6 +65,7 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		Class<?> actualClass = (targetClass != null ? targetClass : method.getDeclaringClass());
 		Boolean hasIntroductions = null;
 
+		//遍历拦截器
 		for (Advisor advisor : advisors) {
 			//支持方法与类级别的拦截
 			if (advisor instanceof PointcutAdvisor) {
@@ -75,7 +76,8 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 					// 方法拦截器是否允许通过
 					MethodMatcher mm = pointcutAdvisor.getPointcut().getMethodMatcher();
 					boolean match;
-					if (mm instanceof IntroductionAwareMethodMatcher) { //是一个意识到引入的方法匹配器
+					//是一个意识到引入的方法匹配器
+					if (mm instanceof IntroductionAwareMethodMatcher) {
 						if (hasIntroductions == null) {
 							//所有拦截器中是否支持引入该类
 							hasIntroductions = hasMatchingIntroductions(advisors, actualClass);

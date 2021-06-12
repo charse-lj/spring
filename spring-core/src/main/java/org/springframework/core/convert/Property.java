@@ -44,6 +44,8 @@ import org.springframework.util.StringUtils;
  * @since 3.1
  * @see TypeDescriptor#TypeDescriptor(Property)
  * @see TypeDescriptor#nested(Property, int)
+ *
+ * 属性：有Getter/Setter方法,可以有对应的字段
  */
 public final class Property {
 

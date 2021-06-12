@@ -106,7 +106,7 @@ public interface PropertyAccessor {
 	 * @throws PropertyAccessException if the property was valid but the
 	 * accessor method failed
 	 *
-	 * 获取/设置属性的方法，基本见名知意
+	 * 获取/设置属性类型，基本见名知意
 	 */
 	@Nullable
 	Class<?> getPropertyType(String propertyName) throws BeansException;
@@ -236,6 +236,8 @@ public interface PropertyAccessor {
 	 * occurred for specific properties during the batch update. This exception bundles
 	 * all individual PropertyAccessExceptions. All other properties will have been
 	 * successfully updated.
+	 *
+	 * 未知或非法的值处理策略
 	 */
 	void setPropertyValues(PropertyValues pvs, boolean ignoreUnknown, boolean ignoreInvalid)
 			throws BeansException;

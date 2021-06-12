@@ -327,6 +327,7 @@ public class UrlPathHelper {
 	}
 
 	/**
+	 * requestUri是否是以mapping开头
 	 * Match the given "mapping" to the start of the "requestUri" and if there
 	 * is a match return the extra part. This method is needed because the
 	 * context path and the servlet path returned by the HttpServletRequest are
@@ -339,9 +340,12 @@ public class UrlPathHelper {
 		for (; (index1 < requestUri.length()) && (index2 < mapping.length()); index1++, index2++) {
 			char c1 = requestUri.charAt(index1);
 			char c2 = mapping.charAt(index2);
+			//为字符';'
 			if (c1 == ';') {
+				//跳到下一个'/'
 				index1 = requestUri.indexOf('/', index1);
 				if (index1 == -1) {
+					//不存在,直接返回null
 					return null;
 				}
 				c1 = requestUri.charAt(index1);
@@ -364,6 +368,7 @@ public class UrlPathHelper {
 	}
 
 	/**
+	 *  ‘//’变'/'
 	 * Sanitize the given path. Uses the following rules:
 	 * <ul>
 	 * <li>replace all "//" by "/"</li>
@@ -511,7 +516,9 @@ public class UrlPathHelper {
 	 */
 	private String decodeAndCleanUriString(HttpServletRequest request, String uri) {
 		uri = removeSemicolonContent(uri);
+		//解码
 		uri = decodeRequestString(request, uri);
+		//‘//’变'/'
 		uri = getSanitizedPath(uri);
 		return uri;
 	}
@@ -580,9 +587,21 @@ public class UrlPathHelper {
 				removeSemicolonContentInternal(requestUri) : removeJsessionid(requestUri));
 	}
 
+	/**
+	 * 去除 uri中';'到'/'中间的字符
+	 *
+	 *  xxx;000/ooo;xxx/
+	 *     |   |
+	 *     i   j
+	 * 用i前的字符拼接上j后的字符,组成新字符,不断更新i、j
+	 * @param requestUri
+	 * @return
+	 */
 	private String removeSemicolonContentInternal(String requestUri) {
+		//第一个';'字符的索引位置
 		int semicolonIndex = requestUri.indexOf(';');
 		while (semicolonIndex != -1) {
+			//
 			int slashIndex = requestUri.indexOf('/', semicolonIndex);
 			String start = requestUri.substring(0, semicolonIndex);
 			requestUri = (slashIndex != -1) ? start + requestUri.substring(slashIndex) : start;
@@ -591,6 +610,11 @@ public class UrlPathHelper {
 		return requestUri;
 	}
 
+	/**
+	 * 去除';jsessionid='到';'之间的内容,如果没有';',只取前面的uri
+	 * @param requestUri .
+	 * @return .
+	 */
 	private String removeJsessionid(String requestUri) {
 		int startIndex = requestUri.toLowerCase().indexOf(";jsessionid=");
 		if (startIndex != -1) {

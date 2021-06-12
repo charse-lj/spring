@@ -196,7 +196,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	/**
 	 * Set the interfaces to be proxied.
 	 * setInterfaces和setProxyInterfaces的效果是相同的。设置需要被代理的接口，
-	 * 若没有实现接口，那就会采用cglib去代理
+	 *  若没有实现接口，那就会采用cglib去代理
 	 *  需要说明的一点是：这里不设置也能正常被代理（若你没指定，Spring内部会去帮你找到所有的接口，然后全部代理上~~~~~~~~~~~~）  设置的好处是只代理指定的接口
 	 */
 	public void setInterfaces(Class<?>... interfaces) {

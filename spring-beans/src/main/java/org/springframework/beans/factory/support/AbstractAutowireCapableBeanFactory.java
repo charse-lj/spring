@@ -1967,6 +1967,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 			else {
 				String propertyName = pv.getName();
+				// 未经类型转换的值（注意：是未经转换的，可能还只是个字符串或者表达式而已~~~~）
 				Object originalValue = pv.getValue();
 				// 3.2 标记位，实际使用resolveDependency方法查找依赖注入的对象
 				if (originalValue == AutowiredPropertyMarker.INSTANCE) {

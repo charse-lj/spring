@@ -840,13 +840,16 @@ public class ResolvableType implements Serializable {
 		if (this.type == EmptyType.INSTANCE) {
 			return null;
 		}
+		//类类型,直接返回
 		if (this.type instanceof Class) {
 			return (Class<?>) this.type;
 		}
+		//泛型数组类型
 		if (this.type instanceof GenericArrayType) {
 			Class<?> resolvedComponent = getComponentType().resolve();
 			return (resolvedComponent != null ? Array.newInstance(resolvedComponent, 0).getClass() : null);
 		}
+		//其他类型
 		return resolveType().resolve();
 	}
 
@@ -856,7 +859,7 @@ public class ResolvableType implements Serializable {
 	 * as it cannot be serialized.
 	 */
 	ResolvableType resolveType() {
-		//List<String> 泛型类
+		//List<String> 参数化类型
 		if (this.type instanceof ParameterizedType) {
 			return forType(((ParameterizedType) this.type).getRawType(), this.variableResolver);
 		}
@@ -1450,6 +1453,7 @@ public class ResolvableType implements Serializable {
 
 		//这里可以看出，即使我们提供了一个typeProvider，也不会直接调用它的getType返回，而是会进行一层包装，这个是为什么呢？这么做的目的主要就是为了得到一个可以进行序列化的Type
 		if (type == null && typeProvider != null) {
+			//JDK动态代理
 			type = SerializableTypeWrapper.forTypeProvider(typeProvider);
 		}
 
@@ -1476,6 +1480,7 @@ public class ResolvableType implements Serializable {
 		ResolvableType cachedType = cache.get(resultType);
 		if (cachedType == null) {
 			cachedType = new ResolvableType(type, typeProvider, variableResolver, resultType.hash);
+			//缓存
 			cache.put(cachedType, cachedType);
 		}
 		resultType.resolved = cachedType.resolved;

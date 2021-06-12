@@ -160,7 +160,7 @@ class TypeConverterDelegate {
 				}
 			}
 			if (editor == null) {
-				// 没有配置定制的属性编辑器，采用默认的属性编辑器
+				// PropertyEditor自动发现机制
 				editor = findDefaultEditor(requiredType);
 			}
 			// 采用属性编辑器进行转换，需要注意的是，默认情况下PropertyEditor只会对String类型的值进行类型转换
@@ -172,17 +172,22 @@ class TypeConverterDelegate {
 		if (requiredType != null) {
 			// Try to apply some standard type conversion rules if appropriate.
 
+			//convertedValue --> 经过转换器转换的结果值
 			if (convertedValue != null) {
 				if (Object.class == requiredType) {
 					return (T) convertedValue;
 				}
+				//需要的类型是数组
 				else if (requiredType.isArray()) {
 					// Array required -> apply appropriate conversion of elements.
+					// 数组元素是枚举
 					if (convertedValue instanceof String && Enum.class.isAssignableFrom(requiredType.getComponentType())) {
+						//分隔
 						convertedValue = StringUtils.commaDelimitedListToStringArray((String) convertedValue);
 					}
 					return (T) convertToTypedArray(convertedValue, propertyName, requiredType.getComponentType());
 				}
+				//结果是集合
 				else if (convertedValue instanceof Collection) {
 					// Convert elements to target type, if determined.
 					convertedValue = convertToTypedCollection(
@@ -344,6 +349,7 @@ class TypeConverterDelegate {
 		if (requiredType != null) {
 			// No custom editor -> check BeanWrapperImpl's default editors.
 			editor = this.propertyEditorRegistry.getDefaultEditor(requiredType);
+			//奇淫技巧 --> PropertyEditor自动发现机制
 			if (editor == null && String.class != requiredType) {
 				// No BeanWrapper default editor -> check standard JavaBean editor.
 				editor = BeanUtils.findEditorByConvention(requiredType);
@@ -497,6 +503,7 @@ class TypeConverterDelegate {
 			return original;
 		}
 
+		//
 		boolean originalAllowed = requiredType.isInstance(original);
 		TypeDescriptor elementType = (typeDescriptor != null ? typeDescriptor.getElementTypeDescriptor() : null);
 		if (elementType == null && originalAllowed &&

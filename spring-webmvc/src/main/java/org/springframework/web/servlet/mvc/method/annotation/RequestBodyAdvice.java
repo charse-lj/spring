@@ -40,6 +40,7 @@ import org.springframework.lang.Nullable;
 public interface RequestBodyAdvice {
 
 	/**
+	 * 判断该advice是否支持
 	 * Invoked first to determine if this interceptor applies.
 	 * @param methodParameter the method parameter
 	 * @param targetType the target type, not necessarily the same as the method
@@ -51,6 +52,7 @@ public interface RequestBodyAdvice {
 			Class<? extends HttpMessageConverter<?>> converterType);
 
 	/**
+	 * 在body体内容被转换前调用
 	 * Invoked second before the request body is read and converted.
 	 * @param inputMessage the request
 	 * @param parameter the target method parameter
@@ -63,6 +65,7 @@ public interface RequestBodyAdvice {
 			Type targetType, Class<? extends HttpMessageConverter<?>> converterType) throws IOException;
 
 	/**
+	 * body体被转化为实体后执行
 	 * Invoked third (and last) after the request body is converted to an Object.
 	 * @param body set to the converter Object before the first advice is called
 	 * @param inputMessage the request
@@ -76,6 +79,7 @@ public interface RequestBodyAdvice {
 			Type targetType, Class<? extends HttpMessageConverter<?>> converterType);
 
 	/**
+	 * 如果body体重没有内容,执行这个方法,后面不会再执行
 	 * Invoked second (and last) if the body is empty.
 	 * @param body usually set to {@code null} before the first advice is called
 	 * @param inputMessage the request

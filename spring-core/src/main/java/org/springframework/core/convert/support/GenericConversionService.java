@@ -44,7 +44,7 @@ import java.util.*;
  *
  * 提供模版实现，如转换器的注册、删除、匹配查找等，但并不内置转换器实现
  *
- * 对于三种转换器Converter、ConverterFactory、GenericConverter在添加到Converters之前都统一被适配为了GenericConverter，这样做的目的是方便统一管理。对应的两个适配器是ConverterAdapter和ConverterFactoryAdapter，它俩都是ConditionalGenericConverter的内部类
+ * 对于三种转换器Converter、ConverterFactory、GenericConverter在添加到Converters之前都统一被适配为了GenericConverter，这样做的目的是方便统一管理。对应的两个适配器是ConverterAdapter和ConverterFactoryAdapter它俩都是ConditionalGenericConverter的内部类
  */
 public class GenericConversionService implements ConfigurableConversionService {
 
@@ -60,6 +60,10 @@ public class GenericConversionService implements ConfigurableConversionService {
 	private static final GenericConverter NO_MATCH = new NoOpConverter("NO_MATCH");
 
 
+	/**
+	 * addConverter()、addConverterFactory()都是调用的converters.add(GenericConverter converter)
+	 * 使用的是适配器
+	 */
 	private final Converters converters = new Converters();
 
 	/**
@@ -101,7 +105,7 @@ public class GenericConversionService implements ConfigurableConversionService {
 
 	@Override
 	public void addConverterFactory(ConverterFactory<?, ?> factory) {
-		//typeInfo => ConverterFactory<S,T> 的S、T
+		//typeInfo => ConverterFactory<S,R> 的S、R
 		ResolvableType[] typeInfo = getRequiredTypeInfo(factory.getClass(), ConverterFactory.class);
 		if (typeInfo == null && factory instanceof DecoratingProxy) {
 			typeInfo = getRequiredTypeInfo(((DecoratingProxy) factory).getDecoratedClass(), ConverterFactory.class);
@@ -371,19 +375,31 @@ public class GenericConversionService implements ConfigurableConversionService {
 		@Override
 		public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
 			// Check raw type first...
+			//TODO 子父类,该当如何? 2021-03-25 21:10
 			if (this.typeInfo.getTargetType() != targetType.getObjectType()) {
 				return false;
 			}
 			// Full check for complex generic type match required?
+			//TODO 不懂 2021-03-25 21:14
 			ResolvableType rt = targetType.getResolvableType();
 			if (!(rt.getType() instanceof Class) && !rt.isAssignableFrom(this.targetType) &&
 					!this.targetType.hasUnresolvableGenerics()) {
 				return false;
 			}
+			//不是ConditionalConverter子类
+			//ConditionalConverter.matches() 返回为true
 			return !(this.converter instanceof ConditionalConverter) ||
 					((ConditionalConverter) this.converter).matches(sourceType, targetType);
 		}
 
+		/**
+		 *
+		 *  一般都是先调用 matches() 返回true,再调用convert() --> 参数的由来
+		 * @param source the source object to convert (may be {@code null})
+		 * @param sourceType the type descriptor of the field we are converting from
+		 * @param targetType the type descriptor of the field we are converting to
+		 * @return
+		 */
 		@Override
 		@Nullable
 		public Object convert(@Nullable Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
@@ -423,6 +439,7 @@ public class GenericConversionService implements ConfigurableConversionService {
 		@Override
 		public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
 			boolean matches = true;
+			//先执行下筛选条件,不满足直接忽略
 			if (this.converterFactory instanceof ConditionalConverter) {
 				//sourceType,targetType是否能被converterFactory转化
 				matches = ((ConditionalConverter) this.converterFactory).matches(sourceType, targetType);
@@ -431,7 +448,7 @@ public class GenericConversionService implements ConfigurableConversionService {
 				//根据target T类型找到对应的Converter<S,T>
 				Converter<?, ?> converter = this.converterFactory.getConverter(targetType.getType());
 				if (converter instanceof ConditionalConverter) {
-					//converter 还实现了 ConditionalConverter
+					//converter 还实现了 ConditionalConverter,执行下筛选条件,看是否满足
 					matches = ((ConditionalConverter) converter).matches(sourceType, targetType);
 				}
 			}

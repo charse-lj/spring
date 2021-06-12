@@ -127,6 +127,7 @@ public class ModelMap extends LinkedHashMap<String, Object> {
 	public ModelMap mergeAttributes(@Nullable Map<String, ?> attributes) {
 		if (attributes != null) {
 			attributes.forEach((key, value) -> {
+				//存在的忽略
 				if (!containsKey(key)) {
 					put(key, value);
 				}

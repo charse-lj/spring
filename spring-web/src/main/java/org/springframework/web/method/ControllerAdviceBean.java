@@ -261,8 +261,10 @@ public class ControllerAdviceBean implements Ordered {
 	 */
 	public static List<ControllerAdviceBean> findAnnotatedBeans(ApplicationContext context) {
 		List<ControllerAdviceBean> adviceBeans = new ArrayList<>();
+		//遍历所有容器中的bean
 		for (String name : BeanFactoryUtils.beanNamesForTypeIncludingAncestors(context, Object.class)) {
 			if (!ScopedProxyUtils.isScopedTarget(name)) {
+				//找到对应类上带有@ControllerAdvice注解
 				ControllerAdvice controllerAdvice = context.findAnnotationOnBean(name, ControllerAdvice.class);
 				if (controllerAdvice != null) {
 					// Use the @ControllerAdvice annotation found by findAnnotationOnBean()

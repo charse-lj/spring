@@ -64,7 +64,7 @@ public class WebDataBinder extends DataBinder {
 	 * This is particularly useful for HTML checkboxes and select options.
 	 * @see #setFieldMarkerPrefix
 	 *
-	 * // 这两个字段的详细作用见下面的两个方法checkFieldDefaults/checkFieldMarkers
+	 * 这两个字段的详细作用见下面的两个方法checkFieldDefaults/checkFieldMarkers
 	 */
 	public static final String DEFAULT_FIELD_MARKER_PREFIX = "_";
 

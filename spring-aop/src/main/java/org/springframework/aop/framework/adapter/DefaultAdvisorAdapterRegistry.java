@@ -85,6 +85,12 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 		throw new UnknownAdviceTypeException(advice);
 	}
 
+	/**
+	 * 对通知器中的通知进行适配,成MethodInterceptor
+	 * @param advisor the Advisor to find an interceptor for
+	 * @return
+	 * @throws UnknownAdviceTypeException
+	 */
 	@Override
 	public MethodInterceptor[] getInterceptors(Advisor advisor) throws UnknownAdviceTypeException {
 		List<MethodInterceptor> interceptors = new ArrayList<>(3);
@@ -96,6 +102,7 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 		}
 		// 从所支持的适配器中拿到拦截器通知器
 		for (AdvisorAdapter adapter : this.adapters) {
+			//判断适配器是否支持该通知
 			if (adapter.supportsAdvice(advice)) {
 				// 这一步需要注意：一定要从适配器中拿到MethodInterceptor类型的通知器
 				interceptors.add(adapter.getInterceptor(advisor));

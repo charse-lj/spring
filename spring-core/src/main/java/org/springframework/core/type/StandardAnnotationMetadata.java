@@ -79,6 +79,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 * Use {@link MergedAnnotation#asMap(org.springframework.core.annotation.MergedAnnotation.Adapt...) MergedAnnotation.asMap}
 	 * from {@link #getAnnotations()} rather than {@link #getAnnotationAttributes(String)}
 	 * if {@code nestedAnnotationsAsMap} is {@code false}
+	 * 很明显关于ClassMetadata的实现部分就交给此父类了，自己只关注于AnnotationMetadata接口的实现
 	 */
 	@Deprecated
 	public StandardAnnotationMetadata(Class<?> introspectedClass, boolean nestedAnnotationsAsMap) {

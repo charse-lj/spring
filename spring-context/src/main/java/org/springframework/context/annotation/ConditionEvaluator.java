@@ -86,7 +86,7 @@ class ConditionEvaluator {
 		if (phase == null) {
 			//类上元注解对象
 			if (metadata instanceof AnnotationMetadata &&
-					//含@Component @ComponentScan @Import @ImportResource其一或者方法被@Bean标注
+					//类元数据含@Component @ComponentScan @Import @ImportResource其一或者方法被@Bean标注
 					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {
 				//是配置类的话直接使用PARSE_CONFIGURATION阶段
 				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
