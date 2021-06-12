@@ -43,24 +43,24 @@ import org.springframework.lang.Nullable;
  * 2.bean的行为配置元素，这些元素展示了这个bean在容器中是如何工作的包括scope(域，我们文末有简单介绍)，lifecycle callbacks(生命周期回调)等等
  * 3.这个bean的依赖信息
  * 4.一些其他配置信息，比如我们配置了一个连接池对象，那么我们还会配置它的池子大小，最大连接数等等
- * <p>
+ *
+ *
  * Spring容器启动的过程中，会将Bean解析成Spring内部的BeanDefinition结构
  * 不管是是通过xml配置文件的<Bean>标签，还是通过注解配置的@Bean，它最终都会被解析成一个BeanDefinition,最后我们的Bean工厂就会根据这份Bean的定义信息，对bean进行实例化、初始化等等操作
+ *
  * IoC容器想要管理各个业务对象以及它们之间的依赖关系，需要通过某种途径来记录和管理这些信息。 BeanDefinition对象就承担了这个责任
- * <p>
  * 说明：假如直接通过 SingletonBeanRegistry#registerSingleton向容器手动注入Bean的，那么就不会存在这份Bean定义信息
- * <p>
- * <p>
+ *
  * 一个BeanDefinition包含了很多的配置信息，包括构造参数，setter方法的参数还有容器特定的一些配置信息，比如初始化方法，静态工厂方法等等。
  * 一个子的BeanDefinition可以从它的父BeanDefinition继承配置信息，不仅如此，还可以覆盖其中的一些值或者添加一些自己需要的属性。
  * 使用BeanDefinition的父子定义可以减少很多的重复属性的设置，父BeanDefinition可以作为BeanDefinition定义的模板
  * 子BeanDefinition会从父BeanDefinition中继承没有的属性。
  * 子BeanDefinition中已经存在的属性不会被父BeanDefinition中所覆盖。
- * <p>
+ *
  * 合并需要注意的点
  * 子BeanDefinition中的class属性如果为null，同时父BeanDefinition又指定了class属性，那么子BeanDefinition也会继承这个class属性。
  * 子BeanDefinition必须要兼容父BeanDefinition中的所有属性。这是什么意思呢？以我们上面的demo为例，我们在父BeanDefinition中指定了name跟age属性，但是如果子BeanDefinition中子提供了一个name的setter方法，这个时候Spring在启动的时候会报错。因为子BeanDefinition不能承接所有来自父BeanDefinition的属性
- * <p>
+ *
  * 整个Bean的生命周期可以分为以下几个阶段：
  * 1)实例化（得到一个还没有经过属性注入跟初始化的对象）
  * 2)属性注入（得到一个经过了属性注入但还没有初始化的对象）
@@ -128,6 +128,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * entirely background role and has no relevance to the end-user. This hint is
 	 * used when registering beans that are completely part of the internal workings
 	 * of a {@link org.springframework.beans.factory.parsing.ComponentDefinition}.
+	 *
 	 * 指内部工作的基础构造  实际上是说我这Bean是Spring自己的，和你用户没有一毛钱关系
 	 * Spring 内部的 Bean
 	 */
@@ -144,6 +145,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 	/**
 	 * Return the name of the parent definition of this bean definition, if any.
+	 *
 	 * 获取父BeanDefinition,主要用于合并，下节中会详细分析
 	 */
 	@Nullable
@@ -157,7 +159,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * @see #setParentName
 	 * @see #setFactoryBeanName
 	 * @see #setFactoryMethodName
-	 * <p>
+	 *
 	 * 指定Class类型。需要注意的是该类型还有可能被改变在Bean post-processing阶段
 	 * 若是getFactoryBeanName  getFactoryMethodName这种情况下会改变
 	 * 对于的bean的ClassName

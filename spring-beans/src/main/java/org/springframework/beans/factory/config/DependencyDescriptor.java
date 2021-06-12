@@ -53,7 +53,7 @@ import org.springframework.util.ObjectUtils;
 public class DependencyDescriptor extends InjectionPoint implements Serializable {
 
 	/**
-	 * 注入点声名的类对象
+	 * 注入点所在的类对象
 	 */
 	private final Class<?> declaringClass;
 
@@ -92,6 +92,9 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	 */
 	private int nestingLevel = 1;
 
+	/**
+	 * 方法所在的类的子类,重写
+	 */
 	@Nullable
 	private Class<?> containingClass;
 
@@ -405,31 +408,35 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	 * @return the declared type (never {@code null})
 	 */
 	public Class<?> getDependencyType() {
+		//field注入点
 		if (this.field != null) {
+			//嵌套等级>1
 			if (this.nestingLevel > 1) {
+				//字段的泛型类型
 				Type type = this.field.getGenericType();
 				for (int i = 2; i <= this.nestingLevel; i++) {
+					//参数化类型 --> eg.List<String>
 					if (type instanceof ParameterizedType) {
+						//参数化类型的真实类型
 						Type[] args = ((ParameterizedType) type).getActualTypeArguments();
+						//取所有类型的最后一个
 						type = args[args.length - 1];
 					}
 				}
 				if (type instanceof Class) {
 					return (Class<?>) type;
-				}
-				else if (type instanceof ParameterizedType) {
+				} else if (type instanceof ParameterizedType) {
 					Type arg = ((ParameterizedType) type).getRawType();
 					if (arg instanceof Class) {
 						return (Class<?>) arg;
 					}
 				}
 				return Object.class;
-			}
-			else {
+			} else {
 				return this.field.getType();
 			}
-		}
-		else {
+		} else {
+			// method注入点
 			return obtainMethodParameter().getNestedParameterType();
 		}
 	}

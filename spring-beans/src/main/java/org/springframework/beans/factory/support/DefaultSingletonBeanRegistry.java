@@ -83,14 +83,14 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Cache of singleton factories: bean name to ObjectFactory. 保存所有单例ObjectFactory
-	 * 1.在创建Abean时，实例化后，Abean的原始对像构造成ObjectFactory添加到三级缓存singletonFactories中。
-	 * 这个ObjectFactory是一个函数式接口，所以支持Lambda表达式：() -> getEarlyBeanReference(beanName, mbd, bean)
-	 * 2.属性填充阶段检测到需要依赖Bbean，缓存检测下来发现容器目前还没有Bbean,这时创建BBean，同样将BBean的Bean工厂添加到三级缓存
-	 * 3.BBean实例化后，也走到属性填充阶段发现需要依赖ABean,这时也会从缓存中检查是否有ABean。
-	 * 因为在1过程中，ABean已经将Abean的ObjectFactory添加进了三级缓存singletonFactories。所以能够找到Abean的原始对像
-	 * 4.执行三级缓存中Abean的原始对像ObjectFactory后，将Abean的原始对像从三级缓存移到二级缓存
-	 * 5.ABean的ObjectFactory：getEarlyBeanReference(beanName, mbd, bean)有可能会进行AOP的增强，创建代理类，因此二级缓存earlySingletonObjects存放的有可能是经过AOP增强的代理对像
+	 * 1.在创建A bean时，实例化后，A bean的原始对像构造成ObjectFactory添加到三级缓存singletonFactories中。这个ObjectFactory是一个函数式接口，所以支持Lambda表达式：() -> getEarlyBeanReference(beanName, mbd, bean)
+	 * 2.属性填充阶段检测到需要依赖 B bean，缓存检测下来发现容器目前还没有B bean,这时创建B Bean，同样将B Bean的Bean工厂添加到三级缓存
+	 * 3.B Bean实例化后，也走到属性填充阶段发现需要依赖A Bean,这时也会从缓存中检查是否有A Bean。因为在1过程中，A Bean已经将A bean的ObjectFactory添加进了三级缓存singletonFactories。所以能够找到A bean的原始对像
+	 * 4.执行三级缓存中A bean的原始对像ObjectFactory后，将A bean的原始对像从三级缓存移到二级缓存
+	 * 5.A Bean的ObjectFactory：getEarlyBeanReference(beanName, mbd, bean)有可能会进行AOP的增强，创建代理类，因此二级缓存earlySingletonObjects存放的有可能是经过AOP增强的代理对像
 	 * 6.在AOP增强的时候会用到缓存earlyProxyReferences，这样后面Abean再自己走到AOP增强的时候会检测是否已经增强
+	 *
+	 * 三级缓存
 	 */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
@@ -102,7 +102,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Set of registered singletons, containing the bean names in registration order.
-	 * registeredSingletons 保存所有单例对象的名字。registeredSingletons= singletonObjects.keySet() + singletonFactories.keySet()
+	 * 保存所有单例对象的名字。registeredSingletons= singletonObjects.keySet() + singletonFactories.keySet()
 	 */
 	private final Set<String> registeredSingletons = new LinkedHashSet<>(256);
 

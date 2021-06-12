@@ -47,6 +47,9 @@ import org.springframework.lang.Nullable;
  * @author Brian Clozel
  * @since 4.1.3
  * @see ContentCachingResponseWrapper
+ *
+ * 把请求/响应内容缓存起来的代理类
+ * 我们都知道request.getInputStream()请求body里面的内容只能被获取一次的。通过这个类,它能够解决：解决HttpServletRequest inputStream只能读取一次的问题
  */
 public class ContentCachingRequestWrapper extends HttpServletRequestWrapper {
 

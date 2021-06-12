@@ -172,6 +172,9 @@ import org.springframework.web.util.WebUtils;
  * DispatcherServlet的默认配置文件DispatcherServlet.properties里都有定义这九大组件的默认值
  *
  * onRefresh(wac) / initStrategies(wac)
+ *
+ * 执行开始位置,查看
+ * @see  HttpServletBean#init()
  */
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {
@@ -506,6 +509,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 *
 	 * 子类若有需要，还可以复写此方法，去初始化自己的其余组件（比如要和它集成等等）
+	 * DispatcherServlet的默认配置文件DispatcherServlet.properties里都有定义这九大组件的默认值
 	 */
 	protected void initStrategies(ApplicationContext context) {
 		//MultipartResolver -->impl-->CommonsMultipartResolver/StandardServletMultipartResolver 
@@ -544,9 +548,6 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * no multipart handling is provided.
 	 *
 	 * MultipartResolver 用于处理文件上传
-	 * 当收到请求时,DispatcherServlet#checkMultipart(),方法会调用 MultipartResolver#isMultipart() 方法判断请求中是否包含文件。
-	 * 如果请求数据中包含文件，则调用 MultipartResolver#resolveMultipart() 方法对请求的数据进行解析。
-	 * 然后将文件数据解析成 MultipartFile 并封装在 MultipartHttpServletRequest(继承了 HttpServletRequest) 对象中，最后传递给 Controller
 	 */
 	private void initMultipartResolver(ApplicationContext context) {
 		try {
@@ -621,6 +622,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the HandlerMappings used by this class.
 	 * <p>If no HandlerMapping beans are defined in the BeanFactory for this namespace,
 	 * we default to BeanNameUrlHandlerMapping.
+	 * 作用是根据当前请求的找到对应的 Handler，并将 Handler（执行程序）与一堆 HandlerInterceptor（拦截器,也是他来处理的）封装到 HandlerExecutionChain 对象中。返回给中央调度器
 	 */
 	private void initHandlerMappings(ApplicationContext context) {
 		this.handlerMappings = null;
@@ -984,7 +986,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Make framework objects available to handlers and view objects.
 		// 把一些常用对象放进请求域  方便Handler里面可以随意获取
-		//方便我们非常方便获取到一些参数，比如web子容器等等
+		// 方便我们非常方便获取到一些参数，比如web子容器等等
 		request.setAttribute(WEB_APPLICATION_CONTEXT_ATTRIBUTE, getWebApplicationContext());
 		request.setAttribute(LOCALE_RESOLVER_ATTRIBUTE, this.localeResolver);
 		request.setAttribute(THEME_RESOLVER_ATTRIBUTE, this.themeResolver);

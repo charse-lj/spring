@@ -81,6 +81,11 @@ import javax.servlet.http.HttpServletRequest;
  * @see org.springframework.web.multipart.support.ByteArrayMultipartFileEditor
  * @see org.springframework.web.multipart.support.StringMultipartFileEditor
  * @see org.springframework.web.servlet.DispatcherServlet
+ *
+ * 处理请求时,会调用{@link org.springframework.web.servlet.DispatcherServlet#checkMultipart(HttpServletRequest)}
+ * 方法又会调用{@link MultipartResolver#isMultipart(HttpServletRequest)} 方法判断请求中是否包含文件
+ * 如果请求数据中包含文件，则调用 {@link MultipartResolver#resolveMultipart(HttpServletRequest)} 方法对请求的数据进行解析。
+ * 然后将文件数据解析成 MultipartFile 并封装在 MultipartHttpServletRequest(继承了 HttpServletRequest) 对象中，最后传递给 Controller
  */
 public interface MultipartResolver {
 

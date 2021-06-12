@@ -79,24 +79,28 @@ class ConditionEvaluator {
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
 		if (metadata == null || !metadata.isAnnotated(Conditional.class.getName())) {
-			//metadata 为null,或者元数据注解不含Conditional注解，不会跳过
+			//metadata 为null,或者元数据注解不含Conditional注解，该类不能被忽略
 			return false;
 		}
-
 		//元数据注解包含Conditional注解
 		if (phase == null) {
+			//类上元注解对象
 			if (metadata instanceof AnnotationMetadata &&
-					//类元数据含@Component @ComponentScan @Import @ImportResource其一或者方法被@Bean标注
-					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {//是配置类的话直接使用PARSE_CONFIGURATION阶段
+					//含@Component @ComponentScan @Import @ImportResource其一或者方法被@Bean标注
+					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {
+				//是配置类的话直接使用PARSE_CONFIGURATION阶段
 				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
 			}
+			// 方法元注解对象
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
 
 		//获取所有@Conditional注解的value值
 		List<Condition> conditions = new ArrayList<>();
+		//获取该类注解上所有@Conditional 的value属性 --> 实现Condition的类
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
 			for (String conditionClass : conditionClasses) {
+				//实例化
 				Condition condition = getCondition(conditionClass, this.context.getClassLoader());
 				conditions.add(condition);
 			}
@@ -105,6 +109,11 @@ class ConditionEvaluator {
 		//排序所有condition类
 		AnnotationAwareOrderComparator.sort(conditions);
 
+		/**@ConditionalOnMissingBean(type = "xx") --> 起不到不加载该组件作用
+		 * @Configuration
+		 * public class Config{}
+		 *
+		*/
 		for (Condition condition : conditions) {
 			ConfigurationPhase requiredPhase = null;
 			if (condition instanceof ConfigurationCondition) {

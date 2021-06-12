@@ -115,7 +115,9 @@ final class DefaultPathContainer implements PathContainer {
 			begin = 0;
 		}
 		while (begin < path.length()) {
+			//从path的begin位置查找分隔符
 			int end = path.indexOf(separator, begin);
+			//分隔符中间的字符
 			String segment = (end != -1 ? path.substring(begin, end) : path.substring(begin));
 			if (!segment.isEmpty()) {
 				elements.add(options.shouldDecodeAndParseSegments() ?
@@ -125,7 +127,9 @@ final class DefaultPathContainer implements PathContainer {
 			if (end == -1) {
 				break;
 			}
+			//添加分隔符
 			elements.add(separatorElement);
+			//调整开始的位置
 			begin = end + 1;
 		}
 		return new DefaultPathContainer(path, elements);
@@ -133,14 +137,19 @@ final class DefaultPathContainer implements PathContainer {
 
 	private static PathSegment decodeAndParsePathSegment(String segment) {
 		Charset charset = StandardCharsets.UTF_8;
+		//查找';'位置
 		int index = segment.indexOf(';');
 		if (index == -1) {
+			//没有,对字符指定字符集解码
 			String valueToMatch = StringUtils.uriDecode(segment, charset);
 			return new DefaultPathSegment(segment, valueToMatch, EMPTY_PARAMS);
 		}
 		else {
+			//对';'前的字符解码
 			String valueToMatch = StringUtils.uriDecode(segment.substring(0, index), charset);
+			//解析出';'后的字符
 			String pathParameterContent = segment.substring(index);
+			//解析参数
 			MultiValueMap<String, String> parameters = parsePathParams(pathParameterContent, charset);
 			return new DefaultPathSegment(segment, valueToMatch, parameters);
 		}
@@ -150,12 +159,16 @@ final class DefaultPathContainer implements PathContainer {
 		MultiValueMap<String, String> result = new LinkedMultiValueMap<>();
 		int begin = 1;
 		while (begin < input.length()) {
+			//参数中';'位置
 			int end = input.indexOf(';', begin);
+			//获取参数,从begin到end
 			String param = (end != -1 ? input.substring(begin, end) : input.substring(begin));
+			//解析参数
 			parsePathParamValues(param, charset, result);
 			if (end == -1) {
 				break;
 			}
+			//调整开始位置
 			begin = end + 1;
 		}
 		return result;

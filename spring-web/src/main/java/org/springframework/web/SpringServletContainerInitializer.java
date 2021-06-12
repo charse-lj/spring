@@ -112,6 +112,10 @@ import org.springframework.util.ReflectionUtils;
  * Shared libraries（共享库） / runtimes pluggability（运行时插件能力）
  * Servlet容器启动会扫描，当前应用里面每一个jar包ServletContainerInitializer的实现
  * 一定要必须绑定在，META-INF/services/javax.servlet.ServletContainerInitializer这个文件里，文件内容为就是ServletContainerInitializer实现类的全类名
+ *
+ * 创建容器的过程,查看WebApplicationInitializer的实现抽象类
+ * @see org.springframework.web.servlet.support.AbstractDispatcherServletInitializer#onStartup(ServletContext)
+ *
  */
 @HandlesTypes(WebApplicationInitializer.class)
 public class SpringServletContainerInitializer implements ServletContainerInitializer {

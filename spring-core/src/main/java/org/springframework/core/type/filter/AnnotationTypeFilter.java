@@ -73,9 +73,9 @@ public class AnnotationTypeFilter extends AbstractTypeHierarchyTraversingFilter 
 
 	/**
 	 * Create a new {@code AnnotationTypeFilter} for the given annotation type.
-	 * @param annotationType the annotation type to match
-	 * @param considerMetaAnnotations whether to also match on meta-annotations
-	 * @param considerInterfaces whether to also match interfaces
+	 * @param annotationType the annotation type to match 要匹配的注解类型
+	 * @param considerMetaAnnotations whether to also match on meta-annotations 是否考虑元注解
+	 * @param considerInterfaces whether to also match interfaces 是否考虑接口
 	 */
 	public AnnotationTypeFilter(
 			Class<? extends Annotation> annotationType, boolean considerMetaAnnotations, boolean considerInterfaces) {

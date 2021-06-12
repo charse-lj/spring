@@ -142,6 +142,11 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 		return false;
 	}
 
+	/**
+	 *  方法上是否有特定注解
+	 * @param annotationName the fully qualified class name of the annotation
+	 * @return .
+	 */
 	@Override
 	@SuppressWarnings("deprecation")
 	public Set<MethodMetadata> getAnnotatedMethods(String annotationName) {

@@ -58,9 +58,9 @@ import java.util.function.Supplier;
  * 3.具体的工厂方法（Class类型），包括工厂方法的返回类型，工厂方法的Method对象
  * 4.构造函数、构造函数形参类型
  * 5.Bean的class对象
- * <p>
+ *
  * 可以看到，RootBeanDefinition与AbstractBeanDefinition是互补关系，RootBeanDefinition在AbstractBeanDefinition的基础上定义了更多属性，初始化Bean需要的信息基本完善
- * <p>
+ *
  * Spring在启动时会实例化几个初始化的BeanDefinition,这几个BeanDefinition的类型都为RootBeanDefinition
  * Spring在合并BeanDefinition返回的都是RootBeanDefinition
  * 我们通过@Bean注解配置的bean，解析出来的BeanDefinition都是RootBeanDefinition（实际上是其子类ConfigurationClassBeanDefinition）

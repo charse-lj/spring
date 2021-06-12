@@ -98,7 +98,7 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 					"Check if there is another servlet registered under the same name.");
 		}
 
-		//1表示立马执行哦，没有第一次惩罚了
+		//1表示立马执行
 		registration.setLoadOnStartup(1);
 
 		//调用者必须实现

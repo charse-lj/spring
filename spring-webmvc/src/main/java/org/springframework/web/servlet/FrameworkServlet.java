@@ -706,14 +706,17 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			}
 			else {
 				// Generate default id...
+				// 默认的id  这里面和contextpath有关了
 				wac.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX +
 						ObjectUtils.getDisplayString(getServletContext().getContextPath()) + '/' + getServletName());
 			}
 		}
 
+		// 关联到了Namespace/servlet等等
 		wac.setServletContext(getServletContext());
 		wac.setServletConfig(getServletConfig());
 		wac.setNamespace(getNamespace());
+		//添加了一个容器监听器  此监听器SourceFilteringListener在后面还会碰到
 		wac.addApplicationListener(new SourceFilteringListener(wac, new ContextRefreshListener()));
 
 		// The wac environment's #initPropertySources will be called in any case when the context
@@ -724,6 +727,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			((ConfigurableWebEnvironment) env).initPropertySources(getServletContext(), getServletConfig());
 		}
 
+		//留给子类，可以复写此方法，做一些初始化时候自己的实行
 		postProcessWebApplicationContext(wac);
 		applyInitializers(wac);
 		wac.refresh();
@@ -1037,7 +1041,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 		//这里需要注意：给异步上下文恒定注册了RequestBindingInterceptor这个拦截器（作用：绑定当前的request、response、local等）
 		asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
-		//这句话很明显，就是吧requestAttributes和localeContext与线程绑定
+		//这句话很明显，就是把requestAttributes、localeContext与线程绑定
 		initContextHolders(request, localeContext, requestAttributes);
 
 		try {

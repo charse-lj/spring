@@ -565,15 +565,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
-				//实例化并调用所有注册的beanFactory后置处理器（实现接口BeanFactoryPostProcessor的bean）。
-				//在beanFactory标准初始化之后执行  例如：PropertyPlaceholderConfigurer(处理占位符)
-				/*invokeBeanFactoryPostProcessors(beanFactory)主要做了
-				 * 执行了BeanDefinitionRegistryPostProcessor（此处只有ConfigurationClassPostProcessor）
-				 * 执行了BeanFactoryPostProcessor
-				 * 完成了@Configuration配置文件的解析，并且把扫描到的、配置的Bean定义信息都加载进容器里
-				 * Full模式下，完成了对@Configuration配置文件的加强，使得管理Bean依赖关系更加的方便了
-				*/
-				// 激活各种 BeanFactory 处理器
+				//实例化并调用所有注册的beanFactory后置处理器（实现接口 BeanFactoryPostProcessor 的bean）。
+				//在beanFactory标准初始化之后执行  例如：PropertySourcesPlaceholderConfigurer(处理占位符)
+				// 激活各种 BeanFactory 处理器 -->BeanFactoryPostProcessor
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
@@ -736,6 +730,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// 添加了一个处理aware相关接口的beanPostProcessor扩展，主要是使用beanPostProcessor的postProcessBeforeInitialization()前置处理方法实现aware相关接口的功能
 		// 类似的还有ResourceLoaderAware、ServletContextAware等等等等
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+
+		// 设置了几个忽略自动装配的接口
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -745,6 +741,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
+		// 设置几个"自动装配"规则======如下：
 		// 此处registerResolvableDependency()方法注意：它会把他们加入到DefaultListableBeanFactory的resolvableDependencies字段里面缓存这，供后面处理依赖注入的时候使用 DefaultListableBeanFactory#resolveDependency处理依赖关系
 		// 这也是为什么我们可以通过依赖注入的方式，直接注入这几个对象比如ApplicationContext可以直接依赖注入
 		// 但是需要注意的是：这些Bean，Spring的IOC容器里其实是没有的。beanFactory.getBeanDefinitionNames()和beanFactory.getSingletonNames()都是找不到他们的，所以特别需要理解这一点
@@ -756,16 +753,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
-		// 注册这个Bean的后置处理器：在Bean初始化后检查是否实现了ApplicationListener接口
-		// 是则加入当前的applicationContext的applicationListeners列表 这样后面广播事件也就方便了
+		// 注册这个Bean的后置处理器：在Bean初始化后检查是否实现了ApplicationListener接口;如果实现了,则加入当前的applicationContext的applicationListeners列表 这样后面广播事件也就方便了
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
-		// 设置几个"自动装配"规则======如下：
-		// 如果是BeanFactory的类，就注册beanFactory
-		//  如果是ResourceLoader、ApplicationEventPublisher、ApplicationContext等等就注入当前对象this(applicationContext对象)
-
-
 
 		// 检查容器中是否包含名称为loadTimeWeaver的bean，实际上是增加Aspectj的支持
 		// AspectJ采用编译期织入、类加载期织入两种方式进行切面的织入

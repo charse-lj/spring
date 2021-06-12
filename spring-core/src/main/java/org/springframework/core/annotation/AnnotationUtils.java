@@ -164,6 +164,7 @@ public abstract class AnnotationUtils {
 	 * @see #isCandidateClass(Class, Class)
 	 */
 	public static boolean isCandidateClass(Class<?> clazz, String annotationName) {
+		//类权限定名以java开始,说明是java中的元注解;直接返回true
 		if (annotationName.startsWith("java.")) {
 			return true;
 		}

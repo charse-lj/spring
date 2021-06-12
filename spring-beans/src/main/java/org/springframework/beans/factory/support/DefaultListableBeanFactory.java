@@ -16,61 +16,10 @@
 
 package org.springframework.beans.factory.support;
 
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-
-import javax.inject.Provider;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.TypeConverter;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanCurrentlyInCreationException;
-import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.BeanNotOfRequiredTypeException;
-import org.springframework.beans.factory.CannotLoadBeanClassException;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InjectionPoint;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
-import org.springframework.beans.factory.ObjectFactory;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.SmartFactoryBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.DependencyDescriptor;
-import org.springframework.beans.factory.config.NamedBeanHolder;
+import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.config.*;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.MergedAnnotation;
@@ -78,11 +27,21 @@ import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy;
 import org.springframework.core.log.LogMessage;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.CompositeIterator;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
+import org.springframework.util.*;
+
+import javax.inject.Provider;
+import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Spring's default implementation of the {@link ConfigurableListableBeanFactory}
@@ -111,25 +70,25 @@ import org.springframework.util.StringUtils;
  * @author Chris Beams
  * @author Phillip Webb
  * @author Stephane Nicoll
- * @since 16 April 2001
  * @see #registerBeanDefinition
  * @see #addBeanPostProcessor
  * @see #getBean
  * @see #resolveDependency
- *
+ * <p>
  * Spring内部的唯一使用的工厂实现（XmlBeanFactory已废弃）基于bean definition对象，是一个成熟的bean factroy
  * 默认实现了ListableBeanFactory和BeanDefinitionRegistry接口，基于bean definition对象，**是一个成熟的bean factroy。**它是整个bean加载的核心部分，也是spring注册加载bean的默认实现
  * DefaultListableBeanFactory既可以作为一个单独的beanFactory，也可以作为自定义beanFactory的父类
  * 至于特定格式的Bean定义信息（比如常见的有xml、注解等）的解析器可以自己实现，也可以使用原有的解析器，如： PropertiesBeanDefinitionReader和XmLBeanDefinitionReader、AnnotatedBeanDefinitionReader
- *
- *  extends：相当于继承了抽象类所有的实现，并且是已经具有注入功能了（含有ListableBeanFactory、ConfigurableListableBeanFactory的所有接口）
- *  implements：直接实现ConfigurableListableBeanFactory，表示它具有了批量处理Bean、配置Bean等等功能
- *  BeanDefinitionRegistry：该接口目前还仅有这个类实现（它父接口为：AliasRegistry	）
- *
- *  为什么要拆成这么多的类和接口呢。这里面可能基于几点考虑
- *  1.功能的不同维度，分不同的接口，方便以后的维护和其他人的阅读。（代码的可读性异常的重要，特别像Spring这种持久性的项目）
- *  2.不同接口的实现，分布在不同的之类里，方便以后不同接口多种实现的扩展（单一职责，才好扩展。否则造成臃肿后，后面无法发展）
- *  3.从整个类图的分布，可以看出spring在这块是面向接口编程，后面类的实现，他们认为只是接口功能实现的一种，随时可以拓展成多种实现 （面向接口编程，能极大的解耦各模块之间的互相影响）
+ * <p>
+ * extends：相当于继承了抽象类所有的实现，并且是已经具有注入功能了（含有ListableBeanFactory、ConfigurableListableBeanFactory的所有接口）
+ * implements：直接实现ConfigurableListableBeanFactory，表示它具有了批量处理Bean、配置Bean等等功能
+ * BeanDefinitionRegistry：该接口目前还仅有这个类实现（它父接口为：AliasRegistry	）
+ * <p>
+ * 为什么要拆成这么多的类和接口呢。这里面可能基于几点考虑
+ * 1.功能的不同维度，分不同的接口，方便以后的维护和其他人的阅读。（代码的可读性异常的重要，特别像Spring这种持久性的项目）
+ * 2.不同接口的实现，分布在不同的之类里，方便以后不同接口多种实现的扩展（单一职责，才好扩展。否则造成臃肿后，后面无法发展）
+ * 3.从整个类图的分布，可以看出spring在这块是面向接口编程，后面类的实现，他们认为只是接口功能实现的一种，随时可以拓展成多种实现 （面向接口编程，能极大的解耦各模块之间的互相影响）
+ * @since 16 April 2001
  */
 @SuppressWarnings("serial")
 public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory
@@ -142,61 +101,90 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		try {
 			javaxInjectProviderClass =
 					ClassUtils.forName("javax.inject.Provider", DefaultListableBeanFactory.class.getClassLoader());
-		}
-		catch (ClassNotFoundException ex) {
+		} catch (ClassNotFoundException ex) {
 			// JSR-330 API not available - Provider interface simply not supported then.
 			javaxInjectProviderClass = null;
 		}
 	}
 
 
-	/** Map from serialized id to factory instance. */
+	/**
+	 * Map from serialized id to factory instance.
+	 */
 	private static final Map<String, Reference<DefaultListableBeanFactory>> serializableFactories =
 			new ConcurrentHashMap<>(8);
 
-	/** Optional id for this factory, for serialization purposes. */
+	/**
+	 * Optional id for this factory, for serialization purposes.
+	 */
 	@Nullable
 	private String serializationId;
 
-	/** Whether to allow re-registration of a different definition with the same name. */
+	/**
+	 * Whether to allow re-registration of a different definition with the same name.
+	 */
 	private boolean allowBeanDefinitionOverriding = true;
 
-	/** Whether to allow eager class loading even for lazy-init beans. */
+	/**
+	 * Whether to allow eager class loading even for lazy-init beans.
+	 */
 	private boolean allowEagerClassLoading = true;
 
-	/** Optional OrderComparator for dependency Lists and arrays. */
+	/**
+	 * Optional OrderComparator for dependency Lists and arrays.
+	 */
 	@Nullable
 	private Comparator<Object> dependencyComparator;
 
-	/** Resolver to use for checking if a bean definition is an autowire candidate. */
+	/**
+	 * Resolver to use for checking if a bean definition is an autowire candidate.
+	 */
 	private AutowireCandidateResolver autowireCandidateResolver = SimpleAutowireCandidateResolver.INSTANCE;
 
-	/** Map from dependency type to corresponding autowired value. */
+	/**
+	 * Map from dependency type to corresponding autowired value.
+	 */
 	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
 
-	/** Map of bean definition objects, keyed by bean name. */
+	/**
+	 * Map of bean definition objects, keyed by bean name.
+	 */
 	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
 
-	/** Map from bean name to merged BeanDefinitionHolder. */
+	/**
+	 * Map from bean name to merged BeanDefinitionHolder.
+	 */
 	private final Map<String, BeanDefinitionHolder> mergedBeanDefinitionHolders = new ConcurrentHashMap<>(256);
 
-	/** Map of singleton and non-singleton bean names, keyed by dependency type. */
+	/**
+	 * Map of singleton and non-singleton bean names, keyed by dependency type.
+	 */
 	private final Map<Class<?>, String[]> allBeanNamesByType = new ConcurrentHashMap<>(64);
 
-	/** Map of singleton-only bean names, keyed by dependency type. */
+	/**
+	 * Map of singleton-only bean names, keyed by dependency type.
+	 */
 	private final Map<Class<?>, String[]> singletonBeanNamesByType = new ConcurrentHashMap<>(64);
 
-	/** List of bean definition names, in registration order. beanDefinitionNames保存所有BeanDefinition的名字*/
+	/**
+	 * List of bean definition names, in registration order. beanDefinitionNames保存所有BeanDefinition的名字
+	 */
 	private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
 
-	/** List of names of manually registered singletons, in registration order. 保存了所有singleton的BeanDefinitionName*/
+	/**
+	 * List of names of manually registered singletons, in registration order. 保存了所有singleton的BeanName
+	 */
 	private volatile Set<String> manualSingletonNames = new LinkedHashSet<>(16);
 
-	/** Cached array of bean definition names in case of frozen configuration. */
+	/**
+	 * Cached array of bean definition names in case of frozen configuration.
+	 */
 	@Nullable
 	private volatile String[] frozenBeanDefinitionNames;
 
-	/** Whether bean definition metadata may be cached for all beans. */
+	/**
+	 * Whether bean definition metadata may be cached for all beans.
+	 */
 	private volatile boolean configurationFrozen;
 
 
@@ -209,6 +197,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Create a new DefaultListableBeanFactory with the given parent.
+	 *
 	 * @param parentBeanFactory the parent BeanFactory
 	 */
 	public DefaultListableBeanFactory(@Nullable BeanFactory parentBeanFactory) {
@@ -224,8 +213,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	public void setSerializationId(@Nullable String serializationId) {
 		if (serializationId != null) {
 			serializableFactories.put(serializationId, new WeakReference<>(this));
-		}
-		else if (this.serializationId != null) {
+		} else if (this.serializationId != null) {
 			serializableFactories.remove(this.serializationId);
 		}
 		this.serializationId = serializationId;
@@ -234,6 +222,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Return an id for serialization purposes, if specified, allowing this BeanFactory
 	 * to be deserialized from this id back into the BeanFactory object, if needed.
+	 *
 	 * @since 4.1.2
 	 */
 	@Nullable
@@ -246,6 +235,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * a different definition with the same name, automatically replacing the former.
 	 * If not, an exception will be thrown. This also applies to overriding aliases.
 	 * <p>Default is "true".
+	 *
 	 * @see #registerBeanDefinition
 	 */
 	public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding) {
@@ -255,6 +245,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Return whether it should be allowed to override bean definitions by registering
 	 * a different definition with the same name, automatically replacing the former.
+	 *
 	 * @since 4.1.2
 	 */
 	public boolean isAllowBeanDefinitionOverriding() {
@@ -269,6 +260,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * In particular, by-type lookups will then simply ignore bean definitions
 	 * without resolved class name, instead of loading the bean classes on
 	 * demand just to perform a type check.
+	 *
 	 * @see AbstractBeanDefinition#setLazyInit
 	 */
 	public void setAllowEagerClassLoading(boolean allowEagerClassLoading) {
@@ -278,6 +270,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Return whether the factory is allowed to eagerly load bean classes
 	 * even for bean definitions that are marked as "lazy-init".
+	 *
 	 * @since 4.1.2
 	 */
 	public boolean isAllowEagerClassLoading() {
@@ -286,9 +279,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Set a {@link java.util.Comparator} for dependency Lists and arrays.
-	 * @since 4.0
+	 *
 	 * @see org.springframework.core.OrderComparator
 	 * @see org.springframework.core.annotation.AnnotationAwareOrderComparator
+	 * @since 4.0
 	 */
 	public void setDependencyComparator(@Nullable Comparator<Object> dependencyComparator) {
 		this.dependencyComparator = dependencyComparator;
@@ -296,6 +290,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Return the dependency comparator for this BeanFactory (may be {@code null}.
+	 *
 	 * @since 4.0
 	 */
 	@Nullable
@@ -316,8 +311,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					((BeanFactoryAware) autowireCandidateResolver).setBeanFactory(this);
 					return null;
 				}, getAccessControlContext());
-			}
-			else {
+			} else {
 				((BeanFactoryAware) autowireCandidateResolver).setBeanFactory(this);
 			}
 		}
@@ -354,8 +348,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * 通过类型获取bean.
+	 *
 	 * @param requiredType type the bean must match; can be an interface or superclass
-	 * @param <T> .
+	 * @param <T>          .
 	 * @return bean.
 	 * @throws BeansException .
 	 */
@@ -393,6 +388,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 				return resolved;
 			}
+
 			@Override
 			public T getObject(Object... args) throws BeansException {
 				T resolved = resolveBean(requiredType, args, false);
@@ -401,58 +397,60 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 				return resolved;
 			}
+
 			@Override
 			@Nullable
 			public T getIfAvailable() throws BeansException {
 				try {
 					return resolveBean(requiredType, null, false);
-				}
-				catch (ScopeNotActiveException ex) {
+				} catch (ScopeNotActiveException ex) {
 					// Ignore resolved bean in non-active scope
 					return null;
 				}
 			}
+
 			@Override
 			public void ifAvailable(Consumer<T> dependencyConsumer) throws BeansException {
 				T dependency = getIfAvailable();
 				if (dependency != null) {
 					try {
 						dependencyConsumer.accept(dependency);
-					}
-					catch (ScopeNotActiveException ex) {
+					} catch (ScopeNotActiveException ex) {
 						// Ignore resolved bean in non-active scope, even on scoped proxy invocation
 					}
 				}
 			}
+
 			@Override
 			@Nullable
 			public T getIfUnique() throws BeansException {
 				try {
 					return resolveBean(requiredType, null, true);
-				}
-				catch (ScopeNotActiveException ex) {
+				} catch (ScopeNotActiveException ex) {
 					// Ignore resolved bean in non-active scope
 					return null;
 				}
 			}
+
 			@Override
 			public void ifUnique(Consumer<T> dependencyConsumer) throws BeansException {
 				T dependency = getIfUnique();
 				if (dependency != null) {
 					try {
 						dependencyConsumer.accept(dependency);
-					}
-					catch (ScopeNotActiveException ex) {
+					} catch (ScopeNotActiveException ex) {
 						// Ignore resolved bean in non-active scope, even on scoped proxy invocation
 					}
 				}
 			}
+
 			@Override
 			public Stream<T> stream() {
 				return Arrays.stream(getBeanNamesForTypedStream(requiredType))
 						.map(name -> (T) getBean(name))
 						.filter(bean -> !(bean instanceof NullBean));
 			}
+
 			@Override
 			public Stream<T> orderedStream() {
 				String[] beanNames = getBeanNamesForTypedStream(requiredType);
@@ -473,9 +471,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
-	 *
-	 * @param requiredType 需要的类型.
-	 * @param args 需要的参数对象.
+	 * @param requiredType    需要的类型.
+	 * @param args            需要的参数对象.
 	 * @param nonUniqueAsNull 如果不是单个，返回null?
 	 * @param <T>
 	 * @return
@@ -489,13 +486,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		BeanFactory parent = getParentBeanFactory();
 		if (parent instanceof DefaultListableBeanFactory) {
 			return ((DefaultListableBeanFactory) parent).resolveBean(requiredType, args, nonUniqueAsNull);
-		}
-		else if (parent != null) {
+		} else if (parent != null) {
 			ObjectProvider<T> parentProvider = parent.getBeanProvider(requiredType);
 			if (args != null) {
 				return parentProvider.getObject(args);
-			}
-			else {
+			} else {
 				return (nonUniqueAsNull ? parentProvider.getIfUnique() : parentProvider.getIfAvailable());
 			}
 		}
@@ -527,14 +522,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		String[] frozenNames = this.frozenBeanDefinitionNames;
 		if (frozenNames != null) {
 			return frozenNames.clone();
-		}
-		else {
+		} else {
 			return StringUtils.toStringArray(this.beanDefinitionNames);
 		}
 	}
 
 	/**
 	 * 只会读取 BeanDefinition 信息或部分已经实例化 FactoryBean 来获取 Bean 的类型，该过程中不会实例化 Bean
+	 *
 	 * @param type the generically typed class or interface to match .
 	 * @return
 	 */
@@ -544,15 +539,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
-	 *
-	 * @param type the generically typed class or interface to match
+	 * @param type                 the generically typed class or interface to match
 	 * @param includeNonSingletons whether to include prototype or scoped beans too
-	 * or just singletons (also applies to FactoryBeans)
-	 * @param allowEagerInit whether to initialize <i>lazy-init singletons</i> and
-	 * <i>objects created by FactoryBeans</i> (or by factory methods with a
-	 * "factory-bean" reference) for the type check. Note that FactoryBeans need to be
-	 * eagerly initialized to determine their type: So be aware that passing in "true"
-	 * for this flag will initialize FactoryBeans and "factory-bean" references. 表示是否提前部分初始化 FactoryBean
+	 *                             or just singletons (also applies to FactoryBeans)
+	 * @param allowEagerInit       whether to initialize <i>lazy-init singletons</i> and
+	 *                             <i>objects created by FactoryBeans</i> (or by factory methods with a
+	 *                             "factory-bean" reference) for the type check. Note that FactoryBeans need to be
+	 *                             eagerly initialized to determine their type: So be aware that passing in "true"
+	 *                             for this flag will initialize FactoryBeans and "factory-bean" references. 表示是否提前部分初始化 FactoryBean
 	 * @return
 	 */
 	@Override
@@ -561,8 +555,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		//没有泛型
 		if (resolved != null && !type.hasGenerics()) {
 			return getBeanNamesForType(resolved, includeNonSingletons, allowEagerInit);
-		}
-		else {
+		} else {
 			return doGetBeanNamesForType(type, includeNonSingletons, allowEagerInit);
 		}
 	}
@@ -573,32 +566,28 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
-	 *
-	 * @param type the class or interface to match, or {@code null} for all bean names
+	 * @param type                 the class or interface to match, or {@code null} for all bean names
 	 * @param includeNonSingletons whether to include prototype or scoped beans too
-	 * or just singletons (also applies to FactoryBeans)
-	 *                                表示是否包含非单例 Bean
-	 * @param allowEagerInit whether to initialize <i>lazy-init singletons</i> and
-	 * <i>objects created by FactoryBeans</i> (or by factory methods with a
-	 * "factory-bean" reference) for the type check. Note that FactoryBeans need to be
-	 * eagerly initialized to determine their type: So be aware that passing in "true"
-	 * for this flag will initialize FactoryBeans and "factory-bean" references.
-	 *                          表示是否提前部分初始化 FactoryBean(为什么说是部分初始化？是因为只实例化 FactoryBean，而不进行属性注入）
-	 * @return
-	 * 发生bd的合并
+	 *                             or just singletons (also applies to FactoryBeans)
+	 *                             表示是否包含非单例 Bean
+	 * @param allowEagerInit       whether to initialize <i>lazy-init singletons</i> and
+	 *                             <i>objects created by FactoryBeans</i> (or by factory methods with a
+	 *                             "factory-bean" reference) for the type check. Note that FactoryBeans need to be
+	 *                             eagerly initialized to determine their type: So be aware that passing in "true"
+	 *                             for this flag will initialize FactoryBeans and "factory-bean" references.
+	 *                             表示是否提前部分初始化 FactoryBean(为什么说是部分初始化？是因为只实例化 FactoryBean，而不进行属性注入）
+	 * @return 发生bd的合并
 	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
-		//are not supposed to be modified or post-processed any further
-		// 1. 查询的结果不使用缓存，是因为此时查询的结果可能不正确吗?==>getBeanNamesForType 方法根据类型查找匹配的 beanNames 结果并不十分准确。原因很简单，因为该方法不会通过提前实例化 Bean 的方式获取其类型，只会根据 BeanDefinition 或 FactoryBean#getObjectType 获取其类型。如果不实例化对象，有些场景可能并不能获取对象的类型
-		// 1.1 configurationFrozen表示是否冻结BeanDefinition，不允许修改，因此为false时,查询的结果可能有误
-		//     一旦调用AbstractApplicationContext#finishBeanFactoryInitialization(beanFactory)则configurationFrozen=true;容器启动过程中会走if语句
-		// 1.2 type=null，查找所有Bean?
-		// 1.3 !allowEagerInit 表示不允许提前初始化FactoryBean，那就只能通过 FactoryBean 上的泛型来获取其类型了，也可能导致查询的结果不准确
-		//不使用缓存的场景如下
-		//configurationFrozen=false，表示 Spring 容器在初始化阶段，可以对 BeanDefinition 进行调整，当然缓存结果毫无意义。在 refresh 后会设置为 true，此时可以对结果进行缓存。
-		//type=null TODO
-		//allowEagerInit=false，即不允许通过实例化 FactoryBean 来获取 Bean 类型，那就只能通过 FactoryBean 上的泛型来获取其类型了，也可能导致查询的结果不准确。
+		/*
+		 * 1. 查询的结果不使用缓存?是因为此时查询的结果可能不正确,原因很简单，因为该方法不会通过提前实例化 Bean 的方式获取其类型，只会根据 BeanDefinition 或 FactoryBean#getObjectType 获取其类型。如果不实例化对象，有些场景可能并不能获取对象的类型
+		 * 使用缓存的场景如下
+		 * 1.1 configurationFrozen表示是否冻结BeanDefinition，不允许修改，因此为false时,查询的结果可能有误
+		     一旦调用AbstractApplicationContext#finishBeanFactoryInitialization(beanFactory)则configurationFrozen=true;容器启动过程中会走if语句
+		   1.2 type=null，查找所有Bean?
+		 * 1.3 !allowEagerInit 表示不允许提前初始化FactoryBean，那就只能通过 FactoryBean 上的泛型来获取其类型了，也可能导致查询的结果不准确
+		*/
 		if (!isConfigurationFrozen() || type == null || !allowEagerInit) {
 			return doGetBeanNamesForType(ResolvableType.forRawClass(type), includeNonSingletons, allowEagerInit);
 		}
@@ -617,18 +606,17 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
-	 *  方法整体逻辑十分清晰，先查找 Spring 中注册的 BeanDefinition，再查找 Spring 托管的 Bean（即通过 registerSingleton 方法注册）。每种情况都先匹配 Bean，再匹配 FactoryBean
-	 *
+	 * 方法整体逻辑十分清晰，先查找 Spring 中注册的 BeanDefinition，再查找 Spring 托管的 Bean（即通过 registerSingleton 方法注册）。每种情况都先匹配 Bean，再匹配 FactoryBean
 	 * 注册的 BeanDefinition：通过 registerBeanDefinition 方法将 BeanDefinition 注册到容器中，大多数情况
-	 *     isTypeMatch(beanName, type)：匹配 Bean，如果是 FactoryBean 会部分初始化来获取其类型。
-	 *     isTypeMatch(&beanName, type)：匹配 FactoryBean。
+	 * isTypeMatch(beanName, type)：匹配 Bean，如果是 FactoryBean 会部分初始化来获取其类型。
+	 * isTypeMatch(&beanName, type)：匹配 FactoryBean。
 	 * 托管的 Bean（即通过 registerSingleton 方法注册）：通过 registerSingleton 方法直接注册到 manualSingletonNames 集合中，极少数
-	 *     isTypeMatch(beanName, type)
-	 *     isTypeMatch(&beanName, type)
-	 * 每种情况都先匹配 Bean，再匹配 FactoryBean
-	 * @param type 需要的bean的类型 .
+	 * isTypeMatch(beanName, type)
+	 * isTypeMatch(&beanName, type)
+	 *
+	 * @param type                 需要的bean的类型 .
 	 * @param includeNonSingletons only singleton or not.
-	 * @param allowEagerInit 是否实例化懒加载的单例或者通过工厂方法(静态或者实例)创建的对象
+	 * @param allowEagerInit       是否实例化懒加载的单例或者通过工厂方法(静态或者实例)创建的对象
 	 * @return .
 	 */
 	private String[] doGetBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
@@ -643,20 +631,24 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 					// Only check bean definition if it is complete.
 					// 1.1 校验 BeanDefinition
-					//Spring 如何判断能否从 BeanDefinition 获取其类型?
-					//条件1:不能是抽象类，这点显而易见
-					//条件2:allowEagerInit=true 表示可以提前初始化 FactoryBean。因为 FactoryBean 只有初始化才能通过 getObjectType 获取其类型。当然还有一种兜底的方案是 FactoryBean 上的泛型
-					//条件3：判断 JVM 是否允许提前加载 mdb.beanClass，因为获取 Bean 类型时会将该类加载到 JVM 中。默认情况下永远为 true。
-					//mdb.beanClass 已经解析完成，这毫无疑问可以获取 bean 类型。
-					//mbd.lazyInit=false 非懒加载 bean 时解析 Bean 类型，因为此时需要在 JVM 上加载 mdb.className 为 mdb.beanClass。默认为 false，也就是可以加载 Bean 类型。
-					//allowEagerClassLoading=true 表示强制加载 mdb.className，即使 mbd.lazyInit=true。Spring 容器 allowEagerClassLoading 默认为 true，而且目前为至，没有发现 Spring 的上下文将其修改为 false 的。也就是这一项条件判断永远为 true。
-					//条件4：requiresEagerInitForType()通常情况下返回 false，只有当工厂类为 FactoryBean 时且未初始化时才返回 true 时。如果为 true 则表示 FactoryBean 需要提前初始化，即必须允许提前初始化，也就是说 allowEagerInit=true
+
+					/*Spring 如何判断能否从 BeanDefinition 获取其类型?
+					 *-->1:不能是抽象类，这点显而易见
+					 *-->2:allowEagerInit=true 表示可以提前初始化 FactoryBean。因为 FactoryBean 只有初始化才能通过 getObjectType 获取其类型。当然还有一种兜底的方案是 FactoryBean 上的泛型
+					 *-->3:判断 JVM 是否允许提前加载 mdb.beanClass，因为获取 Bean 类型时会将该类加载到 JVM 中。默认情况下永远为 true。
+					 *    mdb.beanClass 已经解析完成，这毫无疑问可以获取 bean 类型。
+					 *    mbd.lazyInit=false 非懒加载 bean 时解析 Bean 类型，因为此时需要在 JVM 上加载 mdb.className 为 mdb.beanClass。默认为 false，也就是可以加载 Bean 类型。
+					 *    allowEagerClassLoading=true 表示强制加载 mdb.className，即使 mbd.lazyInit=true。Spring 容器 allowEagerClassLoading 默认为 true，而且目前为至，没有发现 Spring 的上下文将其修改为 false 的。也就是这一项条件判断永远为 true。
+					 *-->4：requiresEagerInitForType()通常情况下返回 false，只有当工厂类为 FactoryBean 时且未初始化时才返回 true 时。如果为 true 则表示 FactoryBean 需要提前初始化，即必须允许提前初始化，也就是说 allowEagerInit=true
+					 *
+					 */
 					if (!mbd.isAbstract() && (allowEagerInit ||
 							(mbd.hasBeanClass() || !mbd.isLazyInit() || isAllowEagerClassLoading()) &&
 									!requiresEagerInitForType(mbd.getFactoryBeanName()))) {
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 						// 1.2 匹配beanName
+
 						//首先要对 isTypeMatch 方法有一定的了解，isTypeMatch 获取 Bean 类型时，如果发现是 FactoryBean，会提前部分初始化 FactoryBean，所以判断前需要判断能不能调用该方法
 						boolean matchFound = false;
 						//allowEagerInit=true 允许提前部分初始化
@@ -668,8 +660,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
-						}
-						else  {
+						} else {
 							//factoryBean
 							if (includeNonSingletons || isNonLazyDecorated ||
 									(allowFactoryBeanInit && isSingleton(beanName, mbd, dbd))) {
@@ -685,8 +676,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							result.add(beanName);
 						}
 					}
-				}
-				catch (CannotLoadBeanClassException | BeanDefinitionStoreException ex) {
+				} catch (CannotLoadBeanClassException | BeanDefinitionStoreException ex) {
 					if (allowEagerInit) {
 						throw ex;
 					}
@@ -697,8 +687,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					logger.trace(message, ex);
 					// Register exception, in case the bean was accidentally unresolvable.
 					onSuppressedException(ex);
-				}
-				catch (NoSuchBeanDefinitionException ex) {
+				} catch (NoSuchBeanDefinitionException ex) {
 					// Bean definition got removed while we were iterating -> ignore.
 				}
 			}
@@ -723,8 +712,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				if (isTypeMatch(beanName, type)) {
 					result.add(beanName);
 				}
-			}
-			catch (NoSuchBeanDefinitionException ex) {
+			} catch (NoSuchBeanDefinitionException ex) {
 				// Shouldn't happen - probably a result of circular reference resolution...
 				logger.trace(LogMessage.format(
 						"Failed to check manually registered singleton with name '%s'", beanName), ex);
@@ -741,12 +729,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Check whether the specified bean would need to be eagerly initialized
 	 * in order to determine its type.
+	 *
 	 * @param factoryBeanName a factory-bean reference that the bean definition
-	 * defines a factory method for
+	 *                        defines a factory method for
 	 * @return whether eager initialization is necessary
-	 *  ① mbd 存在 factoryBeanName 工厂类
-	 *  ② factoryBeanName 为 FactoryBean
-	 *  ③ FactoryBean 未初始化。
+	 * ① mbd 存在 factoryBeanName 工厂类
+	 * ② factoryBeanName 为 FactoryBean
+	 * ③ FactoryBean 未实例化。
 	 */
 	private boolean requiresEagerInitForType(@Nullable String factoryBeanName) {
 		return (factoryBeanName != null && isFactoryBean(factoryBeanName) && !containsSingleton(factoryBeanName));
@@ -754,6 +743,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * 获取集合 Bean 类型实例
+	 *
 	 * @param type the class or interface to match, or {@code null} for all concrete beans
 	 * @param <T>
 	 * @return
@@ -778,8 +768,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				if (!(beanInstance instanceof NullBean)) {
 					result.put(beanName, (T) beanInstance);
 				}
-			}
-			catch (BeanCreationException ex) {
+			} catch (BeanCreationException ex) {
 				Throwable rootCause = ex.getMostSpecificCause();
 				if (rootCause instanceof BeanCurrentlyInCreationException) {
 					BeanCreationException bce = (BeanCreationException) rootCause;
@@ -803,8 +792,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * 注解查找bean名称列表
+	 *
 	 * @param annotationType the type of annotation to look for
-	 * (at class, interface or factory method level of the specified bean)
+	 *                       (at class, interface or factory method level of the specified bean)
 	 * @return
 	 */
 	@Override
@@ -847,9 +837,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
-	 *
 	 * 为什么要先调用 getType 方法查找，查找不到还要通过 BeanDefinition 查找，按理说，getType 就是通过 BeanDefinition 获取其类型的？
 	 * 问题的关键在于 getType 先按实例进行类型自省，再到 BeanDefinition 进行类型自省，对象类型可以不能正确获取。如果是 JDK 动态代理对象，则不能正确获取类型
+	 *
 	 * @param beanName
 	 * @param annotationType
 	 * @param <A>
@@ -921,9 +911,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Determine whether the specified bean definition qualifies as an autowire candidate,
 	 * to be injected into other beans which declare a dependency of matching type.
-	 * @param beanName the name of the bean definition to check
+	 *
+	 * @param beanName   the name of the bean definition to check
 	 * @param descriptor the descriptor of the dependency to resolve
-	 * @param resolver the AutowireCandidateResolver to use for the actual resolution algorithm
+	 * @param resolver   the AutowireCandidateResolver to use for the actual resolution algorithm
 	 * @return whether the bean should be considered as autowire candidate
 	 */
 	protected boolean isAutowireCandidate(
@@ -936,8 +927,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			// 我们的注入，绝大部分情况都走这里
 			//getMergedLocalBeanDefinition方法的作用就是获取缓存的BeanDefinition对象并合并其父类和本身的属性
 			return isAutowireCandidate(beanName, getMergedLocalBeanDefinition(bdName), descriptor, resolver);
-		}
-		else if (containsSingleton(beanName)) {
+		} else if (containsSingleton(beanName)) {
 			// 若已经存在实例了，就走这里
 			return isAutowireCandidate(beanName, new RootBeanDefinition(getType(beanName)), descriptor, resolver);
 		}
@@ -947,12 +937,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (parent instanceof DefaultListableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.
 			return ((DefaultListableBeanFactory) parent).isAutowireCandidate(beanName, descriptor, resolver);
-		}
-		else if (parent instanceof ConfigurableListableBeanFactory) {
+		} else if (parent instanceof ConfigurableListableBeanFactory) {
 			// If no DefaultListableBeanFactory, can't pass the resolver along.
 			return ((ConfigurableListableBeanFactory) parent).isAutowireCandidate(beanName, descriptor);
-		}
-		else {
+		} else {
 			// 默认值是true
 			return true;
 		}
@@ -961,14 +949,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Determine whether the specified bean definition qualifies as an autowire candidate,
 	 * to be injected into other beans which declare a dependency of matching type.
-	 * @param beanName the name of the bean definition to check
-	 * @param mbd the merged bean definition to check
+	 *
+	 * @param beanName   the name of the bean definition to check
+	 * @param mbd        the merged bean definition to check
 	 * @param descriptor the descriptor of the dependency to resolve
-	 * @param resolver the AutowireCandidateResolver to use for the actual resolution algorithm
+	 * @param resolver   the AutowireCandidateResolver to use for the actual resolution algorithm
 	 * @return whether the bean should be considered as autowire candidate
 	 */
 	protected boolean isAutowireCandidate(String beanName, RootBeanDefinition mbd,
-			DependencyDescriptor descriptor, AutowireCandidateResolver resolver) {
+										  DependencyDescriptor descriptor, AutowireCandidateResolver resolver) {
 
 		String bdName = BeanFactoryUtils.transformedBeanName(beanName);
 
@@ -1037,6 +1026,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Considers all beans as eligible for metadata caching
 	 * if the factory's configuration has been marked as frozen.
+	 *
 	 * @see #freezeConfiguration()
 	 */
 	@Override
@@ -1046,6 +1036,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * 此处必须说明：此处绝大部分的单例Bean定义信息都会被实例化，但是如果是通过FactoryBean定义的，它是懒加载的（如果没人使用，就先不会实例化。只会到使用的时候才实例化~）.
+	 *
 	 * @throws BeansException
 	 */
 	@Override
@@ -1079,8 +1070,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							isEagerInit = AccessController.doPrivileged(
 									(PrivilegedAction<Boolean>) ((SmartFactoryBean<?>) factory)::isEagerInit,
 									getAccessControlContext());
-						}
-						else {
+						} else {
 							//判断是否是一个SmartFactoryBean，并且不是懒加载
 							isEagerInit = (factory instanceof SmartFactoryBean &&
 									((SmartFactoryBean<?>) factory).isEagerInit());
@@ -1090,8 +1080,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							getBean(beanName);
 						}
 					}
-				}
-				else {
+				} else {
 					// 这里，就是普通单例Bean正式初始化了~  核心逻辑在方法：doGetBean
 					// 关于doGetBean方法的详解：下面有贴出博文，专文讲解
 					getBean(beanName);
@@ -1114,8 +1103,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						smartSingleton.afterSingletonsInstantiated();
 						return null;
 					}, getAccessControlContext());
-				}
-				else {
+				} else {
 					// 比如：ScheduledAnnotationBeanPostProcessor CacheAspectSupport  MBeanExporter等等
 					smartSingleton.afterSingletonsInstantiated();
 				}
@@ -1140,8 +1128,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				((AbstractBeanDefinition) beanDefinition).validate();
-			}
-			catch (BeanDefinitionValidationException ex) {
+			} catch (BeanDefinitionValidationException ex) {
 				throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
 						"Validation of bean definition failed", ex);
 			}
@@ -1173,8 +1160,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							"' with a different definition: replacing [" + existingDefinition +
 							"] with [" + beanDefinition + "]");
 				}
-			}
-			else {
+			} else {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Overriding bean definition for bean '" + beanName +
 							"' with an equivalent definition: replacing [" + existingDefinition +
@@ -1183,8 +1169,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			//存
 			this.beanDefinitionMap.put(beanName, beanDefinition);
-		}
-		else {
+		} else {
 			// 程序已经启动，不能再修改集合元素(用于稳定迭代)
 			if (hasBeanCreationStarted()) {
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
@@ -1199,8 +1184,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					this.beanDefinitionNames = updatedDefinitions;
 					removeManualSingletonName(beanName);
 				}
-			}
-			else {
+			} else {
 				// 仍处于启动注册阶段
 				// 注册 beanDefinition，并记录 beanName
 				// Still in startup registration phase
@@ -1215,8 +1199,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (existingDefinition != null || containsSingleton(beanName)) {
 			//重置beanName对应的BeanDefinition
 			resetBeanDefinition(beanName);
-		}
-		else if (isConfigurationFrozen()) {
+		} else if (isConfigurationFrozen()) {
 			clearByTypeCache();
 		}
 	}
@@ -1240,8 +1223,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				updatedDefinitions.remove(beanName);
 				this.beanDefinitionNames = updatedDefinitions;
 			}
-		}
-		else {
+		} else {
 			// Still in startup registration phase
 			this.beanDefinitionNames.remove(beanName);
 		}
@@ -1257,6 +1239,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * triggering {@link #clearMergedBeanDefinition}, {@link #destroySingleton}
 	 * and {@link MergedBeanDefinitionPostProcessor#resetBeanDefinition} on the
 	 * given bean and on all bean definitions that have the given bean as parent.
+	 *
 	 * @param beanName the name of the bean to reset
 	 * @see #registerBeanDefinition
 	 * @see #removeBeanDefinition
@@ -1323,9 +1306,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Update the factory's internal set of manual singleton names.
-	 * @param action the modification action  #set -> set.add(beanName)#
+	 *
+	 * @param action    the modification action  #set -> set.add(beanName)#
 	 * @param condition a precondition for the modification action  #set -> !this.beanDefinitionMap.containsKey(beanName)#
-	 * (if this condition does not apply, the action can be skipped)
+	 *                  (if this condition does not apply, the action can be skipped)
 	 */
 	private void updateManualSingletonNames(Consumer<Set<String>> action, Predicate<Set<String>> condition) {
 		//beanFactory的Set<String> alreadyCreated 是否为空
@@ -1343,8 +1327,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					this.manualSingletonNames = updatedSingletons;
 				}
 			}
-		}
-		else {
+		} else {
 			// Still in startup registration phase
 			if (condition.test(this.manualSingletonNames)) {
 				action.accept(this.manualSingletonNames);
@@ -1367,6 +1350,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * 获取单个 Bean 类型实例
+	 *
 	 * @param requiredType type the bean must match; can be an interface or superclass
 	 * @param <T>
 	 * @return
@@ -1425,8 +1409,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				if (containsSingleton(beanName) && args == null) {
 					Object beanInstance = getBean(beanName);
 					candidates.put(beanName, (beanInstance instanceof NullBean ? null : beanInstance));
-				}
-				else {
+				} else {
 					candidates.put(beanName, getType(beanName));
 				}
 			}
@@ -1456,7 +1439,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Override
 	@Nullable
 	public Object resolveDependency(DependencyDescriptor descriptor, @Nullable String requestingBeanName,
-			@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) throws BeansException {//解决依赖（根据依赖关系找到值）
+									@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) throws BeansException {//解决依赖（根据依赖关系找到值）
 
 		// descriptor代表当前需要注入的那个字段，或者方法的参数，也就是注入点
 		// ParameterNameDiscovery用于解析方法参数名称
@@ -1485,8 +1468,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// 3. javax.inject.Provider<T>
 		else if (javaxInjectProviderClass == descriptor.getDependencyType()) {
 			return new Jsr330Factory().createDependencyProvider(descriptor, requestingBeanName);
-		}
-		else {
+		} else {
 			//getAutowireCandidateResolver()得到ContextAnnotationAutowireCandidateResolver 根据依赖注解信息，找到对应的Bean值信息
 			//getLazyResolutionProxyIfNecessary方法，它也是唯一实现。
 			//如果字段上带有@Lazy注解，表示进行懒加载 Spring不会立即创建注入属性的实例，而是生成代理对象，来代替实例
@@ -1508,18 +1490,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 1.Spring注入依赖后会保存依赖的beanName，作为下次注入相同属性的捷径。如果存在捷径的话，直接通过保存的beanName获取bean实例
 	 * 2.对@Value注解的处理。如果存在，会获取并解析value值
 	 * 3.对数组或容器类型的处理。如果是数组或容器类型的话，Spring可以将所有与目标类型匹配的bean实例都注入进去，不需要判断
-	 *    1)获取数组或容器单个组件的类型
-	 *    2)调用findAutowireCandidates方法，获取与组件类型匹配的Map(beanName -> bean实例)
-	 *    3)保存类型匹配的beanNames
+	 * 1)获取数组或容器单个组件的类型
+	 * 2)调用findAutowireCandidates方法，获取与组件类型匹配的Map(beanName -> bean实例)
+	 * 3)保存类型匹配的beanNames
 	 * 4.非数组、容器类型的处理
-	 *    1)调用findAutowireCandidates方法，获取与组件类型匹配的Map(beanName -> bean实例)
-	 *    2)如果类型匹配的结果为多个，需要进行筛选(@Primary、优先级、字段名)
-	 *    3)如果筛选结果不为空，或者只有一个bean类型匹配，就直接使用该bean
-	 *
+	 * 1)调用findAutowireCandidates方法，获取与组件类型匹配的Map(beanName -> bean实例)
+	 * 2)如果类型匹配的结果为多个，需要进行筛选(@Primary、优先级、字段名)
+	 * 3)如果筛选结果不为空，或者只有一个bean类型匹配，就直接使用该bean
+	 * <p>
 	 * 1.快速查找： @Autowired 注解处理场景。AutowiredAnnotationBeanPostProcessor 处理 @Autowired 注解时，如果注入的对象只有一个，会将该 bean 对应的名称缓存起来，下次直接通过名称查找会快很多。
 	 * 2.注入指定值：@Value 注解处理场景。QualifierAnnotationAutowireCandidateResolver 处理 @Value 注解时，会读取 @Value 对应的值进行注入。如果是 String 要经过三个过程：①占位符处理 -> ②EL 表达式解析 -> ③类型转换，这也是一般的处理过程，BeanDefinitionValueResolver 处理 String 对象也是这个过程。
 	 * 3.集合依赖查询：直接全部委托给 resolveMultipleBeans 方法。
 	 * 4.单个依赖查询：先调用 findAutowireCandidates 查找所有可用的依赖，如果有多个依赖，则根据规则匹配： @Primary -> @Priority -> ③方法名称或字段名称。
+	 *
 	 * @param descriptor
 	 * @param beanName
 	 * @param autowiredBeanNames
@@ -1529,7 +1512,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 */
 	@Nullable
 	public Object doResolveDependency(DependencyDescriptor descriptor, @Nullable String beanName,
-			@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) throws BeansException {
+									  @Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) throws BeansException {
 
 		// 相当于打个点，记录下当前的步骤位置  返回值为当前的InjectionPoint
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
@@ -1568,8 +1551,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				try {
 					// 2.3 类型转换
 					return converter.convertIfNecessary(value, type, descriptor.getTypeDescriptor());
-				}
-				catch (UnsupportedOperationException ex) {
+				} catch (UnsupportedOperationException ex) {
 					// A custom TypeConverter which does not support TypeDescriptor resolution...
 					return (descriptor.getField() != null ?
 							converter.convertIfNecessary(value, type, descriptor.getField()) :
@@ -1636,8 +1618,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					// 如果此Bean是要求的，或者 不是Array、Collection、Map等类型，那就抛出异常NoUniqueBeanDefinitionException
 					if (isRequired(descriptor) || !indicatesMultipleBeans(type)) {
 						return descriptor.resolveNotUnique(descriptor.getResolvableType(), matchingBeans);
-					}
-					else {
+					} else {
 						// In case of an optional Collection/Map, silently ignore a non-unique case:
 						// possibly it was meant to be an empty collection of multiple regular beans
 						// (before 4.3 in particular when we didn't even look for collection beans).
@@ -1646,8 +1627,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					}
 				}
 				instanceCandidate = matchingBeans.get(autowiredBeanName);
-			}
-			else {
+			} else {
 				// We have exactly one match.
 				// 直接找到了一个对应的Bean
 				// 仅仅只匹配上一个，走这里 很简单  直接拿出来即可
@@ -1683,8 +1663,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				throw new BeanNotOfRequiredTypeException(autowiredBeanName, type, instanceCandidate.getClass());
 			}
 			return result;
-		}
-		finally {
+		} finally {
 			// 最终把节点归还回来
 			ConstructorResolver.setCurrentInjectionPoint(previousInjectionPoint);
 		}
@@ -1692,7 +1671,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	@Nullable
 	private Object resolveMultipleBeans(DependencyDescriptor descriptor, @Nullable String beanName,
-			@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) {
+										@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) {
 
 		Class<?> type = descriptor.getDependencyType();
 
@@ -1708,8 +1687,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				stream = stream.sorted(adaptOrderComparator(matchingBeans));
 			}
 			return stream;
-		}
-		else if (type.isArray()) {
+		} else if (type.isArray()) {
 			Class<?> componentType = type.getComponentType();
 			ResolvableType resolvableType = descriptor.getResolvableType();
 			Class<?> resolvedArrayType = resolvableType.resolve(type);
@@ -1736,8 +1714,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			return result;
-		}
-		else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
+		} else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
 			Class<?> elementType = descriptor.getResolvableType().asCollection().resolveGeneric();
 			if (elementType == null) {
 				return null;
@@ -1761,8 +1738,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			return result;
-		}
-		else if (Map.class == type) {
+		} else if (Map.class == type) {
 			ResolvableType mapType = descriptor.getResolvableType().asMap();
 			Class<?> keyType = mapType.resolveGeneric(0);
 			if (String.class != keyType) {
@@ -1781,8 +1757,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				autowiredBeanNames.addAll(matchingBeans.keySet());
 			}
 			return matchingBeans;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -1802,8 +1777,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (comparator instanceof OrderComparator) {
 			return ((OrderComparator) comparator).withSourceProvider(
 					createFactoryAwareOrderSourceProvider(matchingBeans));
-		}
-		else {
+		} else {
 			return comparator;
 		}
 	}
@@ -1824,27 +1798,26 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Find bean instances that match the required type.
 	 * Called during autowiring for the specified bean.
-	 * @param beanName the name of the bean that is about to be wired
+	 *
+	 * @param beanName     the name of the bean that is about to be wired
 	 * @param requiredType the actual type of bean to look for
-	 * (may be an array component type or collection element type)
-	 * @param descriptor the descriptor of the dependency to resolve
+	 *                     (may be an array component type or collection element type)
+	 * @param descriptor   the descriptor of the dependency to resolve
 	 * @return a Map of candidate names and candidate instances that match
 	 * the required type (never {@code null})
 	 * @throws BeansException in case of errors
 	 * @see #autowireByType
 	 * @see #autowireConstructor
-	 *
+	 * <p>
 	 * 根据注解进行依赖注入的主要工作，就是根据标注的字段的类型来搜索符合的bean，并将类型匹配的bean注入到字段中
 	 * 总结：
 	 * 1.将获取类型匹配的Bean工作交给BeanFactoryUtils.beanNamesForTypeIncludingAncestors。该方法除了当前beanFactory还会递归对父parentFactory进行查找
 	 * 2.如果注入类型是特殊类型或其子类，会将特殊类型的实例添加到结果
 	 * 3.对结果进行筛选
-	 *     1）BeanDefinition的autowireCandidate属性，表示是否允许该bena注入到其他bean中，默认为true
-	 *     2）泛型类型的匹配，如果存在的话
-	 *     3）Qualifier注解。如果存在Qualifier注解的话，会直接比对Qualifier注解中指定的beanName。需要注意的是，Spring处理自己定义的Qualifier注解，还支持javax.inject.Qualifier注解
+	 * 1）BeanDefinition的autowireCandidate属性，表示是否允许该bena注入到其他bean中，默认为true
+	 * 2）泛型类型的匹配，如果存在的话
+	 * 3）Qualifier注解。如果存在Qualifier注解的话，会直接比对Qualifier注解中指定的beanName。需要注意的是，Spring处理自己定义的Qualifier注解，还支持javax.inject.Qualifier注解
 	 * 4.如果筛选后，结果为空，Spring会放宽筛选条件，再筛选一次
-	 *
-	 *
 	 */
 	protected Map<String, Object> findAutowireCandidates(
 			@Nullable String beanName, Class<?> requiredType, DependencyDescriptor descriptor) {
@@ -1954,14 +1927,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Add an entry to the candidate map: a bean instance if available or just the resolved
 	 * type, preventing early bean initialization ahead of primary candidate selection.
-	 *
+	 * <p>
 	 * // candidates：就是findAutowireCandidates方法要返回的候选集合
 	 * // candidateName：当前的这个候选Bean的名称
 	 * // descriptor：依赖描述符
 	 * // requiredType：依赖的类型
 	 */
 	private void addCandidateEntry(Map<String, Object> candidates, String candidateName,
-			DependencyDescriptor descriptor, Class<?> requiredType) {
+								   DependencyDescriptor descriptor, Class<?> requiredType) {
 
 		// 如果依赖是一个集合，或者容器中已经包含这个单例了
 		// 那么直接调用getBean方法创建或者获取这个Bean
@@ -1989,8 +1962,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Determine the autowire candidate in the given set of beans.
 	 * <p>Looks for {@code @Primary} and {@code @Priority} (in that order).
+	 *
 	 * @param candidates a Map of candidate names and candidate instances
-	 * that match the required type, as returned by {@link #findAutowireCandidates}
+	 *                   that match the required type, as returned by {@link #findAutowireCandidates}
 	 * @param descriptor the target dependency to match against
 	 * @return the name of the autowire candidate, or {@code null} if none found
 	 */
@@ -2030,12 +2004,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Determine the primary candidate in the given set of beans.
-	 * @param candidates a Map of candidate names and candidate instances
-	 * (or candidate classes if not created yet) that match the required type
+	 *
+	 * @param candidates   a Map of candidate names and candidate instances
+	 *                     (or candidate classes if not created yet) that match the required type
 	 * @param requiredType the target dependency type to match against
 	 * @return the name of the primary candidate, or {@code null} if none found
 	 * @see #isPrimary(String, Object)
-	 *
+	 * <p>
 	 * determinePrimaryCandidate：顾名思义。它是从给定的Bean中看有木有标注了@Primary注解的Bean，优先选择
 	 */
 	@Nullable
@@ -2056,13 +2031,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					if (candidateLocal && primaryLocal) {
 						throw new NoUniqueBeanDefinitionException(requiredType, candidates.size(),
 								"more than one 'primary' bean found among candidates: " + candidates.keySet());
-					}
-					else if (candidateLocal) {
+					} else if (candidateLocal) {
 						// 把找出来的标注了@Primary的Bean的名称返回出去
 						primaryBeanName = candidateBeanName;
 					}
-				}
-				else {
+				} else {
 					primaryBeanName = candidateBeanName;
 				}
 			}
@@ -2075,13 +2048,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * <p>Based on {@code @javax.annotation.Priority}. As defined by the related
 	 * {@link org.springframework.core.Ordered} interface, the lowest value has
 	 * the highest priority.
-	 * @param candidates a Map of candidate names and candidate instances
-	 * (or candidate classes if not created yet) that match the required type
+	 *
+	 * @param candidates   a Map of candidate names and candidate instances
+	 *                     (or candidate classes if not created yet) that match the required type
 	 * @param requiredType the target dependency type to match against
 	 * @return the name of the candidate with the highest priority,
 	 * or {@code null} if none found
 	 * @see #getPriority(Object)
-	 *
+	 * <p>
 	 * determineHighestPriorityCandidate：从给定的Bean里面筛选出一个优先级最高的
 	 * 什么叫优先级最高呢？主要为了兼容JDK6提供的注解javax.annotation.Priority
 	 */
@@ -2108,14 +2082,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						if (candidatePriority.equals(highestPriority)) {
 							throw new NoUniqueBeanDefinitionException(requiredType, candidates.size(),
 									"Multiple beans found with the same priority ('" + highestPriority +
-									"') among candidates: " + candidates.keySet());
-						}
-						else if (candidatePriority < highestPriority) {
+											"') among candidates: " + candidates.keySet());
+						} else if (candidatePriority < highestPriority) {
 							highestPriorityBeanName = candidateBeanName;
 							highestPriority = candidatePriority;
 						}
-					}
-					else {
+					} else {
 						highestPriorityBeanName = candidateBeanName;
 						highestPriority = candidatePriority;
 					}
@@ -2128,7 +2100,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Return whether the bean definition for the given bean name has been
 	 * marked as a primary bean.
-	 * @param beanName the name of the bean
+	 *
+	 * @param beanName     the name of the bean
 	 * @param beanInstance the corresponding bean instance (can be null)
 	 * @return whether the given bean qualifies as primary
 	 */
@@ -2151,6 +2124,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * Spring's common {@link OrderComparator} - typically, an
 	 * {@link org.springframework.core.annotation.AnnotationAwareOrderComparator}.
 	 * If no such comparator is present, this implementation returns {@code null}.
+	 *
 	 * @param beanInstance the bean instance to check (can be {@code null})
 	 * @return the priority assigned to that bean or {@code null} if none is set
 	 */
@@ -2194,7 +2168,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		throw new NoSuchBeanDefinitionException(resolvableType,
 				"expected at least 1 bean which qualifies as autowire candidate. " +
-				"Dependency annotations: " + ObjectUtils.nullSafeToString(descriptor.getAnnotations()));
+						"Dependency annotations: " + ObjectUtils.nullSafeToString(descriptor.getAnnotations()));
 	}
 
 	/**
@@ -2216,8 +2190,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						throw new BeanNotOfRequiredTypeException(beanName, type, beanType);
 					}
 				}
-			}
-			catch (NoSuchBeanDefinitionException ex) {
+			} catch (NoSuchBeanDefinitionException ex) {
 				// Bean definition got removed while we were iterating -> ignore.
 			}
 		}
@@ -2239,6 +2212,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			public boolean isRequired() {
 				return false;
 			}
+
 			@Override
 			public Object resolveCandidate(String beanName, Class<?> requiredType, BeanFactory beanFactory) {
 				return (!ObjectUtils.isEmpty(args) ? beanFactory.getBean(beanName, args) :
@@ -2259,8 +2233,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		BeanFactory parent = getParentBeanFactory();
 		if (parent == null) {
 			sb.append("root of factory hierarchy");
-		}
-		else {
+		} else {
 			sb.append("parent: ").append(ObjectUtils.identityToString(parent));
 		}
 		return sb.toString();
@@ -2279,8 +2252,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	protected Object writeReplace() throws ObjectStreamException {
 		if (this.serializationId != null) {
 			return new SerializedBeanFactoryReference(this.serializationId);
-		}
-		else {
+		} else {
 			throw new NotSerializableException("DefaultListableBeanFactory has no serialization id");
 		}
 	}
@@ -2381,8 +2353,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		public Object getObject() throws BeansException {
 			if (this.optional) {
 				return createOptionalDependency(this.descriptor, this.beanName);
-			}
-			else {
+			} else {
 				Object result = doResolveDependency(this.descriptor, this.beanName, null, null);
 				if (result == null) {
 					throw new NoSuchBeanDefinitionException(this.descriptor.getResolvableType());
@@ -2395,8 +2366,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		public Object getObject(final Object... args) throws BeansException {
 			if (this.optional) {
 				return createOptionalDependency(this.descriptor, this.beanName, args);
-			}
-			else {
+			} else {
 				DependencyDescriptor descriptorToUse = new DependencyDescriptor(this.descriptor) {
 					@Override
 					public Object resolveCandidate(String beanName, Class<?> requiredType, BeanFactory beanFactory) {
@@ -2417,8 +2387,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			try {
 				if (this.optional) {
 					return createOptionalDependency(this.descriptor, this.beanName);
-				}
-				else {
+				} else {
 					DependencyDescriptor descriptorToUse = new DependencyDescriptor(this.descriptor) {
 						@Override
 						public boolean isRequired() {
@@ -2427,8 +2396,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					};
 					return doResolveDependency(descriptorToUse, this.beanName, null, null);
 				}
-			}
-			catch (ScopeNotActiveException ex) {
+			} catch (ScopeNotActiveException ex) {
 				// Ignore resolved bean in non-active scope
 				return null;
 			}
@@ -2440,8 +2408,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			if (dependency != null) {
 				try {
 					dependencyConsumer.accept(dependency);
-				}
-				catch (ScopeNotActiveException ex) {
+				} catch (ScopeNotActiveException ex) {
 					// Ignore resolved bean in non-active scope, even on scoped proxy invocation
 				}
 			}
@@ -2455,6 +2422,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				public boolean isRequired() {
 					return false;
 				}
+
 				@Override
 				@Nullable
 				public Object resolveNotUnique(ResolvableType type, Map<String, Object> matchingBeans) {
@@ -2464,12 +2432,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			try {
 				if (this.optional) {
 					return createOptionalDependency(descriptorToUse, this.beanName);
-				}
-				else {
+				} else {
 					return doResolveDependency(descriptorToUse, this.beanName, null, null);
 				}
-			}
-			catch (ScopeNotActiveException ex) {
+			} catch (ScopeNotActiveException ex) {
 				// Ignore resolved bean in non-active scope
 				return null;
 			}
@@ -2481,8 +2447,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			if (dependency != null) {
 				try {
 					dependencyConsumer.accept(dependency);
-				}
-				catch (ScopeNotActiveException ex) {
+				} catch (ScopeNotActiveException ex) {
 					// Ignore resolved bean in non-active scope, even on scoped proxy invocation
 				}
 			}
@@ -2492,8 +2457,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		protected Object getValue() throws BeansException {
 			if (this.optional) {
 				return createOptionalDependency(this.descriptor, this.beanName);
-			}
-			else {
+			} else {
 				return doResolveDependency(this.descriptor, this.beanName, null, null);
 			}
 		}

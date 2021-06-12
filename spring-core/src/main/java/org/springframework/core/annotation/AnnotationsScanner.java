@@ -103,6 +103,7 @@ abstract class AnnotationsScanner {
 			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor,
 			@Nullable BiPredicate<C, Class<?>> classFilter) {
 
+		//对资源类型进行区分
 		if (source instanceof Class) {
 			return processClass(context, (Class<?>) source, searchStrategy, processor, classFilter);
 		}
@@ -153,11 +154,11 @@ abstract class AnnotationsScanner {
 				if (isFiltered(source, context, classFilter)) {
 					continue;
 				}
-				//source声明的注解
+				//source声明的直接注解
 				Annotation[] declaredAnnotations =
 						getDeclaredAnnotations(context, source, classFilter, true);
 				if (relevant == null && declaredAnnotations.length > 0) {
-					//root类的所有注解+所有父类注解中标注@Inherited的集合
+					//root类的所有注解+所有父类注解中标注了@Inherited注解的集合
 					relevant = root.getAnnotations();
 					remaining = relevant.length;
 				}
@@ -458,6 +459,7 @@ abstract class AnnotationsScanner {
 			AnnotationsProcessor<C, R> processor, @Nullable BiPredicate<C, Class<?>> classFilter) {
 
 		try {
+			//提前返回结果,一般返回null
 			R result = processor.doWithAggregate(context, 0);
 			return (result != null ? result : processor.doWithAnnotations(
 				context, 0, source, getDeclaredAnnotations(context, source, classFilter, false)));
@@ -468,6 +470,16 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 * 返回注解元素上的直接注解类型.
+	 * @param context .
+	 * @param source .
+	 * @param classFilter .
+	 * @param copy .
+	 * @param <C> .
+	 * @param <R> .
+	 * @return .
+	 */
 	private static <C, R> Annotation[] getDeclaredAnnotations(C context,
 			AnnotatedElement source, @Nullable BiPredicate<C, Class<?>> classFilter, boolean copy) {
 
@@ -506,7 +518,7 @@ abstract class AnnotationsScanner {
 			cached = true;
 		}
 		else {
-			//获取注解信息
+			//获取直接注解信息
 			annotations = source.getDeclaredAnnotations();
 			if (annotations.length != 0) {
 				boolean allIgnored = true;
@@ -554,6 +566,7 @@ abstract class AnnotationsScanner {
 			if (source instanceof Method && ((Method) source).isBridge()) {
 				return false;
 			}
+			//方法带有缓存功能
 			return getDeclaredAnnotations(source, false).length == 0;
 		}
 		return false;
@@ -565,9 +578,11 @@ abstract class AnnotationsScanner {
 	 * @return 是否是java的原生注解.
 	 */
 	static boolean hasPlainJavaAnnotationsOnly(@Nullable Object annotatedElement) {
+		//类
 		if (annotatedElement instanceof Class) {
 			return hasPlainJavaAnnotationsOnly((Class<?>) annotatedElement);
 		}
+		//属性
 		else if (annotatedElement instanceof Member) {
 			return hasPlainJavaAnnotationsOnly(((Member) annotatedElement).getDeclaringClass());
 		}
@@ -585,14 +600,24 @@ abstract class AnnotationsScanner {
 		return (type.getName().startsWith("java.") || type == Ordered.class);
 	}
 
+	/**
+	 * 是否无继承体系.
+	 * @param source .
+	 * @param searchStrategy .
+	 * @return .
+	 */
 	private static boolean isWithoutHierarchy(AnnotatedElement source, SearchStrategy searchStrategy) {
+		//Object
 		if (source == Object.class) {
 			return true;
 		}
+		//类对象
 		if (source instanceof Class) {
 			Class<?> sourceClass = (Class<?>) source;
+			//是否有父类或者父接口
 			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class &&
 					sourceClass.getInterfaces().length == 0);
+
 			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ? noSuperTypes &&
 					sourceClass.getEnclosingClass() == null : noSuperTypes);
 		}

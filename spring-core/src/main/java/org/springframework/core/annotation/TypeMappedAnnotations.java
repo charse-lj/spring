@@ -53,6 +53,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Nullable
 	private final AnnotatedElement element;
 
+	/**
+	 * 寻找策略
+	 */
 	@Nullable
 	private final SearchStrategy searchStrategy;
 
@@ -67,6 +70,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	private volatile List<Aggregate> aggregates;
 
 
+	/**
+	 * 两种查找方式 --> 对应两个构造函数:
+	 * 1.查找注解对象
+	 * 2.查找注解容器
+	 * @param element
+	 * @param searchStrategy
+	 * @param repeatableContainers
+	 * @param annotationFilter
+	 */
 	private TypeMappedAnnotations(AnnotatedElement element, SearchStrategy searchStrategy,
 			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
@@ -92,6 +104,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public <A extends Annotation> boolean isPresent(Class<A> annotationType) {
+		//在过滤范围内,直接返回false
 		if (this.annotationFilter.matches(annotationType)) {
 			return false;
 		}
@@ -248,6 +261,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
 			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
+		//过滤下
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
 		}
@@ -310,6 +324,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		public Boolean doWithAnnotations(Object requiredType, int aggregateIndex,
 				@Nullable Object source, Annotation[] annotations) {
 
+			//遍历满足要求的所有注解
 			for (Annotation annotation : annotations) {
 				if (annotation != null) {
 					Class<? extends Annotation> type = annotation.annotationType();
@@ -317,11 +332,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 						if (type == requiredType || type.getName().equals(requiredType)) {
 							return Boolean.TRUE;
 						}
+						//获取注解上注解容器中的所有注解元素
 						Annotation[] repeatedAnnotations =
 								this.repeatableContainers.findRepeatedAnnotations(annotation);
 						if (repeatedAnnotations != null) {
+							//递归查找
 							Boolean result = doWithAnnotations(
 									requiredType, aggregateIndex, source, repeatedAnnotations);
+							//找到,直接返回结果
 							if (result != null) {
 								return result;
 							}
@@ -341,6 +359,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return null;
 		}
 
+		/**
+		 *
+		 * @param repeatableContainers
+		 * @param annotationFilter 注解过滤器.
+		 * @param directOnly 只在注解元素上找还是在其继承体系中查找 .
+		 * @return
+		 */
 		static IsPresent get(RepeatableContainers repeatableContainers,
 				AnnotationFilter annotationFilter, boolean directOnly) {
 

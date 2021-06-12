@@ -247,11 +247,12 @@ class ConfigurationClassParser {
 			return;
 		}
 		// 如果这个配置类已经存在了,后面又被@Import进来了~~~会走这里 然后做属性合并~
-		//从已经解析的容器中获取
+		//从已经解析的缓存中获取
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
 		if (existingClass != null) {
 			if (configClass.isImported()) {
 				if (existingClass.isImported()) {
+					//缓存中的和需要解析的进行合并
 					existingClass.mergeImportedBy(configClass);
 				}
 				// Otherwise ignore new imported config class; existing non-imported class overrides it.
@@ -342,7 +343,6 @@ class ConfigurationClassParser {
 			}
 		}
 
-		//TODO 需要重点关注下
 		// Process any @ComponentScan annotations
 		// 解析@ComponentScans和@ComponentScan注解，进行包扫描。最终交给ComponentScanAnnotationParser#parse方法进行处理
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
@@ -462,10 +462,10 @@ class ConfigurationClassParser {
 					this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
 				}
 				else {
-					//入栈 --> 外层Class
+					//入栈 --> 外层Class,暂存
 					this.importStack.push(configClass);
 					try {
-						//内部的SourceClass -> candidate 变成 ConfigurationClass,往成员变量 Set<ConfigurationClass> importedBy中添加外部Class
+						//内部的SourceClass -> candidate 变成 ConfigurationClass,内部的由外部引入,解析内部时,往成员变量 Set<ConfigurationClass> importedBy中添加外部Class
 						processConfigurationClass(candidate.asConfigClass(configClass), filter);
 					}
 					finally {
@@ -801,6 +801,7 @@ class ConfigurationClassParser {
 	 */
 	private SourceClass asSourceClass(ConfigurationClass configurationClass, Predicate<String> filter) throws IOException {
 		AnnotationMetadata metadata = configurationClass.getMetadata();
+		//类的注解元数据
 		if (metadata instanceof StandardAnnotationMetadata) {
 			return asSourceClass(((StandardAnnotationMetadata) metadata).getIntrospectedClass(), filter);
 		}

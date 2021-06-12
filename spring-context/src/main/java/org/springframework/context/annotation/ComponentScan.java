@@ -65,6 +65,8 @@ public @interface ComponentScan {
 	 * <p>Allows for more concise annotation declarations if no other attributes
 	 * are needed &mdash; for example, {@code @ComponentScan("org.my.pkg")}
 	 * instead of {@code @ComponentScan(basePackages = "org.my.pkg")}.
+	 *
+	 * 用于指定包的路径，进行扫描
 	 */
 	@AliasFor("basePackages")
 	String[] value() default {};
@@ -75,6 +77,8 @@ public @interface ComponentScan {
 	 * attribute.
 	 * <p>Use {@link #basePackageClasses} for a type-safe alternative to
 	 * String-based package names.
+	 *
+	 * 用于指定包的路径，进行扫描
 	 */
 	@AliasFor("value")
 	String[] basePackages() default {};
@@ -84,6 +88,8 @@ public @interface ComponentScan {
 	 * to scan for annotated components. The package of each class specified will be scanned.
 	 * <p>Consider creating a special no-op marker class or interface in each package
 	 * that serves no purpose other than being referenced by this attribute.
+	 *
+	 * 用于指定某个类的包的路径进行扫描
 	 */
 	Class<?>[] basePackageClasses() default {};
 
@@ -98,11 +104,14 @@ public @interface ComponentScan {
 	 * @see AnnotationConfigApplicationContext#setBeanNameGenerator(BeanNameGenerator)
 	 * @see AnnotationBeanNameGenerator
 	 * @see FullyQualifiedAnnotationBeanNameGenerator
+	 *
+	 *  bean的名称的生成器
 	 */
 	Class<? extends BeanNameGenerator> nameGenerator() default BeanNameGenerator.class;
 
 	/**
 	 * The {@link ScopeMetadataResolver} to be used for resolving the scope of detected components.
+	 * 用于解析@Scope注解
 	 */
 	Class<? extends ScopeMetadataResolver> scopeResolver() default AnnotationScopeMetadataResolver.class;
 
@@ -113,6 +122,8 @@ public @interface ComponentScan {
 	 * execute the actual scan.
 	 * <p>Note that setting this attribute overrides any value set for {@link #scopeResolver}.
 	 * @see ClassPathBeanDefinitionScanner#setScopedProxyMode(ScopedProxyMode)
+	 *
+	 * 用来设置类的代理模式
 	 */
 	ScopedProxyMode scopedProxy() default ScopedProxyMode.DEFAULT;
 
@@ -120,12 +131,16 @@ public @interface ComponentScan {
 	 * Controls the class files eligible for component detection.
 	 * <p>Consider use of {@link #includeFilters} and {@link #excludeFilters}
 	 * for a more flexible approach.
+	 *
+	 * 扫描路径
 	 */
 	String resourcePattern() default ClassPathScanningCandidateComponentProvider.DEFAULT_RESOURCE_PATTERN;
 
 	/**
 	 * Indicates whether automatic detection of classes annotated with {@code @Component}
 	 * {@code @Repository}, {@code @Service}, or {@code @Controller} should be enabled.
+	 * 指定是否需要使用Spring默认的扫描规则
+	 * 是否开启对@Component，@Repository，@Service，@Controller的类进行检测
 	 */
 	boolean useDefaultFilters() default true;
 
@@ -139,13 +154,21 @@ public @interface ComponentScan {
 	 * @see #resourcePattern()
 	 * @see #useDefaultFilters()
 	 * 
-	 *  useDefaultFilters默认为true,表示默认情况下@Component、@Repository、@Service、@Controller都会扫描
 	 *  useDefaultFilters=false,加上includeFilters我们就可以只扫描指定的组件了
-	 *  web子容器只扫描Controller组件excludeFilters的时候，就不需要去设置useDefaultFilters=false,直接排除掉即可
+	 * 对被扫描的包或类进行过滤，若符合条件，不论组件上是否有注解，Bean对象都将被创建
+	 *  @ComponentScan(value = "spring.annotation.componentscan",includeFilters = {
+	 *     @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = {Controller.class, Service.class}),
+	 *     @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {SchoolDao.class}),
+	 *     @ComponentScan.Filter(type = FilterType.CUSTOM, classes = {MyTypeFilter.class}),
+	 *     @ComponentScan.Filter(type = FilterType.ASPECTJ, pattern = "spring.annotation..*"),
+	 *     @ComponentScan.Filter(type = FilterType.REGEX, pattern = "^[A-Za-z.]+Dao$")
+	 *  },useDefaultFilters = false)
+	 *  useDefaultFilters 必须设为 false
 	 */
 	Filter[] includeFilters() default {};
 
 	/**
+	 * 指定需要排除的组件
 	 * Specifies which types are not eligible for component scanning.
 	 * @see #resourcePattern
 	 */
@@ -155,6 +178,8 @@ public @interface ComponentScan {
 	 * Specify whether scanned beans should be registered for lazy initialization.
 	 * <p>Default is {@code false}; switch this to {@code true} when desired.
 	 * @since 4.1
+	 *
+	 * 指定是否应注册扫描的Bean以进行延迟初始化
 	 */
 	boolean lazyInit() default false;
 
@@ -172,12 +197,21 @@ public @interface ComponentScan {
 		 * <p>Default is {@link FilterType#ANNOTATION}.
 		 * @see #classes
 		 * @see #pattern
+		 *
+		 * 要使用的过滤器类型，默认为 ANNOTATION 注解类型
 		 */
 		FilterType type() default FilterType.ANNOTATION;
 
 		/**
 		 * Alias for {@link #classes}.
 		 * @see #classes
+		 *
+		 * 指定在该规则下过滤的表达式
+		 * 过滤器的参数，参数必须为class数组，单个参数可以不加大括号
+		 * 只能用于 ANNOTATION 、ASSIGNABLE_TYPE 、CUSTOM 这三个类型
+		 * @ComponentScan.Filter(type = FilterType.ANNOTATION, value = {Controller.class, Service.class})
+		 * @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {SchoolDao.class})
+		 * @ComponentScan.Filter(type = FilterType.CUSTOM, classes = {MyTypeFilter.class})
 		 */
 		@AliasFor("classes")
 		Class<?>[] value() default {};
@@ -211,6 +245,38 @@ public @interface ComponentScan {
 		 * @since 4.2
 		 * @see #value
 		 * @see #type
+		 *
+		 * 作用同上面的 value 相同
+		 * ANNOTATION 参数为注解类，如  Controller.class, Service.class, Repository.class
+		 * ASSIGNABLE_TYPE 参数为类，如 SchoolDao.class
+		 * CUSTOM  参数为实现 TypeFilter 接口的类 ，如 MyTypeFilter.class
+		 * MyTypeFilter 同时还能实现 EnvironmentAware，BeanFactoryAware，BeanClassLoaderAware，ResourceLoaderAware 这四个接口
+		 * EnvironmentAware
+		 * 此方法用来接收 Environment 数据 ，主要为程序的运行环境，Environment 接口继承自 PropertyResolver 接口，详细内容在下方
+		 * @Override
+		 * public void setEnvironment(Environment environment) {
+		 *    String property = environment.getProperty("os.name");
+		 * }
+		 *
+		 * BeanFactoryAware
+		 * BeanFactory Bean容器的根接口，用于操作容器，如获取bean的别名、类型、实例、是否单例的数据
+		 * @Override
+		 * public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+		 *     Object bean = beanFactory.getBean("BeanName")
+		 * }
+		 *
+		 * BeanClassLoaderAware
+		 * ClassLoader 是类加载器，在此方法里只能获取资源和设置加载器状态
+		 * @Override
+		 * public void setBeanClassLoader(ClassLoader classLoader) {
+		 *     ClassLoader parent = classLoader.getParent();
+		 * }
+		 *
+		 * ResourceLoaderAware
+		 * ResourceLoader 用于获取类加载器和根据路径获取资源
+		 * public void setResourceLoader(ResourceLoader resourceLoader) {
+		 *     ClassLoader classLoader = resourceLoader.getClassLoader();
+		 * }
 		 */
 		@AliasFor("value")
 		Class<?>[] classes() default {};
@@ -223,6 +289,7 @@ public @interface ComponentScan {
 		 * set to {@link FilterType#REGEX REGEX}, this is a regex pattern
 		 * for the fully-qualified class names to match.
 		 * @see #type
+		 *
 		 * @see #classes
 		 */
 		String[] pattern() default {};

@@ -62,7 +62,7 @@ public abstract class RepeatableContainers {
 	 * @param repeatable the contained repeatable type
 	 * @return a new {@link RepeatableContainers} instance
 	 * <p>
-	 * 在一个可重复注解和包含注解之间建立关系
+	 * 一个可重复注解和其注解容器间建立关系
 	 */
 	public RepeatableContainers and(Class<? extends Annotation> container,
 									Class<? extends Annotation> repeatable) {
@@ -234,7 +234,7 @@ public abstract class RepeatableContainers {
 				//推断容器类
 				container = deduceContainer(repeatable);
 			}
-			//获取名为get()的方法
+			//获取名为value()的方法
 			Method valueMethod = AttributeMethods.forAnnotationType(container).get(MergedAnnotation.VALUE);
 			//校验
 			try {

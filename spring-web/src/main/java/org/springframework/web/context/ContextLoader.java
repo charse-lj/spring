@@ -166,7 +166,8 @@ public class ContextLoader {
 	/**
 	 * Map from (thread context) ClassLoader to corresponding 'current' WebApplicationContext.
 	 *
-	 * 下面这两个属性主要拿到当前的容器上下文。其中static的工具方法ContextLoader.getCurrentWebApplicationContext是基于此的
+	 * 下面这两个属性主要拿到当前的容器上下文。其中static的工具方法
+	 * @see ContextLoader#getCurrentWebApplicationContext()
 	 */
 	private static final Map<ClassLoader, WebApplicationContext> currentContextPerThread =
 			new ConcurrentHashMap<>(1);
@@ -293,7 +294,7 @@ public class ContextLoader {
 			// Store context in local instance variable, to guarantee that
 			// it is available on ServletContext shutdown.
 			if (this.context == null) {
-				// 这句特别重要，兼容了web.xml的方式以及注解驱动的方式。本文中是注解驱动的方式，所以此处不会null。
+				// 这句特别重要，兼容了web.xml的方式以及注解驱动的方式。本文中是注解驱动的方式，所以此处不为null。
 				// 下面讲解web.xml的方式的时候，我再会去详细讲解createWebApplicationContext(servletContext)这个方法~~~
 				this.context = createWebApplicationContext(servletContext);
 			}

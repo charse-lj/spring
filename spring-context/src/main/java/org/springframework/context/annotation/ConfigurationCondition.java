@@ -37,6 +37,8 @@ public interface ConfigurationCondition extends Condition {
 
 	/**
 	 * The various configuration phases where the condition could be evaluated.
+	 * ConfigurationPhase的作用就是根据条件来判断是否加载这个配置类，OnBeanCondition（此注解的功能就是判断是否存在某个bean，如果存在，则不注入标注的bean或者类）之所以返回REGISTER_BEAN，是因为需要无论如何都要加载这个配置类（如果是PARSE_CONFIGURATION，则有可能不加载），配置类中的bean的注入需要再根据bean的注入条件来判断
+	 * 控制的是过滤的时机，是在创建Configuration类的时候过滤还是在创建bean的时候过滤
 	 */
 	enum ConfigurationPhase {
 

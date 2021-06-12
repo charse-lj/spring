@@ -111,9 +111,10 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 		}
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
-		
-		//判断这个请求是否需要执行过滤
+
+		//获取filter名称
 		String alreadyFilteredAttributeName = getAlreadyFilteredAttributeName();
+		//判断这个请求是否需要执行过滤
 		boolean hasAlreadyFilteredAttribute = request.getAttribute(alreadyFilteredAttributeName) != null;
 
 		if (skipDispatch(httpRequest) || shouldNotFilter(httpRequest)) {
@@ -215,7 +216,9 @@ public abstract class OncePerRequestFilter extends GenericFilterBean {
 	 * @return whether the given request should <i>not</i> be filtered
 	 * @throws ServletException in case of errors
 	 *
-	 * 可以人工直接返回true  那这个请求就肯定不会被过滤了~~~~
+	 * 本次请求是否会被过滤
+	 * true：不会被过滤
+	 * false：需要被过滤
 	 */
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
 		return false;
