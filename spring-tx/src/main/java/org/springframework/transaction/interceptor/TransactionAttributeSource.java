@@ -32,6 +32,8 @@ import org.springframework.lang.Nullable;
  * @see TransactionInterceptor#setTransactionAttributeSource
  * @see TransactionProxyFactoryBean#setTransactionAttributeSource
  * @see org.springframework.transaction.annotation.AnnotationTransactionAttributeSource
+ *
+ * 事务属性源
  */
 public interface TransactionAttributeSource {
 
@@ -56,10 +58,13 @@ public interface TransactionAttributeSource {
 	/**
 	 * Return the transaction attribute for the given method,
 	 * or {@code null} if the method is non-transactional.
-	 * @param method the method to introspect
-	 * @param targetClass the target class (may be {@code null},
+	 * @param method the method to introspect  目前正在进行的方法调用  --> method的所属类不一样是targetClass。比如：method是代理对象的方法，它的所属类是代理出来的类，通常情况下，method的所属类会是targetClass的某个祖先类或者实现的某个接口。(动态代理)
+	 * @param targetClass the target class (may be {@code null},  真正要调用的方法所在的类 --> targetClass一定会有一个方法和method的方法签名一样
 	 * in which case the declaring class of the method must be used)
 	 * @return the matching transaction attribute, or {@code null} if none found
+	 *
+	 * 通过Method和目标类，拿到事务属性~~~
+	 * 比如我们的@Transaction是标注在方法上的，可议自定义方法级别的事务属性，用它就特别的方便~
 	 */
 	@Nullable
 	TransactionAttribute getTransactionAttribute(Method method, @Nullable Class<?> targetClass);

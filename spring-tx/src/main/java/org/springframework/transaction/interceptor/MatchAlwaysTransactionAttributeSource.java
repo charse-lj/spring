@@ -59,6 +59,7 @@ public class MatchAlwaysTransactionAttributeSource implements TransactionAttribu
 	@Override
 	@Nullable
 	public TransactionAttribute getTransactionAttribute(Method method, @Nullable Class<?> targetClass) {
+		//用户自定义的
 		return (ClassUtils.isUserLevelMethod(method) ? this.transactionAttribute : null);
 	}
 

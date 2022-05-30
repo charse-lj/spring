@@ -133,6 +133,7 @@ public abstract class PropertyAccessorUtils {
 	}
 
 	/**
+	 * 规范属性名.
 	 * Determine the canonical name for the given property path.
 	 * Removes surrounding quotes from map keys:<br>
 	 * {@code map['key']} -> {@code map[key]}<br>
@@ -148,18 +149,24 @@ public abstract class PropertyAccessorUtils {
 		StringBuilder sb = new StringBuilder(propertyName);
 		int searchIndex = 0;
 		while (searchIndex != -1) {
+			// '[' 下标
 			int keyStart = sb.indexOf(PropertyAccessor.PROPERTY_KEY_PREFIX, searchIndex);
 			searchIndex = -1;
+			//存在 '['
 			if (keyStart != -1) {
+				//']' 下标
 				int keyEnd = sb.indexOf(
 						PropertyAccessor.PROPERTY_KEY_SUFFIX, keyStart + PropertyAccessor.PROPERTY_KEY_PREFIX.length());
+				//存在 ']'
 				if (keyEnd != -1) {
+					//截取 '['和 ']' 中间的值
 					String key = sb.substring(keyStart + PropertyAccessor.PROPERTY_KEY_PREFIX.length(), keyEnd);
 					if ((key.startsWith("'") && key.endsWith("'")) || (key.startsWith("\"") && key.endsWith("\""))) {
 						sb.delete(keyStart + 1, keyStart + 2);
 						sb.delete(keyEnd - 2, keyEnd - 1);
 						keyEnd = keyEnd - 2;
 					}
+					//重置检索的其实下标
 					searchIndex = keyEnd + PropertyAccessor.PROPERTY_KEY_SUFFIX.length();
 				}
 			}

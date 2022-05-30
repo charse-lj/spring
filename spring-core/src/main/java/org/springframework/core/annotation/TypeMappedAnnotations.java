@@ -64,6 +64,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	private final RepeatableContainers repeatableContainers;
 
+	/**
+	 * 查找到源上注解的过滤器.
+	 */
 	private final AnnotationFilter annotationFilter;
 
 	@Nullable
@@ -245,6 +248,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return aggregates;
 	}
 
+	/**
+	 *
+	 * @param criteria 待查找的对象.
+	 * @param processor .
+	 * @param <C> .
+	 * @param <R> .
+	 * @return
+	 */
 	@Nullable
 	private <C, R> R scan(C criteria, AnnotationsProcessor<C, R> processor) {
 		if (this.annotations != null) {

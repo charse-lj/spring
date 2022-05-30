@@ -127,10 +127,7 @@ public class ResolvableType implements Serializable {
 	private final Integer hash;
 
 	/**
-	 * 类型对应的类
-	 * 0)null
-	 * 1)List
-	 * 2)Map
+	 * 解析后的类类型
 	 */
 	@Nullable
 	private Class<?> resolved;
@@ -226,6 +223,7 @@ public class ResolvableType implements Serializable {
 	@Nullable
 	public Class<?> getRawClass() {
 		if (this.type == this.resolved) {
+			// 是个class
 			return this.resolved;
 		}
 		Type rawType = this.type;
@@ -356,6 +354,7 @@ public class ResolvableType implements Serializable {
 			}
 		}
 		if (ourResolved == null) {
+			//我觉得 换成 ourResolved = toClass(); 更合适
 			ourResolved = resolve(Object.class);
 		}
 		Class<?> otherResolved = other.toClass();
@@ -363,6 +362,7 @@ public class ResolvableType implements Serializable {
 		// We need an exact type match for generics
 		// List<CharSequence> is not assignable from List<String>
 		//otherResolved is child of ourResolved
+		// exactMatch 代表主相同.
 		if (exactMatch ? !ourResolved.equals(otherResolved) : !ClassUtils.isAssignable(ourResolved, otherResolved)) {
 			return false;
 		}
@@ -409,16 +409,21 @@ public class ResolvableType implements Serializable {
 		if (this == NONE) {
 			return NONE;
 		}
+		// 缓存
 		if (this.componentType != null) {
 			return this.componentType;
 		}
+		//类类型
 		if (this.type instanceof Class) {
+			// 获取数组元素类型
 			Class<?> componentType = ((Class<?>) this.type).getComponentType();
 			return forType(componentType, this.variableResolver);
 		}
+		//泛型数组类型
 		if (this.type instanceof GenericArrayType) {
 			return forType(((GenericArrayType) this.type).getGenericComponentType(), this.variableResolver);
 		}
+		//泛型类型
 		return resolveType().getComponentType();
 	}
 
@@ -465,12 +470,14 @@ public class ResolvableType implements Serializable {
 		if (resolved == null || resolved == type) {
 			return this;
 		}
+		//接口
 		for (ResolvableType interfaceType : getInterfaces()) {
 			ResolvableType interfaceAsType = interfaceType.as(type);
 			if (interfaceAsType != NONE) {
 				return interfaceAsType;
 			}
 		}
+		//父类
 		return getSuperType().as(type);
 	}
 
@@ -518,12 +525,10 @@ public class ResolvableType implements Serializable {
 		ResolvableType[] interfaces = this.interfaces;
 		if (interfaces == null) {
 			//获取resolved的泛型接口
-			// 1.泛型接口 =>泛型类
-			// 2.类接口 => 类
 			Type[] genericIfcs = resolved.getGenericInterfaces();
 			interfaces = new ResolvableType[genericIfcs.length];
 			for (int i = 0; i < genericIfcs.length; i++) {
-				//该类的接口类转换为RT
+				//接口对应的 ResolvableType
 				interfaces[i] = forType(genericIfcs[i], this);
 			}
 			this.interfaces = interfaces;
@@ -844,7 +849,7 @@ public class ResolvableType implements Serializable {
 		if (this.type instanceof Class) {
 			return (Class<?>) this.type;
 		}
-		//泛型数组类型
+		//泛型数组类型 T[]
 		if (this.type instanceof GenericArrayType) {
 			Class<?> resolvedComponent = getComponentType().resolve();
 			return (resolvedComponent != null ? Array.newInstance(resolvedComponent, 0).getClass() : null);
@@ -861,6 +866,7 @@ public class ResolvableType implements Serializable {
 	ResolvableType resolveType() {
 		//List<String> 参数化类型
 		if (this.type instanceof ParameterizedType) {
+			//去参数化
 			return forType(((ParameterizedType) this.type).getRawType(), this.variableResolver);
 		}
 		//List<? extends Number> 通配符类型
@@ -884,6 +890,7 @@ public class ResolvableType implements Serializable {
 			// Fallback to bounds
 			return forType(resolveBounds(variable.getBounds()), this.variableResolver);
 		}
+		//类类型,返回NONE
 		return NONE;
 	}
 
@@ -1466,7 +1473,7 @@ public class ResolvableType implements Serializable {
 		// For simple Class references, build the wrapper right away -
 		// no expensive resolution necessary, so not worth caching...
 		//class reference
-		// 如果是原始的数据类型（一个简单的Class引用），那么直接封装后返回，这里不做缓存，因为没有上面昂贵的开销
+		// 如果是类类型，那么直接封装后返回，这里不做缓存，因为没有上面昂贵的开销
 		if (type instanceof Class) {
 			return new ResolvableType(type, typeProvider, variableResolver, (ResolvableType) null);
 		}
@@ -1476,9 +1483,11 @@ public class ResolvableType implements Serializable {
 		cache.purgeUnreferencedEntries();
 
 		// Check the cache - we may have a ResolvableType which has been resolved before...
+		// 不是类类型,构建一个key
 		ResolvableType resultType = new ResolvableType(type, typeProvider, variableResolver);
 		ResolvableType cachedType = cache.get(resultType);
 		if (cachedType == null) {
+			// 构建一个新对象
 			cachedType = new ResolvableType(type, typeProvider, variableResolver, resultType.hash);
 			//缓存
 			cache.put(cachedType, cachedType);

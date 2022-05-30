@@ -16,14 +16,14 @@
 
 package org.springframework.core.type.classreading;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * Simple implementation of the {@link MetadataReaderFactory} interface,
@@ -31,12 +31,14 @@ import org.springframework.util.ClassUtils;
  *
  * @author Juergen Hoeller
  * @since 2.5
- *
+ * <p>
  * 利用ResourceLoader的简单实现，加载进资源后，new SimpleMetadataReader(resource)交给此实例分析即可。
  */
 public class SimpleMetadataReaderFactory implements MetadataReaderFactory {
-	// ResourceLoader这个资源加载类应该不陌生了吧
-	// 默认使用的是DefaultResourceLoader，当然你可以通过构造器指定
+	/**
+	 * ResourceLoader这个资源加载类应该不陌生了吧
+	 * 默认使用的是DefaultResourceLoader，当然你可以通过构造器指定
+	 */
 	private final ResourceLoader resourceLoader;
 
 
@@ -49,8 +51,9 @@ public class SimpleMetadataReaderFactory implements MetadataReaderFactory {
 
 	/**
 	 * Create a new SimpleMetadataReaderFactory for the given resource loader.
+	 *
 	 * @param resourceLoader the Spring ResourceLoader to use
-	 * (also determines the ClassLoader to use)
+	 *                       (also determines the ClassLoader to use)
 	 */
 	public SimpleMetadataReaderFactory(@Nullable ResourceLoader resourceLoader) {
 		this.resourceLoader = (resourceLoader != null ? resourceLoader : new DefaultResourceLoader());
@@ -58,6 +61,7 @@ public class SimpleMetadataReaderFactory implements MetadataReaderFactory {
 
 	/**
 	 * Create a new SimpleMetadataReaderFactory for the given class loader.
+	 *
 	 * @param classLoader the ClassLoader to use
 	 */
 	public SimpleMetadataReaderFactory(@Nullable ClassLoader classLoader) {
@@ -78,15 +82,17 @@ public class SimpleMetadataReaderFactory implements MetadataReaderFactory {
 	@Override
 	public MetadataReader getMetadataReader(String className) throws IOException {
 		try {
-			// 把..形式换成//.class形式。使用前缀是：classpath:  在类路径里找哦
+			// 把包(.)形式换成路径(/)形式;
+			// 使用前缀是：classpath(在类路径里找);
+			// 使用后缀 .class
 			String resourcePath = ResourceLoader.CLASSPATH_URL_PREFIX +
 					ClassUtils.convertClassNameToResourcePath(className) + ClassUtils.CLASS_FILE_SUFFIX;
 			Resource resource = this.resourceLoader.getResource(resourcePath);
 			return getMetadataReader(resource);
-		}
-		catch (FileNotFoundException ex) {
+		} catch (FileNotFoundException ex) {
 			// Maybe an inner class name using the dot name syntax? Need to use the dollar syntax here...
 			// ClassUtils.forName has an equivalent check for resolution into Class references later on.
+			// 内部类形式
 			int lastDotIndex = className.lastIndexOf('.');
 			if (lastDotIndex != -1) {
 				String innerClassName =

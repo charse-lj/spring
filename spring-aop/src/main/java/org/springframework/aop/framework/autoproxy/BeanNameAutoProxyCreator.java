@@ -97,6 +97,8 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 	protected Object[] getAdvicesAndAdvisorsForBean(
 			Class<?> beanClass, String beanName, @Nullable TargetSource targetSource) {
 
+		// 这里面注意一点：BeanNameAutoProxyCreator的此方法并没有去寻找Advisor，所以需要拦截的话
+		// 只能依靠：setInterceptorNames()来指定拦截器。它是根据名字去Bean容器里取的
 		return (isSupportedBeanName(beanClass, beanName) ?
 				PROXY_WITHOUT_ADDITIONAL_INTERCEPTORS : DO_NOT_PROXY);
 	}

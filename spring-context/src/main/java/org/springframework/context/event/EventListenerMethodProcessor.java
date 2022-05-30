@@ -16,17 +16,8 @@
 
 package org.springframework.context.event;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.aop.framework.autoproxy.AutoProxyUtils;
 import org.springframework.aop.scope.ScopedObject;
 import org.springframework.aop.scope.ScopedProxyUtils;
@@ -49,6 +40,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
+
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Registers {@link EventListener} methods as individual {@link ApplicationListener} instances.
@@ -90,11 +85,13 @@ public class EventListenerMethodProcessor
 	@Nullable
 	private List<EventListenerFactory> eventListenerFactories;
 
-	// 解析注解中的Conditon的
+	/**
+	 * 解析注解中的Conditon的
+ 	 */
 	@Nullable
 	private final EventExpressionEvaluator evaluator;
 
-	// 视图 这样set也变成线程安全的了
+
 	private final Set<Class<?>> nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap<>(64));
 
 
@@ -114,11 +111,10 @@ public class EventListenerMethodProcessor
 		this.applicationContext = (ConfigurableApplicationContext) applicationContext;
 	}
 
-	// 这个方法是BeanFactoryPostProcessor的方法，它在容器的BeanFactory准备完成后，会执行此后置处理器
-	// 它的作用：BeanFactory工厂准备好后，就去找所有的EventListenerFactory  然后保存起来
-	// 此处：默认情况下Spring在准备Bean工厂的时候，会给我们注册一个`DefaultEventListenerFactory`，
-	//如果你使用了注解驱动的Spring事务如@EnableTransactionManagement，它就会额外再添加一个`TransactionalEventListenerFactory`
-	// 他俩的实现都非常的简单，下面会简单的说一下~~~
+	/**
+	 * 这个方法是BeanFactoryPostProcessor的方法，它在容器的BeanFactory准备完成后，会执行此后置处理器
+	 * @param beanFactory the bean factory used by the application context
+	 */
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
@@ -192,7 +188,7 @@ public class EventListenerMethodProcessor
 			Map<Method, EventListener> annotatedMethods = null;
 			try {
 				// 这可以说是核心方法，就是找到这个Class里面被标注此注解的Methods们
-				// 在讲述到反射专题的时候，这个方法已经分析过~
+				// 本类、父类、接口
 				annotatedMethods = MethodIntrospector.selectMethods(targetType,
 						(MethodIntrospector.MetadataLookup<EventListener>) method ->
 								AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class));

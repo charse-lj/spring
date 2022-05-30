@@ -46,6 +46,7 @@ enum TokenKind {
 
 	COMMA(","),
 
+	//普通字符串
 	IDENTIFIER,
 
 	COLON(":"),
@@ -104,6 +105,9 @@ enum TokenKind {
 
 	SELECT("?["),
 
+	/**
+	 * 乘幂
+	 */
 	POWER("^"),
 
 	ELVIS("?:"),
@@ -118,6 +122,9 @@ enum TokenKind {
 
 	SYMBOLIC_AND("&&"),
 
+	/**
+	 * 自增
+	 */
 	INC("++"),
 
 	DEC("--");

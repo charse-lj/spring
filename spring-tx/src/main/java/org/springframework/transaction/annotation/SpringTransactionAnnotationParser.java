@@ -68,21 +68,30 @@ public class SpringTransactionAnnotationParser implements TransactionAnnotationP
 	protected TransactionAttribute parseTransactionAnnotation(AnnotationAttributes attributes) {
 		RuleBasedTransactionAttribute rbta = new RuleBasedTransactionAttribute();
 
+		//事务的传播属性
 		Propagation propagation = attributes.getEnum("propagation");
 		rbta.setPropagationBehavior(propagation.value());
+		//隔离界别
 		Isolation isolation = attributes.getEnum("isolation");
 		rbta.setIsolationLevel(isolation.value());
 
+		// 设置事务的超时时间
 		rbta.setTimeout(attributes.getNumber("timeout").intValue());
 		String timeoutString = attributes.getString("timeoutString");
 		Assert.isTrue(!StringUtils.hasText(timeoutString) || rbta.getTimeout() < 0,
 				"Specify 'timeout' or 'timeoutString', not both");
 		rbta.setTimeoutString(timeoutString);
 
+		// 是否是只读事务
 		rbta.setReadOnly(attributes.getBoolean("readOnly"));
+
+		// 这个属性，是指定事务管理器PlatformTransactionManager的BeanName的，若不指定，那就按照类型找了
+		// 若容器中存在多个事务管理器，但又没指定名字  那就报错啦~~~
 		rbta.setQualifier(attributes.getString("value"));
 		rbta.setLabels(Arrays.asList(attributes.getStringArray("label")));
 
+		// rollbackFor可以指定需要回滚的异常，可议指定多个  若不指定默认为RuntimeException
+		// 此处使用的RollbackRuleAttribute包装~~~~  它就是个POJO没有实现其余接口
 		List<RollbackRuleAttribute> rollbackRules = new ArrayList<>();
 		for (Class<?> rbRule : attributes.getClassArray("rollbackFor")) {
 			rollbackRules.add(new RollbackRuleAttribute(rbRule));
@@ -90,9 +99,13 @@ public class SpringTransactionAnnotationParser implements TransactionAnnotationP
 		for (String rbRule : attributes.getStringArray("rollbackForClassName")) {
 			rollbackRules.add(new RollbackRuleAttribute(rbRule));
 		}
+
+		// 指定不需要回滚的异常类型们~~~
+		// 此处使用的NoRollbackRuleAttribute包装  它是RollbackRuleAttribute的子类
 		for (Class<?> rbRule : attributes.getClassArray("noRollbackFor")) {
 			rollbackRules.add(new NoRollbackRuleAttribute(rbRule));
 		}
+
 		for (String rbRule : attributes.getStringArray("noRollbackForClassName")) {
 			rollbackRules.add(new NoRollbackRuleAttribute(rbRule));
 		}

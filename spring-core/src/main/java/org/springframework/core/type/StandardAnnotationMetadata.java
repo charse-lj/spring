@@ -43,8 +43,12 @@ import org.springframework.util.ReflectionUtils;
  * @author Phillip Webb
  * @author Sam Brannen
  * @since 2.5
+ *
+ * 基于Java标准的（Standard）反射实现的注解元数据的获取。
+ * 很明显关于ClassMetadata的实现部分就交给此父类了，自己只关注于AnnotationMetadata接口的实现
  */
-public class StandardAnnotationMetadata extends StandardClassMetadata implements AnnotationMetadata {
+public class
+StandardAnnotationMetadata extends StandardClassMetadata implements AnnotationMetadata {
 
 	private final MergedAnnotations mergedAnnotations;
 
@@ -79,7 +83,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 * Use {@link MergedAnnotation#asMap(org.springframework.core.annotation.MergedAnnotation.Adapt...) MergedAnnotation.asMap}
 	 * from {@link #getAnnotations()} rather than {@link #getAnnotationAttributes(String)}
 	 * if {@code nestedAnnotationsAsMap} is {@code false}
-	 * 很明显关于ClassMetadata的实现部分就交给此父类了，自己只关注于AnnotationMetadata接口的实现
+	 *
 	 */
 	@Deprecated
 	public StandardAnnotationMetadata(Class<?> introspectedClass, boolean nestedAnnotationsAsMap) {

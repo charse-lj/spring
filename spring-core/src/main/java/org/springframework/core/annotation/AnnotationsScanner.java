@@ -592,8 +592,7 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 *
-	 * @param type 被注解的类是否以java.开头,或者是Ordered.class.
+	 * @param type 被注解的类是否以java.开头(rt.jar中类),或者是Ordered.class.
 	 * @return .
 	 */
 	static boolean hasPlainJavaAnnotationsOnly(Class<?> type) {

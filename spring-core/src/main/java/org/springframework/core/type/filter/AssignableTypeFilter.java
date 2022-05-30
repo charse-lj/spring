@@ -29,6 +29,9 @@ import org.springframework.util.ClassUtils;
  */
 public class AssignableTypeFilter extends AbstractTypeHierarchyTraversingFilter {
 
+	/**
+	 * 类类型
+	 */
 	private final Class<?> targetType;
 
 

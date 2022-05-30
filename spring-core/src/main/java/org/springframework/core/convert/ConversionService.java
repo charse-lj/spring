@@ -26,7 +26,7 @@ import org.springframework.lang.Nullable;
  * @author Phillip Webb
  * @since 3.0
  *
- * 统一的类型转换服务。属于面向开发者使用的门面接口
+ * 统一的类型转换服务,整合Converter、ConverterFactory、GenericConverter,属于面向开发者使用的门面接口
  */
 public interface ConversionService {
 

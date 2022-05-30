@@ -77,6 +77,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 
 	/**
+	 * 一级缓存
 	 * Cache of singleton objects: bean name to bean instance.  保存所有单例对象
 	 */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
@@ -96,6 +97,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Cache of early singleton objects: bean name to bean instance.
+	 * 二级缓存
 	 * Spring循环依赖-earlySingletonObjects的作用
 	 */
 	private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);

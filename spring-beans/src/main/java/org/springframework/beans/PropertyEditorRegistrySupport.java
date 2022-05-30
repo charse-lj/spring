@@ -91,7 +91,7 @@ import org.springframework.util.ClassUtils;
  * @see java.beans.PropertyEditorSupport#setValue
  * <p>
  * 这个类最大的作用在于管理PropertyEditor,添加了很多的默认的PropertyEditor。在PropertyEditorRegistry的基础上做了进一步的扩展，提供的还是属性编辑器注册的功能
- * PropertyEditor 是用于String->各种其他类型转换器.
+ * PropertyEditor 是用于String<->各种其他类型转换器.
  * @since 1.2.6
  */
 public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {

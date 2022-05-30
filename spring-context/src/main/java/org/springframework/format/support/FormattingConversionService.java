@@ -198,6 +198,7 @@ public class FormattingConversionService extends GenericConversionService
 		@Override
 		@SuppressWarnings("unchecked")
 		public Object convert(@Nullable Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+			//如果fieldType和Printer<T>泛型类型不一致,先转化
 			if (!sourceType.isAssignableTo(this.printerObjectType)) {
 				source = this.conversionService.convert(source, sourceType, this.printerObjectType);
 			}

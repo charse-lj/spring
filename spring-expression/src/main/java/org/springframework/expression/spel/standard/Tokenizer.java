@@ -34,31 +34,65 @@ import org.springframework.expression.spel.SpelParseException;
  */
 class Tokenizer {
 
+	 //替代的操作符
 	// If this gets changed, it must remain sorted...
 	private static final String[] ALTERNATIVE_OPERATOR_NAMES =
 			{"DIV", "EQ", "GE", "GT", "LE", "LT", "MOD", "NE", "NOT"};
 
 	private static final byte[] FLAGS = new byte[256];
 
+	//数字
 	private static final byte IS_DIGIT = 0x01;
 
+	//十六进制字符
 	private static final byte IS_HEXDIGIT = 0x02;
 
+	//字母
 	private static final byte IS_ALPHA = 0x04;
 
 	static {
+//		00110000	48	30	'0'
+//		00110001	49	31	'1'
+//		00110010	50	32	'2'
+//		00110011	51	33	'3'
+//		00110100	52	34	'4'
+//		00110101	53	35	'5'
+//		00110110	54	36	'6'
+//		00110111	55	37	'7'
+//		00111000	56	38	'8'
+//		00111001	57	39	'9'
 		for (int ch = '0'; ch <= '9'; ch++) {
+			//FLAGS[48~57] = 011
 			FLAGS[ch] |= IS_DIGIT | IS_HEXDIGIT;
 		}
+//		01000001	65	41	'A'
+//		01000010	66	42	'B'
+//		01000011	67	43	'C'
+//		01000100	68	44	'D'
+//		01000101	69	45	'E'
+//		01000110	70	46	'F'
 		for (int ch = 'A'; ch <= 'F'; ch++) {
+			//FLAGS[65~70] = 010
 			FLAGS[ch] |= IS_HEXDIGIT;
 		}
+//		01100001	97	61	'a'
+//		01100010	98	62	'b'
+//		01100011	99	63	'c'
+//		01100100	100	64	'd'
+//		01100101	101	65	'e'
+//		01100110	102	66	'f'
 		for (int ch = 'a'; ch <= 'f'; ch++) {
+			//FLAGS[97~102] = 010
 			FLAGS[ch] |= IS_HEXDIGIT;
 		}
+
 		for (int ch = 'A'; ch <= 'Z'; ch++) {
+			//FLAGS[65~70] = 110
+			//FLAGS[71~90] = 100
 			FLAGS[ch] |= IS_ALPHA;
 		}
+		//FLAGS[97~102] = 110
+		//FLAGS[103~122] = 100
 		for (int ch = 'a'; ch <= 'z'; ch++) {
 			FLAGS[ch] |= IS_ALPHA;
 		}
@@ -87,7 +121,9 @@ class Tokenizer {
 	public List<Token> process() {
 		while (this.pos < this.max) {
 			char ch = this.charsToProcess[this.pos];
+			//是字符
 			if (isAlphabetic(ch)) {
+				//提取一个字符串
 				lexIdentifier();
 			}
 			else {
@@ -158,10 +194,12 @@ class Tokenizer {
 							pushPairToken(TokenKind.SELECT_FIRST);
 						}
 						else {
+							//乘幂
 							pushCharToken(TokenKind.POWER);
 						}
 						break;
 					case '!':
+						//不等于
 						if (isTwoCharToken(TokenKind.NE)) {
 							pushPairToken(TokenKind.NE);
 						}
@@ -169,27 +207,34 @@ class Tokenizer {
 							pushPairToken(TokenKind.PROJECT);
 						}
 						else {
+							//非
 							pushCharToken(TokenKind.NOT);
 						}
 						break;
 					case '=':
+						//相等
 						if (isTwoCharToken(TokenKind.EQ)) {
 							pushPairToken(TokenKind.EQ);
 						}
 						else {
+							//赋值
 							pushCharToken(TokenKind.ASSIGN);
 						}
 						break;
 					case '&':
+						// 双与
 						if (isTwoCharToken(TokenKind.SYMBOLIC_AND)) {
 							pushPairToken(TokenKind.SYMBOLIC_AND);
 						}
 						else {
+							// factory bean 引用
 							pushCharToken(TokenKind.FACTORY_BEAN_REF);
 						}
 						break;
 					case '|':
+						//不是双或
 						if (!isTwoCharToken(TokenKind.SYMBOLIC_OR)) {
+							//报错
 							raiseParseException(this.pos, SpelMessage.MISSING_CHARACTER, "|");
 						}
 						pushPairToken(TokenKind.SYMBOLIC_OR);
@@ -244,6 +289,7 @@ class Tokenizer {
 					case '9':
 						lexNumericLiteral(ch == '0');
 						break;
+						//空格直接跳过
 					case ' ':
 					case '\t':
 					case '\r':
@@ -340,21 +386,28 @@ class Tokenizer {
 	private void lexNumericLiteral(boolean firstCharIsZero) {
 		boolean isReal = false;
 		int start = this.pos;
+		//后一位字符.
 		char ch = this.charsToProcess[this.pos + 1];
+		//是否是16进制字符
 		boolean isHex = ch == 'x' || ch == 'X';
 
 		// deal with hexadecimal
+		//以0x开头
 		if (firstCharIsZero && isHex) {
 			this.pos = this.pos + 1;
 			do {
+				//提取0x后面的数字
 				this.pos++;
 			}
 			while (isHexadecimalDigit(this.charsToProcess[this.pos]));
+			//是否是l或者L
 			if (isChar('L', 'l')) {
+				//16进制Long类型常量
 				pushHexIntToken(subarray(start + 2, this.pos), true, start, this.pos);
 				this.pos++;
 			}
 			else {
+				//16进制int类型常量
 				pushHexIntToken(subarray(start + 2, this.pos), false, start, this.pos);
 			}
 			return;
@@ -364,6 +417,7 @@ class Tokenizer {
 
 		// Consume first part of number
 		do {
+			//提取数字
 			this.pos++;
 		}
 		while (isDigit(this.charsToProcess[this.pos]));
@@ -375,9 +429,11 @@ class Tokenizer {
 			int dotpos = this.pos;
 			// carry on consuming digits
 			do {
+				//提取小数点后面的数字
 				this.pos++;
 			}
 			while (isDigit(this.charsToProcess[this.pos]));
+			//数字末尾紧跟着.且后面不是数字
 			if (this.pos == dotpos + 1) {
 				// the number is something like '3.'. It is really an int but may be
 				// part of something like '3.toString()'. In this case process it as
@@ -400,6 +456,7 @@ class Tokenizer {
 			pushIntToken(subarray(start, endOfNumber), true, start, endOfNumber);
 			this.pos++;
 		}
+		// 数字e +/- 数字 (f/d) -->科学计数法
 		else if (isExponentChar(this.charsToProcess[this.pos])) {
 			isReal = true;  // if it wasn't before, it is now
 			this.pos++;
@@ -444,12 +501,17 @@ class Tokenizer {
 		}
 	}
 
+	/**
+	 * 词法分析器生成器
+	 */
 	private void lexIdentifier() {
 		int start = this.pos;
 		do {
 			this.pos++;
 		}
+		//[a-z,A-Z] |[0-9] | _ | $
 		while (isIdentifier(this.charsToProcess[this.pos]));
+		//满足条件的字符数组
 		char[] subarray = subarray(start, this.pos);
 
 		// Check if this is the alternative (textual) representation of an operator (see
@@ -575,6 +637,7 @@ class Tokenizer {
 		if (ch > 255) {
 			return false;
 		}
+		//二进制第三位是1
 		return (FLAGS[ch] & IS_ALPHA) != 0;
 	}
 

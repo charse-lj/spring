@@ -365,6 +365,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 				nodes.toArray(new SpelNodeImpl[0]));
 	}
 
+
 	// node : ((DOT dottedNode) | (SAFE_NAVI dottedNode) | nonDottedNode)+;
 	@Nullable
 	private SpelNodeImpl eatNode() {

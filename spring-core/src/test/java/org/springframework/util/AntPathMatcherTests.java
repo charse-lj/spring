@@ -61,6 +61,7 @@ class AntPathMatcherTests {
 		assertThat(pathMatcher.match("te??", "test")).isTrue();
 		assertThat(pathMatcher.match("?es?", "test")).isTrue();
 		assertThat(pathMatcher.match("tes?", "tes")).isFalse();
+		assertThat(pathMatcher.match("abc", "bc")).isFalse();
 		assertThat(pathMatcher.match("tes?", "testt")).isFalse();
 		assertThat(pathMatcher.match("tes?", "tsst")).isFalse();
 

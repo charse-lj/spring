@@ -632,7 +632,9 @@ public class GenericConversionService implements ConfigurableConversionService {
 				Class<?> candidate = hierarchy.get(i);
 				//如果是array,获取其中元素类型
 				candidate = (array ? candidate.getComponentType() : ClassUtils.resolvePrimitiveIfNecessary(candidate));
+				//父类
 				Class<?> superclass = candidate.getSuperclass();
+				//不能是空,不能是Object,不能是枚举
 				if (superclass != null && superclass != Object.class && superclass != Enum.class) {
 					addToClassHierarchy(i + 1, candidate.getSuperclass(), array, hierarchy, visited);
 				}

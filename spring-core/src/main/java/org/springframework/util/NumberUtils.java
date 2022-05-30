@@ -88,6 +88,7 @@ public abstract class NumberUtils {
 		if (targetClass.isInstance(number)) {
 			return (T) number;
 		}
+		//目标是Byte
 		else if (Byte.class == targetClass) {
 			long value = checkedLongValue(number, targetClass);
 			if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {

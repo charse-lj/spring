@@ -246,9 +246,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		//beanName是空，或者targetSourcedBeans不包含
 		if (!StringUtils.hasLength(beanName) || !this.targetSourcedBeans.contains(beanName)) {
 			if (this.advisedBeans.containsKey(cacheKey)) {
+				//advisedBeans：已经被通知了的（被代理了的）Bean~~~~  如果在这里面  也返回null
 				return null;
 			}
-			//是代理基础类:Advice,Pointcut,Advisor,AopInfrastructureBean
+			//是代理基础类:Advice,Pointcut,Advisor,AopInfrastructureBean --> 不需要代理
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
@@ -451,6 +452,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 		proxyFactory.setFrozen(this.freezeProxy);
 		if (advisorsPreFiltered()) {
+			// preFiltered：字段意思为：是否已为特定目标类筛选Advisor
 			proxyFactory.setPreFiltered(true);
 		}
 
@@ -495,6 +497,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected Advisor[] buildAdvisors(@Nullable String beanName, @Nullable Object[] specificInterceptors) {
 		// Handle prototypes correctly...
+		// 解析interceptorNames而来得Advisor数组~~~
 		Advisor[] commonInterceptors = resolveInterceptorNames();
 
 		List<Object> allInterceptors = new ArrayList<>();
@@ -517,6 +520,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		Advisor[] advisors = new Advisor[allInterceptors.size()];
+		// 把每一个Advisor都用advisorAdapterRegistry.wrap()包装一下~~~~
+		// 注意wrap方法，默认只支持那三种类型的Advice转换为Advisor的~~~
 		for (int i = 0; i < allInterceptors.size(); i++) {
 			advisors[i] = this.advisorAdapterRegistry.wrap(allInterceptors.get(i));
 		}

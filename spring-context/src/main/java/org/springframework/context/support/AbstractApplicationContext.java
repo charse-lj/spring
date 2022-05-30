@@ -547,8 +547,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
-			// Prepare this context for refreshing.
-			//容器刷新前的准备，设置上下文状态，获取属性，验证必要的属性等
+			/*
+			 * Prepare this context for refreshing.
+			 * 前戏
+			 * 1.设置容器的启动时间
+			 * 2.设置活跃状态为true
+			 * 3.设置关闭状态为false
+			 * 4.获取Environment对象,并加载当前系统的属性值到该对象中
+			 * 5.准备监听器和事件的集合对象,默认为空集合
+			 */
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
@@ -557,7 +564,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
-			// 对 BeanFactory 进行各种功能填充
+			// 对 BeanFactory设置具体属性值
 			prepareBeanFactory(beanFactory);
 
 			try {
@@ -577,6 +584,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//RequiredAnnotationBeanPostProcessor(处理被@Required注解修饰的方法)
 				//CommonAnnotationBeanPostProcessor(处理@PreDestroy、@PostConstruct、@Resource等多个注解的作用)等。
 				//注册拦截 bean 创建的处理器，这里只是注册，真正的调用是在 getBean 时候
+				//实例化前的准备工作 开始
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -595,12 +603,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//注册监听器，并且广播early application events,也就是早期的事件
 				registerListeners();
 
+				//实例化前的准备工作 结束
 				// Instantiate all remaining (non-lazy-init) singletons.
 				//非常重要。。。实例化所有剩余的（非懒加载）单例Bean。（也就是我们自己定义的那些Bean们）
 				//比如invokeBeanFactoryPostProcessors方法中根据各种注解解析出来的类，在这个时候都会被初始化  扫描的 @Bean之类的
 				//实例化的过程各种BeanPostProcessor开始起作用~~~~~~~~~~~~~~
 				//容器内所有的单例Bean们： 有的是提前经历过getBean()被提前实例化了，有的是直接addSingleton()方法直接添加的,自己@Bean进去的目前都仅仅存在于Bean定义信息内，还并没有真正的实例化
 				//创建所有非懒加载的单例类（并invoke BeanPostProcessors）。这一步可谓和我们开发者打交道最多的，我们自定义的Bean绝大都是在这一步被初始化的，包括依赖注入等等~
+				//实例化
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.

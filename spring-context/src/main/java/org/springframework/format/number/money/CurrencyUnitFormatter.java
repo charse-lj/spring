@@ -43,4 +43,3 @@ public class CurrencyUnitFormatter implements Formatter<CurrencyUnit> {
 	}
 
 }
-FormattingConversionService

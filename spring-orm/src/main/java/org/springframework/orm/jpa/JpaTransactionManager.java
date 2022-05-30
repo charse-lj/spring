@@ -776,6 +776,7 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 
 		private final int timeout;
 
+		// 指示资源事务，尤其是事务性资源是否准备好进行本地优化
 		private final boolean localResource;
 
 		public JpaTransactionDefinition(TransactionDefinition targetDefinition, int timeout, boolean localResource) {

@@ -140,6 +140,9 @@ class ConfigurationClassParser {
 
 	private final ConditionEvaluator conditionEvaluator;
 
+	/**
+	 * 所有的解析过的class
+	 */
 	private final Map<ConfigurationClass, ConfigurationClass> configurationClasses = new LinkedHashMap<>();
 
 	private final Map<String, ConfigurationClass> knownSuperclasses = new HashMap<>();
@@ -266,9 +269,11 @@ class ConfigurationClassParser {
 			}
 		}
 
-		// Recursively process the configuration class and its superclass hierarchy.
-		// 请注意此处：while递归，只要方法不返回null，就会一直do下去~~~~~~~
+		//Recursively process the configuration class and its superclass hierarchy.
+		//请注意此处：while递归，只要方法不返回null，就会一直do下去~~~~~~~
 		//深度优先遍历
+		//无论是内部类、外部类、引入类(@Import)、普通类最终都会变成ConfigurationClass
+		//父类会作为SourceClass去配置子类,父类中的内容会合并到子类中
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
 			//核心方法
@@ -358,7 +363,6 @@ class ConfigurationClassParser {
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
 				// 这一步非常重要：如果被扫描的Bean定义信息，还是属于@Configuration的配置组件，那就继续调用本类的parse方法，进行递归解析==============
-				// 所以我们在进行包扫描的时候，也是会扫描到@Configuration并且进行解析的。。。
 				for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
 					if (bdCand == null) {
@@ -465,7 +469,7 @@ class ConfigurationClassParser {
 					//入栈 --> 外层Class,暂存
 					this.importStack.push(configClass);
 					try {
-						//内部的SourceClass -> candidate 变成 ConfigurationClass,内部的由外部引入,解析内部时,往成员变量 Set<ConfigurationClass> importedBy中添加外部Class
+						//内部类的ConfigurationClass中设置了外部类的ConfigurationClass,除此外,解析内部类方式不变
 						processConfigurationClass(candidate.asConfigClass(configClass), filter);
 					}
 					finally {
@@ -1199,6 +1203,10 @@ class ConfigurationClassParser {
 			return result;
 		}
 
+		/**
+		 * 获取对象上注解.
+		 * @return .
+		 */
 		public Set<SourceClass> getAnnotations() {
 			Set<SourceClass> result = new LinkedHashSet<>();
 			if (this.source instanceof Class) {

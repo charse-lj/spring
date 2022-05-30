@@ -298,8 +298,6 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
 
 				// 此处为扫描的Bean，为ScannedGenericBeanDefinition，所以肯定为true
-				// 因此进来，执行postProcessBeanDefinition（对Bean定义信息做）   如下详解
-				// 注意：只是添加些默认的Bean定义信息，并不是执行后置处理器~~~
 				if (candidate instanceof AbstractBeanDefinition) {
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}

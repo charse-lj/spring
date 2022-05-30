@@ -296,6 +296,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 */
 	void setFactoryMethodName(@Nullable String factoryMethodName);
 
+
 	/**
 	 * Return a factory method, if any.
 	 */

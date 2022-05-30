@@ -40,6 +40,19 @@ import org.springframework.lang.Nullable;
  * @see PlatformTransactionManager#getTransaction(TransactionDefinition)
  * @see org.springframework.transaction.support.DefaultTransactionDefinition
  * @see org.springframework.transaction.interceptor.TransactionAttribute
+ *
+ *
+ * class A{
+ *   methodA(){
+ *   //逻辑处理
+ *   b.methodB();
+ *   //逻辑处理
+ *  }
+ * }
+ * class B{
+ *  methodB();
+ * }
+ *
  */
 public interface TransactionDefinition {
 
@@ -48,6 +61,10 @@ public interface TransactionDefinition {
 	 * Analogous to the EJB transaction attribute of the same name.
 	 * <p>This is typically the default setting of a transaction definition,
 	 * and typically defines a transaction synchronization scope.
+	 *
+	 * 如果存在一个事务，则支持当前事务。如果没有事务则开启一个新的事务
+	 * 当A.methodA()和B.methodB()都打上REQUIRED的事务标志，执行A.methodA()方法的时候，看到上下文没有事务，会新建一个事务，当执行到b.methodB()的时候，发现上下文已经有事务了，则不会新建事务，用A.methodA()新建的那个事务
+	 * 如果b.methodB()执行成功，a.methodA()执行失败，那么b.methodB()和a.methodA()都会回滚（用的都是a.methodA()的事务）
 	 */
 	int PROPAGATION_REQUIRED = 0;
 
@@ -69,6 +86,9 @@ public interface TransactionDefinition {
 	 * "synchronization on actual transaction").
 	 * @see org.springframework.transaction.support.AbstractPlatformTransactionManager#setTransactionSynchronization
 	 * @see org.springframework.transaction.support.AbstractPlatformTransactionManager#SYNCHRONIZATION_ON_ACTUAL_TRANSACTION
+	 *
+	 * 如果存在一个事务，支持当前事务。如果没有事务，则非事务的执行
+	 * 当B.methodB()打上PROPAGATION_SUPPORTS的事务标志，执行A.methodA()方法，当执行到b.methodB()的时候，会检查上下文有没有事务，如果A.methodA()有事务，则b.methodB()沿用该事务，反之b.methodB()就以非事物的方式执行
 	 */
 	int PROPAGATION_SUPPORTS = 1;
 
@@ -77,6 +97,9 @@ public interface TransactionDefinition {
 	 * exists. Analogous to the EJB transaction attribute of the same name.
 	 * <p>Note that transaction synchronization within a {@code PROPAGATION_MANDATORY}
 	 * scope will always be driven by the surrounding transaction.
+	 *
+	 * 如果已经存在一个事务，支持当前事务。如果没有一个活动的事务，则抛出异常;MANDATORY是强制的，命令的意思，放在这里就是强制需要一个事务。
+	 * 当B.methodB()打上PROPAGATION_MANDATORY的事务标志，执行A.methodA()方法，当执行到b.methodB()的时候，会检查上下文有没有事务，如果A.methodA()有事务，则b.methodB()沿用该事务，如果没有，则会抛出异常
 	 */
 	int PROPAGATION_MANDATORY = 2;
 
@@ -92,6 +115,11 @@ public interface TransactionDefinition {
 	 * transaction synchronizations. Existing synchronizations will be suspended
 	 * and resumed appropriately.
 	 * @see org.springframework.transaction.jta.JtaTransactionManager#setTransactionManager
+	 *
+	 * 创建一个新的事务，如果存在，暂停当前事务
+	 * 当B.methodB()打上PROPAGATION_REQUIRES_NEW的事务标志，执行A.methodA()方法，当执行到b.methodB()的时候，会检查上下文有没有事务，如果A.methodA()有事务，则会挂起A.methodA()的事务，新建一个属于b.methodB()的事务，当b.methodB()的事务执行结束的时候，则会唤醒A.methodA()的事务。
+	 *
+	 * 和PROPAGATION_REQUIRED的差别在于回滚，当b.methodB()的事务提交后，A.methodA()执行失败，只会回滚A.methodA不会回滚b.methodB()，当b.methodB()执行失败，异常被A.methodA()方法catch到的话，A.methodA()事务不会回滚
 	 */
 	int PROPAGATION_REQUIRES_NEW = 3;
 
@@ -107,6 +135,10 @@ public interface TransactionDefinition {
 	 * {@code PROPAGATION_NOT_SUPPORTED} scope. Existing synchronizations
 	 * will be suspended and resumed appropriately.
 	 * @see org.springframework.transaction.jta.JtaTransactionManager#setTransactionManager
+	 *
+	 * 总是非事务地执行，并挂起任何存在的事务
+	 *
+	 * 当B.methodB()打上PROPAGATION_NOT_SUPPORTED的事务标志，执行A.methodA()方法，当执行到b.methodB()的时候，会检查上下文有没有事务，如果A.methodA()有事务，则会挂起A.methodA()的事务，当执行完b.methodB()方法的时候，A.methodA()方法继续以事务的方式执行
 	 */
 	int PROPAGATION_NOT_SUPPORTED = 4;
 
@@ -115,6 +147,9 @@ public interface TransactionDefinition {
 	 * exists. Analogous to the EJB transaction attribute of the same name.
 	 * <p>Note that transaction synchronization is <i>not</i> available within a
 	 * {@code PROPAGATION_NEVER} scope.
+	 *
+	 *  总是非事务地执行，如果存在一个活动事务
+	 *  当B.methodB()打上PROPAGATION_NEVER的事务标志，执行A.methodA()方法，当执行到b.methodB()的时候，会检查上下文有没有事务,如果有事务，则抛出异常，如果没有则以非事务执行
 	 */
 	int PROPAGATION_NEVER = 5;
 
@@ -128,14 +163,25 @@ public interface TransactionDefinition {
 	 * when working on a JDBC 3.0 driver. Some JTA providers might support
 	 * nested transactions as well.
 	 * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
+	 *
+	 * 如果当前事务存在，则在嵌套事务内执行
+	 * 当B.methodB()打上 PROPAGATION_REQUIRED的事务标志，执行A.methodA()方法，当执行到b.methodB()的时候，如果A.methodA()方法有事务，则会创建一个依赖于当前事务的嵌套事务，如果 b.methodB()执行失败，只会回滚 b.methodB()，不会回滚A.methodA()，只有当A.methodA()执行完成后才会提交b.methodB()的事务，因为嵌套事务不能单独提交；如果A.methodA()回滚了，则会导致内部嵌套事务的回滚。如果A.methodA()方法没有事务，就会新建一个事务；
 	 */
 	int PROPAGATION_NESTED = 6;
 
 
 	/**
+	 *
+	 *  事务隔离级别
+	 *  虚幻读 :一个事务读到了另一个事务已经提交的 insert 的数据导致多次查询结果不一致
+	 *  不可重复读 :一个事务读到了另一个事务已经提交的 update 的数据导致多次查询结果不一致.
+	 *  脏读:一个事务读到了另一个事务的未提交的数据
+	 *
 	 * Use the default isolation level of the underlying datastore.
 	 * All other levels correspond to the JDBC isolation levels.
 	 * @see java.sql.Connection
+	 *
+	 * 使用底层数据存储的默认隔离级别
 	 */
 	int ISOLATION_DEFAULT = -1;
 
@@ -147,6 +193,8 @@ public interface TransactionDefinition {
 	 * If any of the changes are rolled back, the second transaction will have
 	 * retrieved an invalid row.
 	 * @see java.sql.Connection#TRANSACTION_READ_UNCOMMITTED
+	 *
+	 * 这是事务最低的隔离级别，它充许别外一个事务可以看到这个事务未提交的数据。这种隔离级别会产生脏读，不可重复读和幻读
 	 */
 	int ISOLATION_READ_UNCOMMITTED = 1;  // same as java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
 
@@ -156,6 +204,8 @@ public interface TransactionDefinition {
 	 * <p>This level only prohibits a transaction from reading a row
 	 * with uncommitted changes in it.
 	 * @see java.sql.Connection#TRANSACTION_READ_COMMITTED
+	 *
+	 * 证一个事务修改的数据提交后才能被另外一个事务读取。另外一个事务不能读取该事务未提交的数据。这种事务隔离级别可以避免脏读出现，但是可能会出现不可重复读和幻像读
 	 */
 	int ISOLATION_READ_COMMITTED = 2;  // same as java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
@@ -167,6 +217,8 @@ public interface TransactionDefinition {
 	 * a second transaction alters the row, and the first transaction re-reads the row,
 	 * getting different values the second time (a "non-repeatable read").
 	 * @see java.sql.Connection#TRANSACTION_REPEATABLE_READ
+	 *
+	 * 这种事务隔离级别可以防止脏读，不可重复读。但是可能出现幻像读
 	 */
 	int ISOLATION_REPEATABLE_READ = 4;  // same as java.sql.Connection.TRANSACTION_REPEATABLE_READ;
 
@@ -180,6 +232,9 @@ public interface TransactionDefinition {
 	 * re-reads for the same condition, retrieving the additional "phantom" row
 	 * in the second read.
 	 * @see java.sql.Connection#TRANSACTION_SERIALIZABLE
+	 *
+	 * 最可靠的事务隔离级别
+	 * 事务被处理为顺序执行
 	 */
 	int ISOLATION_SERIALIZABLE = 8;  // same as java.sql.Connection.TRANSACTION_SERIALIZABLE;
 

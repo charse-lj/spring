@@ -33,6 +33,8 @@ package org.springframework.transaction;
  * @see TransactionStatus
  * @see TransactionDefinition#PROPAGATION_NESTED
  * @see java.sql.Savepoint
+ *
+ * 定义了SavePoint接口，提供在一个更细粒度的事务控制机制。当设置了一个保存点后，可以rollback到该保存点处的状态，而不是rollback整个事务
  */
 public interface SavepointManager {
 
@@ -62,6 +64,8 @@ public interface SavepointManager {
 	 * transaction does not support savepoints
 	 * @throws TransactionException if the rollback failed
 	 * @see java.sql.Connection#rollback(java.sql.Savepoint)
+	 *
+	 * 释放保存点
 	 */
 	void rollbackToSavepoint(Object savepoint) throws TransactionException;
 
@@ -76,6 +80,8 @@ public interface SavepointManager {
 	 * transaction does not support savepoints
 	 * @throws TransactionException if the release failed
 	 * @see java.sql.Connection#releaseSavepoint
+	 *
+	 * 释放保存点
 	 */
 	void releaseSavepoint(Object savepoint) throws TransactionException;
 

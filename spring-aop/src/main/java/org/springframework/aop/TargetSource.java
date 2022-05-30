@@ -34,6 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  *
  * TargetSource(目标源)是被代理的target(目标对象)实例的来源
+ * SpringAOP代理不直接代理target,而需要通过代理TargetSource，间接代理target-->一个proxy(代理对象)只能代理一个target,每次方法调用的目标也是唯一固定的target。但是,如果让proxy代理TargetSource,可以使得每次方法调用的target实例都不同
  */
 public interface TargetSource extends TargetClassAware {
 
@@ -80,7 +81,7 @@ public interface TargetSource extends TargetClassAware {
 	 * @param target object obtained from a call to {@link #getTarget()}
 	 * @throws Exception if the object can't be released
 	 *
-	 *  Spring在完目标bean之后会调用这个方法释放目标bean对象，对于一些需要池化的对象，这个方法是必须
+	 *  Spring在用完目标bean之后会调用这个方法释放目标bean对象，对于一些需要池化的对象，这个方法是必须
 	 *  要实现的，这个方法默认不进行任何处理
 	 */
 	void releaseTarget(Object target) throws Exception;

@@ -49,14 +49,26 @@ final class SimpleAnnotationMetadataReadingVisitor extends ClassVisitor {
 
 	private int access;
 
+	/**
+	 * 父类.
+	 */
 	@Nullable
 	private String superClassName;
 
+	/**
+	 * 父接口.
+	 */
 	private String[] interfaceNames = new String[0];
 
+	/**
+	 * 外部类名.
+	 */
 	@Nullable
 	private String enclosingClassName;
 
+	/**
+	 *
+	 */
 	private boolean independentInnerClass;
 
 	private Set<String> memberClassNames = new LinkedHashSet<>(4);

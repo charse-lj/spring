@@ -238,6 +238,7 @@ public interface PropertyAccessor {
 	 * successfully updated.
 	 *
 	 * 未知或非法的值处理策略
+	 * pvs --> 为目标对象的某些属性设置值
 	 */
 	void setPropertyValues(PropertyValues pvs, boolean ignoreUnknown, boolean ignoreInvalid)
 			throws BeansException;

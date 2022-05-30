@@ -392,9 +392,12 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			candidates.clear();
 			// 如果registry中注册的bean的数量 大于 之前获得的数量,则意味着在解析过程中又新加入了很多,那么就需要对其进行解继续析
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
+				// 基于上面的扫描后,重新获取所有的bean name
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
+				//旧得的所谓数据源的bean name
 				Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
 				Set<String> alreadyParsedClasses = new HashSet<>();
+				//上次解析的所有bean name
 				for (ConfigurationClass configurationClass : alreadyParsed) {
 					alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());
 				}

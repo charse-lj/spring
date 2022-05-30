@@ -140,9 +140,7 @@ public class MethodParameter {
 	/**
 	 * Create a new {@code MethodParameter} for the given method, with nesting level 1.
 	 * @param method the Method to specify a parameter for
-	 * @param parameterIndex the index of the parameter: -1 for the method
-	 * return type; 0 for the first method parameter; 1 for the second method
-	 * parameter, etc.
+	 * @param parameterIndex the index of the parameter: -1 for the method return type; 0 for the first method parameter; 1 for the second method parameter, etc.
 	 * 方法: 修饰符 返回值 方法名(参数列表)
 	 *  -1:方法返回值,0:参数列表第一个参数...（类推）
 	 */
@@ -160,11 +158,12 @@ public class MethodParameter {
 	 * (typically 1; e.g. in case of a List of Lists, 1 would indicate the
 	 * nested List, whereas 2 would indicate the element of the nested List)
 	 *
-	 *  nestingLevel 如果参数列表是一个List<T>,1代表List,2代表T
+	 *  nestingLevel 如果参数是一个List<T>,1代表List,2代表T
 	 */
 	public MethodParameter(Method method, int parameterIndex, int nestingLevel) {
 		Assert.notNull(method, "Method must not be null");
 		this.executable = method;
+		// 校验参数索引.
 		this.parameterIndex = validateIndex(method, parameterIndex);
 		this.nestingLevel = nestingLevel;
 	}
@@ -288,6 +287,8 @@ public class MethodParameter {
 	/**
 	 * Return the {@link Parameter} descriptor for method/constructor parameter.
 	 * @since 5.0
+	 *
+	 * jdk中参数对象.
 	 */
 	public Parameter getParameter() {
 		if (this.parameterIndex < 0) {
@@ -422,9 +423,11 @@ public class MethodParameter {
 	}
 
 	/**
-	 *
-	 * @param nestingLevel .
-	 * @param typeIndex .
+	 * List<List<Map<String,Integer>>>
+	 *  |    |    |    |      |
+	 * 1:1  2:1  3:1  4:1    4:2 --> 4:1和4:2不能同时存在
+	 * @param nestingLevel 嵌套的深度.
+	 * @param typeIndex 类型索引.
 	 * @return .
 	 */
 	private MethodParameter nested(int nestingLevel, @Nullable Integer typeIndex) {
@@ -503,6 +506,7 @@ public class MethodParameter {
 	 */
 	@Deprecated
 	void setContainingClass(Class<?> containingClass) {
+		//子类
 		this.containingClass = containingClass;
 		this.parameterType = null;
 	}
@@ -559,8 +563,7 @@ public class MethodParameter {
 				paramType = (method != null ?
 						(KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(getContainingClass()) ?
 						KotlinDelegate.getGenericReturnType(method) : method.getGenericReturnType()) : void.class);
-			}
-			else {
+			} else {
 				//该方法的所有参数类型
 				Type[] genericParameterTypes = this.executable.getGenericParameterTypes();
 				//参数下标
@@ -605,11 +608,16 @@ public class MethodParameter {
 	 */
 	public Class<?> getNestedParameterType() {
 		if (this.nestingLevel > 1) {
+			//参数的泛型类型
 			Type type = getGenericParameterType();
 			for (int i = 2; i <= this.nestingLevel; i++) {
+				//参数化类型
 				if (type instanceof ParameterizedType) {
+					//参数化类型的的真实类型参数
 					Type[] args = ((ParameterizedType) type).getActualTypeArguments();
+					//获取嵌套深度对应的类型索引
 					Integer index = getTypeIndexForLevel(i);
+					//如果没有,取最后一个
 					type = args[index != null ? index : args.length - 1];
 				}
 				// TODO: Object.class if unresolvable

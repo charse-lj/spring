@@ -91,8 +91,13 @@ final class ByteBufferConverter implements ConditionalGenericConverter {
 		boolean byteBufferTarget = targetType.isAssignableTo(BYTE_BUFFER_TYPE);
 		if (source instanceof ByteBuffer) {
 			ByteBuffer buffer = (ByteBuffer) source;
+			// 源是ByteBuffer,目标是ByteBuffer --> 从源直接复制
+			// 源是ByteBuffer,目标是byte[] --> 获取源中剩余内容
+			// 源是byte[],目标targetType --> 交给conversionService
 			return (byteBufferTarget ? buffer.duplicate() : convertFromByteBuffer(buffer, targetType));
 		}
+		// 目标是ByteBuffer,源是byte[] --> 构建一个ByteBuffer
+		// 目标是ByteBuffer,源不是byte[] --> 交给conversionService
 		if (byteBufferTarget) {
 			return convertToByteBuffer(source, sourceType);
 		}
@@ -102,6 +107,7 @@ final class ByteBufferConverter implements ConditionalGenericConverter {
 
 	@Nullable
 	private Object convertFromByteBuffer(ByteBuffer source, TypeDescriptor targetType) {
+		//获取ByteBuffer源中内容
 		byte[] bytes = new byte[source.remaining()];
 		source.get(bytes);
 

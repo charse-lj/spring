@@ -40,6 +40,8 @@ public interface TransactionAttribute extends TransactionDefinition {
 	 * <p>This may be used for choosing a corresponding transaction manager
 	 * to process this specific transaction.
 	 * @since 3.0
+	 *
+	 * 返回与此事务属性关联的限定符值
 	 */
 	@Nullable
 	String getQualifier();

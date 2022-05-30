@@ -121,7 +121,6 @@ class ConfigurationClassBeanDefinitionReader {
 		TrackedConditionEvaluator trackedConditionEvaluator = new TrackedConditionEvaluator();
 
 		// 遍历处理参数configurationModel中的每个配置类
-		// 这里需要特别注意的是，此环境下，这里size不是1，而是2（rootConfig和helloServiceImpl）
 		// 因为对于parser来说，只要是@Component都是一个组件（配置文件），只是是Lite模式而已
 		// 因此我们也是可以在任意一个@Component标注的类上使用@Bean向里面注册Bean的，相当于采用的Lite模式。只是我们一般不会去这么干而已，毕竟要职责单一
 		for (ConfigurationClass configClass : configurationModel) {
@@ -194,7 +193,7 @@ class ConfigurationClassBeanDefinitionReader {
 		configBeanDef.setScope(scopeMetadata.getScopeName());
 		//生成新configBeanName
 		String configBeanName = this.importBeanNameGenerator.generateBeanName(configBeanDef, this.registry);
-		//为beanDefinition设置通长的注解属性
+		//为beanDefinition设置常用的注解属性
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(configBeanDef, metadata);
 
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(configBeanDef, configBeanName);
@@ -516,7 +515,7 @@ class ConfigurationClassBeanDefinitionReader {
 
 			Boolean skip = this.skipped.get(configClass);
 			if (skip == null) {
-				//之前没解析过
+				//被导入的
 				if (configClass.isImported()) {
 					//该configClass是作为某个ConfigurationClass的子部分
 					boolean allSkipped = true;

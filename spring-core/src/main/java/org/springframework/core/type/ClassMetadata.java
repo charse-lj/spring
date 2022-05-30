@@ -30,7 +30,7 @@ import org.springframework.lang.Nullable;
  *
  * 注解上的注解，Spring将其定义为元注解(meta-annotation),如 @Component标注在 @Service上，@Component就被称作为元注解。后面我们就将注解的注解称为元注解。
  *
- * ClassMetadata：对Class的抽象和适配
+ * ClassMetadata：类的元数据,是对Class的抽象和适配
  */
 public interface ClassMetadata {
 

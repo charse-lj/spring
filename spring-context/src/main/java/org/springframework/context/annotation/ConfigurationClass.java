@@ -48,6 +48,9 @@ import org.springframework.util.ClassUtils;
  */
 final class ConfigurationClass {
 
+	/**
+	 * 特定类上的注解元数据.
+	 */
 	private final AnnotationMetadata metadata;
 
 	private final Resource resource;
@@ -70,6 +73,7 @@ final class ConfigurationClass {
 
 	/**
 	 * 用Map保存着部分@Import 导入进来的资源们~
+	 * @Import(xx.class) --> xx.class 实现了ImportBeanDefinitionRegistrar
 	 */
 	private final Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> importBeanDefinitionRegistrars =
 			new LinkedHashMap<>();
@@ -82,6 +86,8 @@ final class ConfigurationClass {
 	 * @param metadataReader reader used to parse the underlying {@link Class}
 	 * @param beanName must not be {@code null}
 	 * @see ConfigurationClass#ConfigurationClass(Class, ConfigurationClass)
+	 *
+	 * ASM
 	 */
 	public ConfigurationClass(MetadataReader metadataReader, String beanName) {
 		Assert.notNull(beanName, "Bean name must not be null");
@@ -95,8 +101,9 @@ final class ConfigurationClass {
 	 * using the {@link Import} annotation or automatically processed as a nested
 	 * configuration class (if importedBy is not {@code null}).
 	 * @param metadataReader reader used to parse the underlying {@link Class}
-	 * @param importedBy the configuration class importing this one or {@code null}
+	 * @param importedBy the configuration class importing this one or {@code null} 导入该metadataReader的带有@Configuration的类
 	 * @since 3.1.1
+	 *
 	 */
 	public ConfigurationClass(MetadataReader metadataReader, @Nullable ConfigurationClass importedBy) {
 		this.metadata = metadataReader.getAnnotationMetadata();

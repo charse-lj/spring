@@ -71,6 +71,9 @@ import org.springframework.lang.Nullable;
  * @author Vladislav Kisel
  * @since 16.07.2003
  *
+ * Ant风格（Ant Style）用于URL、目录地址、包名,较于普通的字符串具有很强的规律性：标准的分段式。因此，使用轻量级Ant风格表达式作匹配模式
+ * AntPathMatcher默认使用/作为分隔符。你可根据实际情况在构造时自行指定分隔符（如windows是\，Lunux是/，包名是.）
+ *
  * 1.?（匹配任何单字符）
  * 2.*（匹配0或者任意数量的字符）
  * 3.**（匹配0或者更多的目录）
@@ -97,9 +100,12 @@ public class AntPathMatcher implements PathMatcher {
 	//区分大小写
 	private boolean caseSensitive = true;
 
-	//
+	//去除空格
 	private boolean trimTokens = false;
 
+	/**
+	 * 缓存pattern
+	 */
 	@Nullable
 	private volatile Boolean cachePatterns;
 
@@ -138,6 +144,7 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 	/**
+	 * 是否忽略大小写
 	 * Specify whether to perform pattern matching in a case-sensitive fashion.
 	 * <p>Default is {@code true}. Switch this to {@code false} for case-insensitive matching.
 	 * @since 4.2
@@ -147,6 +154,7 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 	/**
+	 * 是否需要去除token path或者pattern的空白
 	 * Specify whether to trim tokenized paths and patterns.
 	 * <p>Default is {@code false}.
 	 */
@@ -177,6 +185,11 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 
+	/**
+	 * 是否是Ant表达式.
+	 * @param path the path to check
+	 * @return
+	 */
 	@Override
 	public boolean isPattern(@Nullable String path) {
 		if (path == null) {
@@ -185,9 +198,11 @@ public class AntPathMatcher implements PathMatcher {
 		boolean uriVar = false;
 		for (int i = 0; i < path.length(); i++) {
 			char c = path.charAt(i);
+			//包含* 、?
 			if (c == '*' || c == '?') {
 				return true;
 			}
+			//{} 必须成对,才返回true
 			if (c == '{') {
 				uriVar = true;
 				continue;
@@ -199,6 +214,12 @@ public class AntPathMatcher implements PathMatcher {
 		return false;
 	}
 
+	/**
+	 * 判断path是否匹配Ant.
+	 * @param pattern the pattern to match against
+	 * @param path the path to test
+	 * @return
+	 */
 	@Override
 	public boolean match(String pattern, String path) {
 		return doMatch(pattern, path, true, null);
@@ -220,40 +241,49 @@ public class AntPathMatcher implements PathMatcher {
 	protected boolean doMatch(String pattern, @Nullable String path, boolean fullMatch,
 			@Nullable Map<String, String> uriTemplateVariables) {
 
-		//判断此时path和pattern是否都是以分隔符"/"开头，或者path为null，就直接返回false
+		//判1. path和pattern是否都是以相同分隔符"/"开头
+		//判2. path为null，就直接返回false
 		if (path == null || path.startsWith(this.pathSeparator) != pattern.startsWith(this.pathSeparator)) {
 			return false;
 		}
 
-		//以分隔符分隔pattern的结果
+
+		// pattern分词.
 		String[] pattDirs = tokenizePattern(pattern);
-		//需要完全匹配
+		//完全匹配、大小写敏感、潜在不匹配
 		if (fullMatch && this.caseSensitive && !isPotentialMatch(path, pattDirs)) {
 			return false;
 		}
 
+		// path分词.
 		String[] pathDirs = tokenizePath(path);
 		int pattIdxStart = 0;
 		int pattIdxEnd = pattDirs.length - 1;
 		int pathIdxStart = 0;
 		int pathIdxEnd = pathDirs.length - 1;
 
+		//正向遍历pattern分词和path分词,遇到**停止
 		// Match all elements up to the first **
 		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
+			//对应索引的pattern 分词
 			String pattDir = pattDirs[pattIdxStart];
-			//遇到模式串中的**就跳过，因为**表示匹配0个或多个目录
+			//pattern分词是**,直接跳出循环，因为**表示匹配0个或多个目录
 			if ("**".equals(pattDir)) {
 				break;
 			}
+			//
 			if (!matchStrings(pattDir, pathDirs[pathIdxStart], uriTemplateVariables)) {
 				return false;
 			}
+			//pattern分词索引+1
 			pattIdxStart++;
+			//path分词索引+1
 			pathIdxStart++;
 		}
-		//path耗尽的情况
+		//正向path分词耗尽
 		if (pathIdxStart > pathIdxEnd) {
-			//如果此时正好patt也耗尽，就比较结尾字符是否相同，相同就返回true，说明匹配上了
+			//pattern分词耗尽
+			// 比较结尾字符是否相同，相同就返回true，说明匹配上了
 			// Path is exhausted, only match if rest of pattern is * or **'s
 			if (pattIdxStart > pattIdxEnd) {
 				return (pattern.endsWith(this.pathSeparator) == path.endsWith(this.pathSeparator));
@@ -262,32 +292,32 @@ public class AntPathMatcher implements PathMatcher {
 			if (!fullMatch) {
 				return true;
 			}
-			//path耗尽，但是patt没耗尽，正好pattIdxStart == pattIdxEnd，也就是还剩一个字符串，如果这个字符串equals("*")，就是*的话，说明也匹配
-			//pattern："/aa/bb/*"和path："/aa/bb/"的情况
+			// pattern分词没耗尽
+			// 此时如果 pattIdxStart == pattIdxEnd，即pattern分词还剩一个，如果这个字符串为*,且path以'/'结尾,匹配
+			// pattern："/aa/bb/*"和path："/aa/bb/"的情况
 			if (pattIdxStart == pattIdxEnd && pattDirs[pattIdxStart].equals("*") && path.endsWith(this.pathSeparator)) {
 				return true;
 			}
-			//path耗尽，但是patt没耗尽，不止一个，判断如果都是**，也是匹配的 //pattern："/aa/bb/**/**"和path："/aa/bb/"的情况
+			// pattern分词剩余多个，判断如果都是**，匹配
+			// pattern："/aa/bb/**/**"和path："/aa/bb/"的情况
 			for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
 				if (!pattDirs[i].equals("**")) {
 					return false;
 				}
 			}
 			return true;
-		}
-		else if (pattIdxStart > pattIdxEnd) {
+		} else if (pattIdxStart > pattIdxEnd) {
 			//pattern耗尽，但path没有耗尽，肯定不能相匹配了
 			// String not exhausted, but pattern is. Failure.
 			return false;
-		}
-		else if (!fullMatch && "**".equals(pattDirs[pattIdxStart])) {
+		} else if (!fullMatch && "**".equals(pattDirs[pattIdxStart])) {
+			// pattern 没耗尽,path也没耗尽,不要求完全匹配,且含有 **
 			// Path start definitely matches due to "**" part in pattern.
 			return true;
 		}
 
+		//反向遍历pattern分词和path分词,遇到**停止
 		// up to last '**'
-		//从前往后循环进行匹配，遇到“**”停止，匹配不上就结束算法返回false
-		//pattern："/aa/**/bb/cc"和path："/aa/bb/cc"的情况,此时从后往前遍历对比，遇到"**"退出
 		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			String pattDir = pattDirs[pattIdxEnd];
 			if (pattDir.equals("**")) {
@@ -297,14 +327,16 @@ public class AntPathMatcher implements PathMatcher {
 			if (!matchStrings(pattDir, pathDirs[pathIdxEnd], uriTemplateVariables)) {
 				return false;
 			}
+			//pattern分词索引-1
 			pattIdxEnd--;
+			//path分词索引-1
 			pathIdxEnd--;
 		}
-		//path耗尽的情况
+		//反向path耗尽的情况
 		if (pathIdxStart > pathIdxEnd) {
 			// String is exhausted
 			for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
-				//如果有不为"**"的返回false说明不匹配
+				//剩余的pattern分词如果不为"**",说明不匹配
 				if (!pattDirs[i].equals("**")) {
 					return false;
 				}
@@ -325,17 +357,17 @@ public class AntPathMatcher implements PathMatcher {
 		pathIdxStart=1
 		pathIdxEnd=4
 		 */
-
+		//正向path分词没耗尽，反向path分词也没耗尽
 		while (pattIdxStart != pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			int patIdxTmp = -1;
-			//从第一个**的位置+1开始遍历,遇到"**"停止，但是将**的位置索引记录在patIdxTmp中
+			//遍历剩余的pattern分词,遇到"**"停止
 			for (int i = pattIdxStart + 1; i <= pattIdxEnd; i++) {
 				if (pattDirs[i].equals("**")) {
 					patIdxTmp = i;
 					break;
 				}
 			}
-			//将记录的patIdxTmp(第一个**的位置+1) 与当前patt位置进行比较，相等的话就说明遇到了**/**的情况，然后continue跳出此次循环再循环一次，用于一直排除连续**的情况
+			//将记录的patIdxTmp(第一个**的位置+1) 与当前patt位置进行比较，相等的话就说明遇到了**/**的情况，然后continue跳出此次循环再循环一次，用于排除连续**的情况
 			if (patIdxTmp == pattIdxStart + 1) {
 				// '**/**' situation, so skip one
 				pattIdxStart++;
@@ -343,18 +375,19 @@ public class AntPathMatcher implements PathMatcher {
 			}
 			// Find the pattern between padIdxStart & padIdxTmp in str between
 			// strIdxStart & strIdxEnd
-			//计算剩下的patt数量
+			//计算对应的两个**间间隔的pattern分词数量
 			int patLength = (patIdxTmp - pattIdxStart - 1);
-			//计算剩下的path数量
+			//计算两个**间的path分词数量
 			int strLength = (pathIdxEnd - pathIdxStart + 1);
 			int foundIdx = -1;
 
 			strLoop:
-			//循环剩下的patt（其实patLength始终为1），和path，直到找到path中能和patt中ff相匹配的，此时返回path中ff的位置
+			//循环剩下的pattern分词（其实patLength始终为1），和path，直到找到path中能和patt中ff相匹配的，此时返回path中ff的位置
 			//平移量i,比较量j
 			for (int i = 0; i <= strLength - patLength; i++) {
 				for (int j = 0; j < patLength; j++) {
 					String subPat = pattDirs[pattIdxStart + j + 1];
+					//path会随着i进行平移
 					String subStr = pathDirs[pathIdxStart + i + j];
 					if (!matchStrings(subPat, subStr, uriTemplateVariables)) {
 						continue strLoop;
@@ -384,38 +417,45 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 	/**
-	 *
+	 * 潜在匹配?
 	 * @param path 路径.
-	 * @param pattDirs pattern的token集合
+	 * @param pattDirs pattern的分词集合
 	 * @return
 	 */
 	private boolean isPotentialMatch(String path, String[] pattDirs) {
 		//不需要trim() token
 		if (!this.trimTokens) {
+			//path的索引位置
 			int pos = 0;
 			for (String pattDir : pattDirs) {
-				//跳过的分隔符长度
+				//跳过的path中分隔符长度
 				int skipped = skipSeparator(path, pos, this.pathSeparator);
-				//现在的位置
+				//path现在的位置
 				pos += skipped;
-				//跳过的部分
+				//跳过的path中字符部分
 				skipped = skipSegment(path, pos, pattDir);
-				//遇到通配符或者字符有不相等
+				//skipped = pattDir.length() 是完全相同.
 				if (skipped < pattDir.length()) {
+					// skipped>0,表示字符不完全相同,存在潜在匹配.
+					// skipped=0,表示字符完全不同,可是首字符是通配符,存在潜在匹配.
 					return (skipped > 0 || (pattDir.length() > 0 && isWildcardChar(pattDir.charAt(0))));
 				}
 				pos += skipped;
 			}
 		}
+		//完全相同
 		return true;
 	}
 
 	/**
-	 * 可以跳过的部分
+	 * 可以跳过的字符
 	 * @param path 路径
-	 * @param pos 当前遍历到的path中的位置
-	 * @param prefix pattern.
-	 * @return 可向前跳过的字符长度.
+	 * @param pos path的其实位置.
+	 * @param prefix pattern的分词.
+	 * @return 可向前跳过的字符长度
+	 * 当返回值为0时的两种情况
+	 * 1.path和prefix没有一个字符相同
+	 * 2.prefix 首字符是通配符
 	 */
 	private int skipSegment(String path, int pos, String prefix) {
 		int skipped = 0;
@@ -433,7 +473,7 @@ public class AntPathMatcher implements PathMatcher {
 			if (currPos >= path.length()) {
 				return 0;
 			}
-			//当前遍历位置对应的字符和c相等
+			//当前path的currPos索引位置的字符和pattern分词 i索引位置处的字符相同
 			if (c == path.charAt(currPos)) {
 				skipped++;
 			}
@@ -441,6 +481,13 @@ public class AntPathMatcher implements PathMatcher {
 		return skipped;
 	}
 
+	/**
+	 *
+	 * @param path 待查询的路径.
+	 * @param pos 起始位置.
+	 * @param separator 分隔符.
+	 * @return 跳过的分隔符长度.
+	 */
 	private int skipSeparator(String path, int pos, String separator) {
 		int skipped = 0;
 		//path从pos+skipped位置开始是否以separator开头
@@ -468,12 +515,14 @@ public class AntPathMatcher implements PathMatcher {
 	 */
 	protected String[] tokenizePattern(String pattern) {
 		String[] tokenized = null;
+		//是否支持缓存pattern
 		Boolean cachePatterns = this.cachePatterns;
 		if (cachePatterns == null || cachePatterns.booleanValue()) {
+			//支持,缓存取
 			tokenized = this.tokenizedPatternCache.get(pattern);
 		}
 		if (tokenized == null) {
-			//以分隔符分隔pattern
+			//分词.
 			tokenized = tokenizePath(pattern);
 			if (cachePatterns == null && this.tokenizedPatternCache.size() >= CACHE_TURNOFF_THRESHOLD) {
 				// Try to adapt to the runtime situation that we're encountering:
@@ -483,6 +532,7 @@ public class AntPathMatcher implements PathMatcher {
 				return tokenized;
 			}
 			if (cachePatterns == null || cachePatterns.booleanValue()) {
+				// 缓存
 				this.tokenizedPatternCache.put(pattern, tokenized);
 			}
 		}
@@ -490,6 +540,7 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 	/**
+	 * 分词
 	 * Tokenize the given path into parts, based on this matcher's settings.
 	 * @param path the path to tokenize
 	 * @return the tokenized path parts
@@ -1013,8 +1064,10 @@ public class AntPathMatcher implements PathMatcher {
 	 */
 	private static class PathSeparatorPatternCache {
 
+		//单通配符
 		private final String endsOnWildCard;
 
+		//双通配符
 		private final String endsOnDoubleWildCard;
 
 		public PathSeparatorPatternCache(String pathSeparator) {

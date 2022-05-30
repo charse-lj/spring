@@ -73,6 +73,12 @@ class ComponentScanAnnotationParser {
 	}
 
 
+	/**
+	 *
+	 * @param componentScan 属性集合.
+	 * @param declaringClass 需要排除的类.
+	 * @return
+	 */
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);

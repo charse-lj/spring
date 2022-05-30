@@ -70,6 +70,8 @@ public class DefaultTransactionAttribute extends DefaultTransactionDefinition im
 	 * @see #setTimeout
 	 * @see #setReadOnly
 	 * @see #setName
+	 *
+	 * 你自己也可以自定义一个TransactionAttribute other 来替换掉一些默认行为
 	 */
 	public DefaultTransactionAttribute(TransactionAttribute other) {
 		super(other);
@@ -181,6 +183,8 @@ public class DefaultTransactionAttribute extends DefaultTransactionDefinition im
 	 * (a corner case). For declarative transactions, we expect checked exceptions to be
 	 * intentionally declared as business exceptions, leading to a commit by default.
 	 * @see org.springframework.transaction.support.TransactionTemplate#execute
+	 *
+	 * 可以清晰的看到：默认只回滚RuntimeException 或者 Error(比如OOM这种)
 	 */
 	@Override
 	public boolean rollbackOn(Throwable ex) {

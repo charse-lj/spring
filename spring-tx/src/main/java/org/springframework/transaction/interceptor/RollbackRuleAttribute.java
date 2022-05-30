@@ -105,6 +105,8 @@ public class RollbackRuleAttribute implements Serializable{
 	 * <p>{@code 0} means {@code ex} matches exactly. Returns
 	 * {@code -1} if there is no match. Otherwise, returns depth with the
 	 * lowest depth winning.
+	 *
+	 * 遍历该异常继承体系,由子到父,深度递增
 	 */
 	public int getDepth(Throwable ex) {
 		return getDepth(ex.getClass(), 0);

@@ -41,11 +41,19 @@ import org.springframework.util.ClassUtils;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 2.5
+ *
+ * 对目标的注解信息进行过滤,看是否含有annotationType,
  */
 public class AnnotationTypeFilter extends AbstractTypeHierarchyTraversingFilter {
 
+	/**
+	 * 注解元素类型
+	 */
 	private final Class<? extends Annotation> annotationType;
 
+	/**
+	 * 是否考虑元注解 -->注解的注解
+	 */
 	private final boolean considerMetaAnnotations;
 
 
@@ -94,10 +102,16 @@ public class AnnotationTypeFilter extends AbstractTypeHierarchyTraversingFilter 
 		return this.annotationType;
 	}
 
+	/**
+	 *
+	 * @param metadataReader 目标元数据读取器.
+	 * @return .
+	 */
 	@Override
 	protected boolean matchSelf(MetadataReader metadataReader) {
 		AnnotationMetadata metadata = metadataReader.getAnnotationMetadata();
 		return metadata.hasAnnotation(this.annotationType.getName()) ||
+				// 如果考虑目标的元注解,检索目标的元注解,是否含有annotationType类型注解
 				(this.considerMetaAnnotations && metadata.hasMetaAnnotation(this.annotationType.getName()));
 	}
 

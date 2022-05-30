@@ -26,14 +26,25 @@ import org.springframework.lang.Nullable;
  * @since 3.0
  */
 class Token {
-
+	/**
+	 * 分词种类
+	 */
 	TokenKind kind;
 
+	/**
+	 * 分词数据
+	 */
 	@Nullable
 	String data;
 
+	/**
+	 * 分词数据在整个数据的开始位置
+	 */
 	int startPos;  // index of first character
 
+	/**
+	 * 分词数据在整个数据的结束位置
+	 */
 	int endPos;  // index of char after the last character
 
 

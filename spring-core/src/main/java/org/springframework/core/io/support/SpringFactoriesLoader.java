@@ -145,7 +145,7 @@ public final class SpringFactoriesLoader {
 
 		result = new HashMap<>();
 		try {
-			// 读取到资源文件，遍历
+			// 获取classLoader下所有 META-INF/spring.factories资源文件，遍历
 			Enumeration<URL> urls = classLoader.getResources(FACTORIES_RESOURCE_LOCATION);
 			while (urls.hasMoreElements()) {
 				URL url = urls.nextElement();

@@ -106,6 +106,7 @@ final class AttributeMethods {
 				foundNestedAnnotation = true;
 			}
 			ReflectionUtils.makeAccessible(method);
+			// 可能抛出异常的索引
 			this.canThrowTypeNotPresentException[i] = (type == Class.class || type == Class[].class || type.isEnum());
 		}
 		this.hasDefaultValueMethod = foundDefaultValueMethod;
