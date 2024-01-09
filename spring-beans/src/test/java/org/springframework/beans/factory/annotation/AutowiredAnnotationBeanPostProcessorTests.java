@@ -212,6 +212,7 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 
 	@Test
 	public void testExtendedResourceInjectionWithSkippedOverriddenMethods() {
+		assertThat(OverriddenExtendedResourceInjectionBean.class.getDeclaredMethods().length).as("supper class is static class not public static class").isEqualTo(6);
 		RootBeanDefinition annotatedBd = new RootBeanDefinition(OverriddenExtendedResourceInjectionBean.class);
 		bf.registerBeanDefinition("annotatedBean", annotatedBd);
 		TestBean tb = new TestBean();

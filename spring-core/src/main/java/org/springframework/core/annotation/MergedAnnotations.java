@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 import org.springframework.lang.Nullable;
 
-/**
+ /**
  * Provides access to a collection of merged annotations, usually obtained
  * from a source such as a {@link Class} or {@link Method}.
  *
@@ -125,6 +125,14 @@ import org.springframework.lang.Nullable;
  * There is no support for retrieving plain Java annotations with this API;
  * please use standard Java reflection or Spring's {@link AnnotationUtils}
  * for simple annotation retrieval purposes.
+  *
+  * 类上存在 @AnnotationA 与 @AnnotationB 两个注解，这两个注解又都有一大堆的元注解。此时 @AnnotationA 与 @AnnotationB 则各表示一个 MergedAnnotation，而 MergedAnnotations 表示 Foo.class 上的两个MergedAnnotation
+  *
+  * MergedAnnotations提供了四个比较重要的静态方法
+  * get：用于从聚合注解中获取某个指定类型的合并注解；
+  * stream：用于从聚合注解中获取多个指定类型的合并注解构成的 stream 流；
+  * isPresent：某个类型的合并注解是否在该聚合中存在；
+  * from：解析某个带有注解的元素获得对应的聚合注解；
  *
  * @author Phillip Webb
  * @author Sam Brannen
@@ -172,12 +180,13 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 */
 	boolean isDirectlyPresent(String annotationType);
 
-	/**
+ 	/**
 	 * Get the {@linkplain MergedAnnotationSelectors#nearest() nearest} matching
 	 * annotation or meta-annotation of the specified type, or
 	 * {@link MergedAnnotation#missing()} if none is present.
 	 * @param annotationType the annotation type to get
 	 * @return a {@link MergedAnnotation} instance
+	 *
 	 */
 	<A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType);
 
@@ -326,6 +335,7 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
 			RepeatableContainers repeatableContainers) {
 
+		//3、配置注解过滤器：过滤属于`java`、`javax`或者`org.springframework.lang`包的注解
 		return TypeMappedAnnotations.from(element, searchStrategy, repeatableContainers, AnnotationFilter.PLAIN);
 	}
 
@@ -438,16 +448,16 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 */
 	enum SearchStrategy {
 
-		/**
+ 		/**
 		 * Find only directly declared annotations, without considering
 		 * {@link Inherited @Inherited} annotations and without searching
 		 * superclasses or implemented interfaces.
 		 *
-		 * 该元素的直接注解
+		 * 只查找元素上直接声明的注解，不包括通过@Inherited继承的注解
 		 */
 		DIRECT,
 
-		/**
+ 		/**
 		 * Find all directly declared annotations as well as any
 		 * {@link Inherited @Inherited} superclass annotations. This strategy
 		 * is only really useful when used with {@link Class} types since the
@@ -455,21 +465,21 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * {@linkplain AnnotatedElement annotated elements}. This strategy does
 		 * not search implemented interfaces.
 		 *
-		 * 该元素的直接注解+所有父类的可继承注解
+		 * 只查找元素直接声明或通过@Inherited继承的注解
 		 */
 		INHERITED_ANNOTATIONS,
 
-		/**
+  		/**
 		 * Find all directly declared and superclass annotations. This strategy
 		 * is similar to {@link #INHERITED_ANNOTATIONS} except the annotations
 		 * do not need to be meta-annotated with {@link Inherited @Inherited}.
 		 * This strategy does not search implemented interfaces.
 		 *
-		 * 该元素的直接注解+父类的所有直接注解,不包含接口
+		 * 查找元素直接注解或所有父类的直接注解,不包含接口
 		 */
 		SUPERCLASS,
 
-		/**
+ 		/**
 		 * Perform a full search of the entire type hierarchy, including
 		 * superclasses and implemented interfaces. Superclass annotations do
 		 * not need to be meta-annotated with {@link Inherited @Inherited}.
@@ -478,7 +488,7 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 */
 		TYPE_HIERARCHY,
 
-		/**
+ 		/**
 		 * Perform a full search of the entire type hierarchy on the source
 		 * <em>and</em> any enclosing classes. This strategy is similar to
 		 * {@link #TYPE_HIERARCHY} except that {@linkplain Class#getEnclosingClass()

@@ -249,10 +249,19 @@ final class SerializableTypeWrapper {
 	@SuppressWarnings("serial")
 	static class FieldTypeProvider implements TypeProvider {
 
+		/**
+		 * 属性名称.
+		 */
 		private final String fieldName;
 
+		/**
+		 * 声明该field的类
+		 */
 		private final Class<?> declaringClass;
 
+		/**
+		 * 属性
+		 */
 		private transient Field field;
 
 		public FieldTypeProvider(Field field) {
@@ -289,15 +298,30 @@ final class SerializableTypeWrapper {
 	@SuppressWarnings("serial")
 	static class MethodParameterTypeProvider implements TypeProvider {
 
+		/**
+		 * 方法名称.
+		 */
 		@Nullable
 		private final String methodName;
 
+		/**
+		 * 方法参数类型.
+		 */
 		private final Class<?>[] parameterTypes;
 
+		/**
+		 * 声明该方法的类
+		 */
 		private final Class<?> declaringClass;
 
+		/**
+		 * 方法参数在方法中的索引
+		 */
 		private final int parameterIndex;
 
+		/**
+		 * 方法参数对象.
+		 */
 		private transient MethodParameter methodParameter;
 
 		public MethodParameterTypeProvider(MethodParameter methodParameter) {

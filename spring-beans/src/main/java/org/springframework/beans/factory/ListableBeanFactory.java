@@ -182,6 +182,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 *  既会通过BeanDefinition做判断，也会通过FactoryBean的getObjectType方法判断
 	 *  includeNonSingletons：是否能包含非单例的Bean
 	 *  allowEagerInit：是否允许对”懒加载"的Bean进行实例化,这里主要针对FactoryBean，因为FactoryBean默认是懒加载的，为了推断它的类型可能会进行初始化。
+	 *  主要是解决FactoryBean的情况。若为false，只会去检查FactoryBean本身,若为true，FactoryBean本身和它的产生的对象都会被检查匹配
 	 */
 	String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit);
 
@@ -283,7 +284,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 */
 	<T> Map<String, T> getBeansOfType(@Nullable Class<T> type) throws BeansException;
 
-	/**
+ 	/**
 	 * Return the bean instances that match the given object type (including
 	 * subclasses), judging from either bean definitions or the value of
 	 * {@code getObjectType} in the case of FactoryBeans.

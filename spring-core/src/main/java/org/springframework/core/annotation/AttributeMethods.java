@@ -92,7 +92,9 @@ final class AttributeMethods {
 		this.annotationType = annotationType;
 		this.attributeMethods = attributeMethods;
 		this.canThrowTypeNotPresentException = new boolean[attributeMethods.length];
+		//方法有默认值
 		boolean foundDefaultValueMethod = false;
+		//方法返回一个注解(注解数组)
 		boolean foundNestedAnnotation = false;
 		for (int i = 0; i < attributeMethods.length; i++) {
 			Method method = this.attributeMethods[i];

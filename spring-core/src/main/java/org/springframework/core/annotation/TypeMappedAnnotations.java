@@ -50,6 +50,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Nullable
 	private final Object source;
 
+	/**
+	 * 注解源 element，即要被查找的元素
+	 */
 	@Nullable
 	private final AnnotatedElement element;
 
@@ -62,10 +65,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Nullable
 	private final Annotation[] annotations;
 
+	/**
+	 * 重复容器注解 repeatableContainers，即@Repeatable 指定的对应容器注解；
+	 */
 	private final RepeatableContainers repeatableContainers;
 
-	/**
-	 * 查找到源上注解的过滤器.
+ 	/**
+	 * 注解过滤器,用于过滤注解
 	 */
 	private final AnnotationFilter annotationFilter;
 
@@ -159,9 +165,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			@Nullable Predicate<? super MergedAnnotation<A>> predicate,
 			@Nullable MergedAnnotationSelector<A> selector) {
 
+		// 1、若该注解无法通过过滤，即该注解若属于 `java.lang`、`org.springframework.lang` 包，则直接返回
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
 		}
+		// 2、使用MergedAnnotationFinder扫描并获取注解
 		MergedAnnotation<A> result = scan(annotationType,
 				new MergedAnnotationFinder<>(annotationType, predicate, selector));
 		return (result != null ? result : MergedAnnotation.missing());
@@ -259,10 +267,12 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Nullable
 	private <C, R> R scan(C criteria, AnnotationsProcessor<C, R> processor) {
 		if (this.annotations != null) {
+			// a.若指定了查找的注解，则扫描这些注解以及其元注解的层级结构
 			R result = processor.doWithAnnotations(criteria, 0, this.source, this.annotations);
 			return processor.finish(result);
 		}
 		if (this.element != null && this.searchStrategy != null) {
+			// b.未指定查找的注解，则直接扫描元素以及其父类、父接口的层级结构
 			return AnnotationsScanner.scan(criteria, this.element, this.searchStrategy, processor);
 		}
 		return null;
@@ -272,10 +282,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
 			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
-		//过滤下
+		// 该元素若符合下述任一情况，则直接返回空注解：
+		// a.被处理的元素属于java包、被java包中的对象声明，或者就是Ordered.class
+		// b.只查找元素直接声明的注解，但是元素本身没有声明任何注解
+		// c.查找元素的层级结构，但是元素本身没有任何层级结构
+		// d.元素是桥接方法
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
 		}
+		//4、创建聚合注解：TypeMappedAnnotations
 		return new TypeMappedAnnotations(element, searchStrategy, repeatableContainers, annotationFilter);
 	}
 
@@ -400,13 +415,17 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	private class MergedAnnotationFinder<A extends Annotation>
 			implements AnnotationsProcessor<Object, MergedAnnotation<A>> {
 
+		// 要查找的注解类型
 		private final Object requiredType;
 
+		// 过滤器
 		@Nullable
 		private final Predicate<? super MergedAnnotation<A>> predicate;
 
+		// 选择器，作用类似于比较器，用于从两个注解中获得一个权重更高的注解实例
 		private final MergedAnnotationSelector<A> selector;
 
+		// 最终的返回结构
 		@Nullable
 		private MergedAnnotation<A> result;
 
@@ -415,6 +434,8 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 			this.requiredType = requiredType;
 			this.predicate = predicate;
+			// 若不指定选择器，则默认使用MergedAnnotationSelectors.Nearest
+			// 当存在两个相同注解式，选择层级更低的，即离根注解更近的注解
 			this.selector = (selector != null ? selector : MergedAnnotationSelectors.nearest());
 		}
 
@@ -430,6 +451,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 				@Nullable Object source, Annotation[] annotations) {
 
 			for (Annotation annotation : annotations) {
+				// 找到至少一个不被过滤的、并且可以合成合并注解的注解实例
 				if (annotation != null && !annotationFilter.matches(annotation)) {
 					MergedAnnotation<A> result = process(type, aggregateIndex, source, annotation);
 					if (result != null) {
@@ -444,21 +466,29 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private MergedAnnotation<A> process(
 				Object type, int aggregateIndex, @Nullable Object source, Annotation annotation) {
 
+			// 1、若要查找的注解可重复，则先找到其容器注解，然后获取容器中的可重复注解并优先处理
 			Annotation[] repeatedAnnotations = repeatableContainers.findRepeatedAnnotations(annotation);
 			if (repeatedAnnotations != null) {
 				return doWithAnnotations(type, aggregateIndex, source, repeatedAnnotations);
 			}
+			// 2、解析注解与注解的映射关系
 			AnnotationTypeMappings mappings = AnnotationTypeMappings.forAnnotationType(
 					annotation.annotationType(), repeatableContainers, annotationFilter);
+			// 遍历已解析好的AnnotationTypeMapping实例，并找到相同注解类型的AnnotationTypeMapping接着将其封装为MergedAnnotation
+			// 然后继续下一次寻找，若还有匹配的结果，则根据选择器从中找到更合适的结果，最终返回一个最匹配结
 			for (int i = 0; i < mappings.size(); i++) {
 				AnnotationTypeMapping mapping = mappings.get(i);
 				if (isMappingForType(mapping, annotationFilter, this.requiredType)) {
+					// 3、尝试创建一个合并注解
 					MergedAnnotation<A> candidate = TypeMappedAnnotation.createIfPossible(
 							mapping, source, annotation, aggregateIndex, IntrospectionFailureLogger.INFO);
+					// 4、若合并注解创建成功，且过滤器匹配通过
 					if (candidate != null && (this.predicate == null || this.predicate.test(candidate))) {
+						// a.合并注解是最匹配的结果
 						if (this.selector.isBestCandidate(candidate)) {
 							return candidate;
 						}
+						// b.使用选择器从上一结果和当前结果中选择一个权重更高的注解，做为新的结果
 						updateLastResult(candidate);
 					}
 				}
@@ -529,19 +559,24 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	private static class Aggregate {
 
+		//继承体系的层级
 		private final int aggregateIndex;
 
 		@Nullable
 		private final Object source;
 
+		//注解.
 		private final List<Annotation> annotations;
 
+		//对应注解
 		private final AnnotationTypeMappings[] mappings;
 
 		Aggregate(int aggregateIndex, @Nullable Object source, List<Annotation> annotations) {
+			//层级.
 			this.aggregateIndex = aggregateIndex;
 			this.source = source;
 			this.annotations = annotations;
+			//注解解析结果.
 			this.mappings = new AnnotationTypeMappings[annotations.size()];
 			for (int i = 0; i < annotations.size(); i++) {
 				this.mappings[i] = AnnotationTypeMappings.forAnnotationType(annotations.get(i).annotationType());
@@ -582,10 +617,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Nullable
 		private final Object requiredType;
 
+		//注解封装列表
 		private final List<Aggregate> aggregates;
 
+		//游标
 		private int aggregateCursor;
 
+		//
 		@Nullable
 		private int[] mappingCursors;
 

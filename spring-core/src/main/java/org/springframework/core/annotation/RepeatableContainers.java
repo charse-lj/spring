@@ -27,7 +27,7 @@ import java.lang.annotation.Repeatable;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-/**
+ /**
  * Strategy used to determine annotations that act as containers for other
  * annotations. The {@link #standardRepeatables()} method provides a default
  * strategy that respects Java's {@link Repeatable @Repeatable} support and
@@ -38,13 +38,27 @@ import java.util.Map;
  *
  * <p>To completely disable repeatable support use {@link #none()}.
  * <p>
- * 可重复注解容器
+ * 可重复注解容器 -->表示某个可重复注解与他的某个容器注解之间的对应关系
+  *
+  * 可重复的注解
+  * @Repeatable(RepeatableContainerAnnotation.class)
+  * @interface RepeatableAnnotation {}
+  *
+  * 可重复注解的容器注解
+  * @interface RepeatableContainerAnnotation {
+  *     RepeatableAnnotation[] value() default {};
+  * }
+  *
+  * 所有重复注解都收集到容器中.
  *
  * @author Phillip Webb
  * @since 5.2
  */
 public abstract class RepeatableContainers {
 
+	 /**
+	  * 一个树结构，通过 parent 变量持有当前容器注解与容器注解的容器注解的对应关系。
+	  */
 	@Nullable
 	private final RepeatableContainers parent;
 
@@ -81,6 +95,7 @@ public abstract class RepeatableContainers {
 		if (this.parent == null) {
 			return null;
 		}
+		// 返回父节点的findRepeatedAnnotations
 		return this.parent.findRepeatedAnnotations(annotation);
 	}
 
@@ -186,12 +201,12 @@ public abstract class RepeatableContainers {
 		private static Object computeRepeatedAnnotationsMethod(Class<? extends Annotation> annotationType) {
 			//获取所注解类的所有注解属性方法
 			AttributeMethods methods = AttributeMethods.forAnnotationType(annotationType);
-			//方法只有value()
+			//只有一个名为value的属性
 			if (methods.hasOnlyValueAttribute()) {
 				Method method = methods.get(0);
 				//方法返回值
 				Class<?> returnType = method.getReturnType();
-				//必须是数组.
+				//返回值是可重复注解类型的数组，并且可重复注解上存在@Repeatable注解
 				if (returnType.isArray()) {
 					//获取数组元素
 					Class<?> componentType = returnType.getComponentType();
@@ -213,16 +228,19 @@ public abstract class RepeatableContainers {
 	 */
 	private static class ExplicitRepeatableContainer extends RepeatableContainers {
 
-		/**
-		 * 含有@Repeatable注解的注解元素类
+ 		/**
+		 * 可重复的注解
 		 */
 		private final Class<? extends Annotation> repeatable;
 
-		/**
-		 * 包含重复注解的容器类
+ 		/**
+		 * 容器注解
 		 */
 		private final Class<? extends Annotation> container;
 
+		/**
+		 * 容器注解的value方法
+		 */
 		private final Method valueMethod;
 
 		ExplicitRepeatableContainer(@Nullable RepeatableContainers parent,
@@ -279,10 +297,12 @@ public abstract class RepeatableContainers {
 		@Override
 		@Nullable
 		Annotation[] findRepeatedAnnotations(Annotation annotation) {
+			// 若容器注解的value方法返回值就是可重复注解，说明容器注解就是该可重复注解的直接容器
 			if (this.container.isAssignableFrom(annotation.annotationType())) {
 				//在这个对象上执行方法.
 				return (Annotation[]) ReflectionUtils.invokeMethod(this.valueMethod, annotation);
 			}
+			// 否则说明存在嵌套结构，当前容器注解实际上放的也是一个容器注解，继续递归直到找到符合条件的容器注解为止
 			return super.findRepeatedAnnotations(annotation);
 		}
 

@@ -28,7 +28,7 @@ import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 
-/**
+ /**
  * Defines access to the annotations of a specific type ({@link AnnotationMetadata class}
  * or {@link MethodMetadata method}), in a form that does not necessarily require the
  * class-loading.
@@ -44,7 +44,7 @@ import org.springframework.util.MultiValueMap;
  * @see MethodMetadata
  *
  *
- * 什么叫注解元素(AnnotatedElement)？比如我们常见的Class、Method、Constructor、Parameter等等都属于它的子类,都属于注解元素
+ * 什么叫注解元素(AnnotatedElement)?比如我们常见的Class、Method、Constructor、Parameter等等都属于它的子类,都属于注解元素
  * 单理解：只要能在上面标注注解都属于这种元素
  * 这个接口提供了对注解统一的、便捷的访问
  */

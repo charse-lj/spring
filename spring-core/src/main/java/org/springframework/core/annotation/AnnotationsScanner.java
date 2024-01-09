@@ -138,19 +138,26 @@ abstract class AnnotationsScanner {
 			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor, @Nullable BiPredicate<C, Class<?>> classFilter) {
 
 		try {
+			//无继承体系
 			if (isWithoutHierarchy(source, searchStrategy)) {
 				return processElement(context, source, processor, classFilter);
 			}
+			//root类的所有直接注解+所有父类注解中标注了@Inherited注解的集合
 			Annotation[] relevant = null;
 			int remaining = Integer.MAX_VALUE;
+			//层级.
 			int aggregateIndex = 0;
 			Class<?> root = source;
-			while (source != null && source != Object.class && remaining > 0 &&
+			while (source != null && //非null
+					source != Object.class && //不是Object
+					remaining > 0 &&
 					!hasPlainJavaAnnotationsOnly(source)) {
+				//
 				R result = processor.doWithAggregate(context, aggregateIndex);
 				if (result != null) {
 					return result;
 				}
+				//是否被过滤.
 				if (isFiltered(source, context, classFilter)) {
 					continue;
 				}
@@ -158,33 +165,44 @@ abstract class AnnotationsScanner {
 				Annotation[] declaredAnnotations =
 						getDeclaredAnnotations(context, source, classFilter, true);
 				if (relevant == null && declaredAnnotations.length > 0) {
-					//root类的所有注解+所有父类注解中标注了@Inherited注解的集合
+					//root类的所有直接注解+所有父类注解中标注了@Inherited注解的集合
 					relevant = root.getAnnotations();
 					remaining = relevant.length;
 				}
+				//遍历当前类上直接注解
 				for (int i = 0; i < declaredAnnotations.length; i++) {
 					if (declaredAnnotations[i] != null) {
+						//标志位
 						boolean isRelevant = false;
+						//遍历root上所有注解(直接注解+继承注解)
 						for (int relevantIndex = 0; relevantIndex < relevant.length; relevantIndex++) {
+							//当前类直接注解 和 root上的注解相同
 							if (relevant[relevantIndex] != null &&
 									declaredAnnotations[i].annotationType() == relevant[relevantIndex].annotationType()) {
+								//设置标志位
 								isRelevant = true;
+								//对应位置置空
 								relevant[relevantIndex] = null;
+								//剩余次数
 								remaining--;
 								break;
 							}
 						}
-						//不在relevant中,即该注解未标注@Inherited，需要去除
+						//不在relevant中,即该不是root的上的直接注解或者注解未标注@Inherited，需要去除
 						if (!isRelevant) {
+							//对应位置置空
 							declaredAnnotations[i] = null;
 						}
 					}
 				}
+				//有结果,会直接返回.
 				result = processor.doWithAnnotations(context, aggregateIndex, source, declaredAnnotations);
 				if (result != null) {
 					return result;
 				}
+				//递归.
 				source = source.getSuperclass();
+				//层级+1
 				aggregateIndex++;
 			}
 		}
@@ -194,6 +212,18 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 *
+	 * @param context .
+	 * @param source 源类.
+	 * @param processor 处理类.
+	 * @param classFilter 类过滤器.
+	 * @param includeInterfaces 是否查找对象的接口.
+	 * @param includeEnclosing  是否查找对象内部类.
+	 * @return
+	 * @param <C>
+	 * @param <R>
+	 */
 	@Nullable
 	private static <C, R> R processClassHierarchy(C context, Class<?> source,
 			AnnotationsProcessor<C, R> processor, @Nullable BiPredicate<C, Class<?>> classFilter,
@@ -209,6 +239,7 @@ abstract class AnnotationsScanner {
 			boolean includeInterfaces, boolean includeEnclosing) {
 
 		try {
+			//短路操作.
 			R result = processor.doWithAggregate(context, aggregateIndex[0]);
 			if (result != null) {
 				return result;
@@ -216,6 +247,7 @@ abstract class AnnotationsScanner {
 			if (hasPlainJavaAnnotationsOnly(source)) {
 				return null;
 			}
+			//source类的直接注解.
 			Annotation[] annotations = getDeclaredAnnotations(context, source, classFilter, false);
 			result = processor.doWithAnnotations(context, aggregateIndex[0], source, annotations);
 			if (result != null) {
@@ -316,6 +348,7 @@ abstract class AnnotationsScanner {
 				return null;
 			}
 			boolean calledProcessor = false;
+			//顶级类.
 			if (sourceClass == rootMethod.getDeclaringClass()) {
 				result = processMethodAnnotations(context, aggregateIndex[0],
 					rootMethod, processor, classFilter);
@@ -376,13 +409,16 @@ abstract class AnnotationsScanner {
 
 		Method[] methods = baseTypeMethodsCache.get(baseType);
 		if (methods == null) {
+			//是否是接口.
 			boolean isInterface = baseType.isInterface();
-			methods = isInterface ? baseType.getMethods() : ReflectionUtils.getDeclaredMethods(baseType);
+			methods = isInterface ?
+					baseType.getMethods() //取接口所有方法
+					: ReflectionUtils.getDeclaredMethods(baseType); //非接口取声明的方法
 			int cleared = 0;
 			for (int i = 0; i < methods.length; i++) {
-				if ((!isInterface && Modifier.isPrivate(methods[i].getModifiers())) ||
+				if ((!isInterface && Modifier.isPrivate(methods[i].getModifiers())) || //非接口且不是private方法
 						hasPlainJavaAnnotationsOnly(methods[i]) ||
-						getDeclaredAnnotations(methods[i], false).length == 0) {
+						getDeclaredAnnotations(methods[i], false).length == 0) { //方法声明了注解.
 					methods[i] = null;
 					cleared++;
 				}
@@ -436,13 +472,18 @@ abstract class AnnotationsScanner {
 	private static <C, R> R processMethodAnnotations(C context, int aggregateIndex, Method source,
 			AnnotationsProcessor<C, R> processor, @Nullable BiPredicate<C, Class<?>> classFilter) {
 
+		 //获取方法上直接声明的注解对象
 		Annotation[] annotations = getDeclaredAnnotations(context, source, classFilter, false);
+		//处理.
 		R result = processor.doWithAnnotations(context, aggregateIndex, source, annotations);
 		if (result != null) {
 			return result;
 		}
+		//找到该类的桥方法.
 		Method bridgedMethod = BridgeMethodResolver.findBridgedMethod(source);
+		//不相同.
 		if (bridgedMethod != source) {
+			//获取桥方法的注解.
 			Annotation[] bridgedAnnotations = getDeclaredAnnotations(context, bridgedMethod, classFilter, true);
 			for (int i = 0; i < bridgedAnnotations.length; i++) {
 				if (ObjectUtils.containsElement(annotations, bridgedAnnotations[i])) {
@@ -572,18 +613,21 @@ abstract class AnnotationsScanner {
 		return false;
 	}
 
-	/**
+ 	/**
 	 *
 	 * @param annotatedElement 可注解的对象.
 	 * @return 是否是java的原生注解.
+	 * 由于 java 包下的代码都是标准库，自定义的元注解不可能加到源码中，因此只要类属于 java包，则我们实际上是可以认为它是不可能有符合 spring 语义的元注解的
 	 */
 	static boolean hasPlainJavaAnnotationsOnly(@Nullable Object annotatedElement) {
-		//类
+		//1.1 如果是类，则声明它不能是java包下的，或者Ordered.class
 		if (annotatedElement instanceof Class) {
 			return hasPlainJavaAnnotationsOnly((Class<?>) annotatedElement);
 		}
 		//属性
 		else if (annotatedElement instanceof Member) {
+			//((Member) annotatedElement).getDeclaringClass() --> 声明该Member的类
+			// 1.2 如果是类成员，则声明它的类不能是java包下的，或者Ordered.class
 			return hasPlainJavaAnnotationsOnly(((Member) annotatedElement).getDeclaringClass());
 		}
 		else {
@@ -613,16 +657,17 @@ abstract class AnnotationsScanner {
 		//类对象
 		if (source instanceof Class) {
 			Class<?> sourceClass = (Class<?>) source;
-			//是否有父类或者父接口
-			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class &&
-					sourceClass.getInterfaces().length == 0);
+			//无父
+			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class && //ture --> 无父类
+					sourceClass.getInterfaces().length == 0); //true --> 无父接口.
 
 			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ? noSuperTypes &&
 					sourceClass.getEnclosingClass() == null : noSuperTypes);
 		}
 		if (source instanceof Method) {
 			Method sourceMethod = (Method) source;
-			return (Modifier.isPrivate(sourceMethod.getModifiers()) ||
+			return (Modifier.isPrivate(sourceMethod.getModifiers()) || //方法是private
+					//声明该方法的类是否无继承体系.
 					isWithoutHierarchy(sourceMethod.getDeclaringClass(), searchStrategy));
 		}
 		return true;

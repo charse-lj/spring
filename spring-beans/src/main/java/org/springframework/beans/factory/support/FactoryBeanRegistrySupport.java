@@ -102,23 +102,22 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
-		//factory对象是单例的,并且所有单例对象名称容器singletonObjects中包含该beanName
-		if (factory.isSingleton() && containsSingleton(beanName)) {
-			// 获得DefaultSingletonBeanRegistry中的锁
+
+		if (factory.isSingleton() &&//factoryBean是单例
+				containsSingleton(beanName)) { //包含beanName这个单例对象.
 			synchronized (getSingletonMutex()) {
+				//缓存中获取.
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
-					//通过factoryBean对象获取bean
+					//调用factoryBean的getObject()方法获取对象
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
 					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
 					if (alreadyThere != null) {
 						object = alreadyThere;
-					}
-					else {
-						//支持后置处理
-						if (shouldPostProcess) {
+					} else {
+						if (shouldPostProcess) {//支持后置处理
 							//在创建过程中
 							if (isSingletonCurrentlyInCreation(beanName)) {
 								// Temporarily return non-post-processed object, not storing it yet..
@@ -139,9 +138,9 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 								afterSingletonCreation(beanName);
 							}
 						}
-						//查询该beanName是否在在单例对象beanName容器中
+						//该beanName存在单例对象
 						if (containsSingleton(beanName)) {
-							//在其中,将其缓存,缓存的结果是调用FactoryBeangetObject()之后的返回结果
+							//缓存
 							this.factoryBeanObjectCache.put(beanName, object);
 						}
 					}

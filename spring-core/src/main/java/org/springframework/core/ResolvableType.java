@@ -42,7 +42,7 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-/**
+  /**
  * Encapsulates a Java {@link java.lang.reflect.Type}, providing access to
  * {@link #getSuperType() supertypes}, {@link #getInterfaces() interfaces}, and
  * {@link #getGeneric(int...) generic parameters} along with the ability to ultimately
@@ -79,7 +79,11 @@ import org.springframework.util.StringUtils;
  * @see #forType(Type)
  * @see #forInstance(Object)
  * @see ResolvableTypeProvider
- * 将java的Type类型解析成ResolvableType,每个Type对应一个ResolvableType
+  *
+ * 1.ParameterizedType： 表示一种参数化的类型，比如Collection，即普通的泛型。
+  * 2.TypeVariable：是各种类型变量的公共父接口，就是泛型里面的类似T、E。
+  * 3.GenericArrayType：表示一种元素类型是参数化类型或者类型变量的数组类型，比如List<>[]，T[]这种。
+  * 4.WildcardType：代表一种通配符类型表达式，类似? super T这样的通配符表达式。
  */
 @SuppressWarnings("serial")
 public class ResolvableType implements Serializable {
@@ -96,7 +100,7 @@ public class ResolvableType implements Serializable {
 			new ConcurrentReferenceHashMap<>(256);
 
 
-	/**
+ 	/**
 	 * The underlying Java type being managed.
 	 * 类型type
 	 * 0)E
@@ -449,7 +453,7 @@ public class ResolvableType implements Serializable {
 		return as(Map.class);
 	}
 
-	/**
+ 	/**
 	 * Return this type as a {@link ResolvableType} of the specified class. Searches
 	 * {@link #getSuperType() supertype} and {@link #getInterfaces() interface}
 	 * hierarchies to find a match, returning {@link #NONE} if this type does not
@@ -461,6 +465,8 @@ public class ResolvableType implements Serializable {
 	 * @see #asMap()
 	 * @see #getSuperType()
 	 * @see #getInterfaces()
+	 *
+	 * 将当前类型转换为指定类型 查找继承体系
 	 */
 	public ResolvableType as(Class<?> type) {
 		if (this == NONE) {
@@ -488,15 +494,18 @@ public class ResolvableType implements Serializable {
 	 * @see #getInterfaces()
 	 */
 	public ResolvableType getSuperType() {
+		//解析后的类
 		Class<?> resolved = resolve();
 		if (resolved == null) {
 			return NONE;
 		}
 		try {
+			//该类的类型
 			Type superclass = resolved.getGenericSuperclass();
 			if (superclass == null) {
 				return NONE;
 			}
+			//父类有没有解析过.
 			ResolvableType superType = this.superType;
 			if (superType == null) {
 				superType = forType(superclass, this);
@@ -743,10 +752,12 @@ public class ResolvableType implements Serializable {
 					generics[i] = ResolvableType.forType(typeParams[i], this);
 				}
 			}
-			else if (this.type instanceof ParameterizedType) {
+			else if (this.type instanceof ParameterizedType) { //参数化类型
+				//真实的类型参数
 				Type[] actualTypeArguments = ((ParameterizedType) this.type).getActualTypeArguments();
 				generics = new ResolvableType[actualTypeArguments.length];
 				for (int i = 0; i < actualTypeArguments.length; i++) {
+					//遍历,解析
 					generics[i] = forType(actualTypeArguments[i], this.variableResolver);
 				}
 			}
@@ -1024,9 +1035,9 @@ public class ResolvableType implements Serializable {
 				return "?";
 			}
 		}
-		if (hasGenerics()) {
-			return this.resolved.getName() + '<' + StringUtils.arrayToDelimitedString(getGenerics(), ", ") + '>';
-		}
+//		if (hasGenerics()) {
+//			return this.resolved.getName() + '<' + StringUtils.arrayToDelimitedString(getGenerics(), ", ") + '>';
+//		}
 		return this.resolved.getName();
 	}
 
@@ -1418,6 +1429,7 @@ public class ResolvableType implements Serializable {
 	public static ResolvableType forType(@Nullable Type type, @Nullable ResolvableType owner) {
 		VariableResolver variableResolver = null;
 		if (owner != null) {
+			//变量解析器 --> 子类型
 			variableResolver = owner.asVariableResolver();
 		}
 		return forType(type, variableResolver);
@@ -1645,13 +1657,21 @@ public class ResolvableType implements Serializable {
 	}
 
 
-	/**
+ 	/**
 	 * Internal helper to handle bounds from {@link WildcardType WildcardTypes}.
+	 *
+	 * WildcardType：代表一种通配符类型表达式，类似? super T这样的通配符表达式。
 	 */
 	private static class WildcardBounds {
 
+		/**
+		 * 通配符类型.
+		 */
 		private final Kind kind;
 
+		/**
+		 *  通配符类型参数.
+		 */
 		private final ResolvableType[] bounds;
 
 		/**

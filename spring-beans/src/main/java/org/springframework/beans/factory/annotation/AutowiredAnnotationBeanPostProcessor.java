@@ -68,7 +68,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
-/**
+ /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor BeanPostProcessor}
  * implementation that autowires annotated fields, setter methods, and arbitrary
  * config methods. Such members to be injected are detected through annotations:
@@ -251,7 +251,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	}
 
 
-	/**
+ 	/**
 	 * postProcessMergedBeanDefinition 和 postProcessMergedBeanDefinition 处理字段或方法注入的场景。
 	 * postProcessMergedBeanDefinition 方法将标注 @Autowired 注入点（字段或方法）解析成元信息 InjectionMetadata，
 	 * postProcessMergedBeanDefinition 则根据元信息 InjectionMetadata 注入到 bean 中。

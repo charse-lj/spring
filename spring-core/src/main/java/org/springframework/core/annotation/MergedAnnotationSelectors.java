@@ -66,6 +66,7 @@ public abstract class MergedAnnotationSelectors {
 
 		@Override
 		public boolean isBestCandidate(MergedAnnotation<Annotation> annotation) {
+			// 若注解是否被元素直接声明
 			return annotation.getDistance() == 0;
 		}
 
@@ -73,6 +74,7 @@ public abstract class MergedAnnotationSelectors {
 		public MergedAnnotation<Annotation> select(
 				MergedAnnotation<Annotation> existing, MergedAnnotation<Annotation> candidate) {
 
+			// 若候选注解离元素的距离比当前注解更近，则返回候选注解，否则返回当前注解
 			if (candidate.getDistance() < existing.getDistance()) {
 				return candidate;
 			}
@@ -90,9 +92,11 @@ public abstract class MergedAnnotationSelectors {
 
 		@Override
 		public boolean isBestCandidate(MergedAnnotation<Annotation> annotation) {
+			// 若注解是否被元素直接声明
 			return annotation.getDistance() == 0;
 		}
 
+		// 若当前注解没有被元素直接声明，而候选注解被元素直接声明时返回候选注解，否则返回已有注解
 		@Override
 		public MergedAnnotation<Annotation> select(
 				MergedAnnotation<Annotation> existing, MergedAnnotation<Annotation> candidate) {

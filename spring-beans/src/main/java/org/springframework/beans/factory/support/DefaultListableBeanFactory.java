@@ -122,32 +122,38 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Whether to allow re-registration of a different definition with the same name.
+	 * 是否允许同名 bean 定义的从新注册，即同名bean定义，后面的注册能否覆盖之前的，默认是可以
 	 */
 	private boolean allowBeanDefinitionOverriding = true;
 
 	/**
 	 * Whether to allow eager class loading even for lazy-init beans.
+	 * 是否允许 eager class loading（立即加载） 包括对于 lazy-init beans，默认是允许
 	 */
 	private boolean allowEagerClassLoading = true;
 
 	/**
 	 * Optional OrderComparator for dependency Lists and arrays.
+	 * 可选的用于依赖集合和数组的顺序比较器
 	 */
 	@Nullable
 	private Comparator<Object> dependencyComparator;
 
 	/**
 	 * Resolver to use for checking if a bean definition is an autowire candidate.
+	 * 用于检测 Bean 是否有 自动注入请求
 	 */
 	private AutowireCandidateResolver autowireCandidateResolver = SimpleAutowireCandidateResolver.INSTANCE;
 
 	/**
 	 * Map from dependency type to corresponding autowired value.
+	 * 保存 依赖类型 和 依赖的对象 的map
 	 */
 	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
 
 	/**
 	 * Map of bean definition objects, keyed by bean name.
+	 * 保存BeanDefinition的对象的Map，key:bean的名字, value:定义BeanDefinition
 	 */
 	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
 
@@ -158,32 +164,38 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Map of singleton and non-singleton bean names, keyed by dependency type.
+	 * 保存key:依赖类型，value：单例和非单例 bean的名字
 	 */
 	private final Map<Class<?>, String[]> allBeanNamesByType = new ConcurrentHashMap<>(64);
 
 	/**
 	 * Map of singleton-only bean names, keyed by dependency type.
+	 * key:依赖类型，value:单例bean的名字
 	 */
 	private final Map<Class<?>, String[]> singletonBeanNamesByType = new ConcurrentHashMap<>(64);
 
 	/**
-	 * List of bean definition names, in registration order. beanDefinitionNames保存所有BeanDefinition的名字
+	 * List of bean definition names, in registration order.
+	 * 所有BeanDefinition的名字
 	 */
 	private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
 
 	/**
-	 * List of names of manually registered singletons, in registration order. 保存了所有singleton的BeanName
+	 * List of names of manually registered singletons, in registration order.
+	 * 手动注册单例bean的名字，按照注册顺序
 	 */
 	private volatile Set<String> manualSingletonNames = new LinkedHashSet<>(16);
 
 	/**
 	 * Cached array of bean definition names in case of frozen configuration.
+	 * 冻结配置时 提供的 definition名字的缓存数组
 	 */
 	@Nullable
 	private volatile String[] frozenBeanDefinitionNames;
 
 	/**
 	 * Whether bean definition metadata may be cached for all beans.
+	 * 是否允许缓存definition，以用于所有的bean，默认是否
 	 */
 	private volatile boolean configurationFrozen;
 
@@ -575,20 +587,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 *                             "factory-bean" reference) for the type check. Note that FactoryBeans need to be
 	 *                             eagerly initialized to determine their type: So be aware that passing in "true"
 	 *                             for this flag will initialize FactoryBeans and "factory-bean" references.
-	 *                             表示是否提前部分初始化 FactoryBean(为什么说是部分初始化？是因为只实例化 FactoryBean，而不进行属性注入）
-	 * @return 发生bd的合并
+	 * @return .
 	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		/*
 		 * 1. 查询的结果不使用缓存?是因为此时查询的结果可能不正确,原因很简单，因为该方法不会通过提前实例化 Bean 的方式获取其类型，只会根据 BeanDefinition 或 FactoryBean#getObjectType 获取其类型。如果不实例化对象，有些场景可能并不能获取对象的类型
-		 * 使用缓存的场景如下
-		 * 1.1 configurationFrozen表示是否冻结BeanDefinition，不允许修改，因此为false时,查询的结果可能有误
-		     一旦调用AbstractApplicationContext#finishBeanFactoryInitialization(beanFactory)则configurationFrozen=true;容器启动过程中会走if语句
-		   1.2 type=null，查找所有Bean?
-		 * 1.3 !allowEagerInit 表示不允许提前初始化FactoryBean，那就只能通过 FactoryBean 上的泛型来获取其类型了，也可能导致查询的结果不准确
-		*/
-		if (!isConfigurationFrozen() || type == null || !allowEagerInit) {
+		 */
+		if (!isConfigurationFrozen() ||  //configurationFrozen表示是否冻结BeanDefinition，不允许修改，因此为false时,查询的结果可能有误
+				type == null ||  //查找所有Bean?
+				!allowEagerInit) { //allowEagerInit --> 是否提前初始化factoryBean
 			return doGetBeanNamesForType(ResolvableType.forRawClass(type), includeNonSingletons, allowEagerInit);
 		}
 		// 2. 允许使用缓存，此时容器已经启动完成，bean已经加载，BeanDefinition不允许修改
@@ -605,7 +613,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return resolvedBeanNames;
 	}
 
-	/**
+ 	/**
 	 * 方法整体逻辑十分清晰，先查找 Spring 中注册的 BeanDefinition，再查找 Spring 托管的 Bean（即通过 registerSingleton 方法注册）。每种情况都先匹配 Bean，再匹配 FactoryBean
 	 * 注册的 BeanDefinition：通过 registerBeanDefinition 方法将 BeanDefinition 注册到容器中，大多数情况
 	 * isTypeMatch(beanName, type)：匹配 Bean，如果是 FactoryBean 会部分初始化来获取其类型。
@@ -616,13 +624,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 *
 	 * @param type                 需要的bean的类型 .
 	 * @param includeNonSingletons only singleton or not.
-	 * @param allowEagerInit       是否实例化懒加载的单例或者通过工厂方法(静态或者实例)创建的对象
+	 * @param allowEagerInit        是否提前初始化factoryBean
 	 * @return .
 	 */
 	private String[] doGetBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
 		List<String> result = new ArrayList<>();
 
 		// Check all bean definitions.
+		//检查所有的bd
 		for (String beanName : this.beanDefinitionNames) {
 			// Only consider bean as eligible if the bean name is not defined as alias for some other bean.
 			//beanName不能是别名.
@@ -631,44 +640,40 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 					// Only check bean definition if it is complete.
 					// 1.1 校验 BeanDefinition
-
-					/*Spring 如何判断能否从 BeanDefinition 获取其类型?
-					 *-->1:不能是抽象类，这点显而易见
-					 *-->2:allowEagerInit=true 表示可以提前初始化 FactoryBean。因为 FactoryBean 只有初始化才能通过 getObjectType 获取其类型。当然还有一种兜底的方案是 FactoryBean 上的泛型
-					 *-->3:判断 JVM 是否允许提前加载 mdb.beanClass，因为获取 Bean 类型时会将该类加载到 JVM 中。默认情况下永远为 true。
-					 *    mdb.beanClass 已经解析完成，这毫无疑问可以获取 bean 类型。
-					 *    mbd.lazyInit=false 非懒加载 bean 时解析 Bean 类型，因为此时需要在 JVM 上加载 mdb.className 为 mdb.beanClass。默认为 false，也就是可以加载 Bean 类型。
-					 *    allowEagerClassLoading=true 表示强制加载 mdb.className，即使 mbd.lazyInit=true。Spring 容器 allowEagerClassLoading 默认为 true，而且目前为至，没有发现 Spring 的上下文将其修改为 false 的。也就是这一项条件判断永远为 true。
-					 *-->4：requiresEagerInitForType()通常情况下返回 false，只有当工厂类为 FactoryBean 时且未初始化时才返回 true 时。如果为 true 则表示 FactoryBean 需要提前初始化，即必须允许提前初始化，也就是说 allowEagerInit=true
-					 *
-					 */
-					if (!mbd.isAbstract() && (allowEagerInit ||
-							(mbd.hasBeanClass() || !mbd.isLazyInit() || isAllowEagerClassLoading()) &&
-									!requiresEagerInitForType(mbd.getFactoryBeanName()))) {
+					if (!mbd.isAbstract() && (  //-->1:不能是抽象类，这点显而易见
+							allowEagerInit || (//-->2:allowEagerInit=true 表示可以提前初始化 FactoryBean。因为 FactoryBean 只有初始化才能通过 getObjectType 获取其类型。当然还有一种兜底的方案是 FactoryBean 上的泛型
+									mbd.hasBeanClass() ||  //-->3.1:已经解析完成，这毫无疑问可以获取 bean 类型。
+											!mbd.isLazyInit() ||  //-->3.2:非懒加载 bean 时解析 Bean 类型，因为此时需要在 JVM 上加载 mdb.className 为 mdb.beanClass。默认为 false，也就是可以加载 Bean 类型。
+											isAllowEagerClassLoading()) && //-->3.3:表示强制加载 mdb.className，即使 mbd.lazyInit=true。Spring 容器 allowEagerClassLoading 默认为 true，而且目前为至，没有发现 Spring 的上下文将其修改为 false 的。也就是这一项条件判断永远为 true
+									!requiresEagerInitForType(mbd.getFactoryBeanName()))) { //-->4:requiresEagerInitForType()通常情况下返回 false，只有当工厂类为 FactoryBean 时且未初始化时才返回 true 时。如果为 true 则表示 FactoryBean 需要提前初始化，即必须允许提前初始化，也就是说 allowEagerInit=true
+						//是否为FactoryBean,解析结果保存到bd中
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 						// 1.2 匹配beanName
 
 						//首先要对 isTypeMatch 方法有一定的了解，isTypeMatch 获取 Bean 类型时，如果发现是 FactoryBean，会提前部分初始化 FactoryBean，所以判断前需要判断能不能调用该方法
 						boolean matchFound = false;
-						//allowEagerInit=true 允许提前部分初始化
-						boolean allowFactoryBeanInit = (allowEagerInit || containsSingleton(beanName));
-						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit());
-						if (!isFactoryBean) {
-							//不是factoryBean
-							//允许非单例或者beanName是单例
-							if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
+						boolean allowFactoryBeanInit =
+								(
+										allowEagerInit || //允许提前部分初始化
+												containsSingleton(beanName) //包含该beanName的单利对象
+								);
+						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit()); //不是懒加载
+						if (!isFactoryBean) { //非factoryBean
+							if (includeNonSingletons || //允许非单例
+									isSingleton(beanName, mbd, dbd)) { //beanName是单例
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
-						} else {
-							//factoryBean
-							if (includeNonSingletons || isNonLazyDecorated ||
-									(allowFactoryBeanInit && isSingleton(beanName, mbd, dbd))) {
+						} else {//是factoryBean
+							if (includeNonSingletons ||  //允许非单例
+									isNonLazyDecorated ||  //不是懒加载
+									(allowFactoryBeanInit && //运行FactoryBean 初始化
+											isSingleton(beanName, mbd, dbd))) { //beanName是单例
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
-							if (!matchFound) {
+							if (!matchFound) { //没有找到
 								// In case of FactoryBean, try to match FactoryBean instance itself next.
-								beanName = FACTORY_BEAN_PREFIX + beanName;
+								beanName = FACTORY_BEAN_PREFIX + beanName; //找该bean对应的factoryBean
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
 						}
@@ -694,22 +699,25 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		// Check manually registered singletons too.
+		//检查手动注册的单例对象.
 		for (String beanName : this.manualSingletonNames) {
 			try {
 				// In case of FactoryBean, match object created by FactoryBean.
-				if (isFactoryBean(beanName)) {
+				if (isFactoryBean(beanName)) { //是factoryBean
 					// 2.1 匹配beanName
-					if ((includeNonSingletons || isSingleton(beanName)) && isTypeMatch(beanName, type)) {
+					if ((includeNonSingletons ||  //允许非单例
+							isSingleton(beanName)) &&  //beanName 是单例对象
+							isTypeMatch(beanName, type)) { //beanName 类型匹配
 						result.add(beanName);
 						// Match found for this bean: do not match FactoryBean itself anymore.
 						continue;
 					}
 					// 2.2 没有匹配成功，继续匹配&beanName
 					// In case of FactoryBean, try to match FactoryBean itself next.
-					beanName = FACTORY_BEAN_PREFIX + beanName;
+					beanName = FACTORY_BEAN_PREFIX + beanName; //该bean的factoryBean
 				}
 				// Match raw bean instance (might be raw FactoryBean).
-				if (isTypeMatch(beanName, type)) {
+				if (isTypeMatch(beanName, type)) { //检查类型是否匹配
 					result.add(beanName);
 				}
 			} catch (NoSuchBeanDefinitionException ex) {
@@ -733,12 +741,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * @param factoryBeanName a factory-bean reference that the bean definition
 	 *                        defines a factory method for
 	 * @return whether eager initialization is necessary
-	 * ① mbd 存在 factoryBeanName 工厂类
-	 * ② factoryBeanName 为 FactoryBean
-	 * ③ FactoryBean 未实例化。
 	 */
 	private boolean requiresEagerInitForType(@Nullable String factoryBeanName) {
-		return (factoryBeanName != null && isFactoryBean(factoryBeanName) && !containsSingleton(factoryBeanName));
+		return (factoryBeanName != null && //mbd 存在 factoryBeanName 工厂类
+				isFactoryBean(factoryBeanName) && //factoryBeanName 为 FactoryBean
+				!containsSingleton(factoryBeanName));//FactoryBean 未实例化。
 	}
 
 	/**
@@ -1826,12 +1833,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// 这里会根据descriptor.isEager()来决定是否要匹配factoryBean类型的Bean
 		// 如果isEager()为true,那么会匹配factoryBean，反之，不会
 
-		// 获取类型匹配的bean的beanName列表（包括父容器，但是此时还没有进行泛型的精确匹配）
-		//BeanFactoryUtils.beanNamesForTypeIncludingAncestors，该方法除了当前beanFactory还会递归对父parentFactory进行查找
-		// 2. 类型查找：本质上递归调用beanFactory#beanNamesForType。先匹配实例类型，再匹配bd。
-		//包括 ①外部托管 Bean ②注册 BeanDefinition。类型查找调用 beanFactory#beanNamesForType 方法，详见 Spring IoC 依赖查找之类型自省。我们来看一下如何过滤的。
-		//自身引用：isSelfReference 方法判断 beanName 和 candidate 是否是同一个对象，包括两种情况：一是名称完全相同，二是 candidate 对应的工厂对象创建了 beanName
-		//是否可以注入：底层实际调用 resolver.isAutowireCandidate 方法进行过滤，包含三重规则：①bd.autowireCandidate=true -> ②泛型匹配 -> ③@Qualifier。下面会详细介绍这个方法。
+		// 获取类型匹配的bean的beanName列表（包括父容器，但是此时还没有进行泛型的精确匹配）,类型查找：本质上递归调用beanFactory#beanNamesForType。先匹配bd，再匹配实例类型。
 		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 				this, requiredType, true, descriptor.isEager());
 

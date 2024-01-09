@@ -174,7 +174,7 @@ public abstract class AnnotationUtils {
 		return true;
 	}
 
-	/**
+ 	/**
 	 * Get a single {@link Annotation} of {@code annotationType} from the supplied
 	 * annotation: either the given annotation itself or a direct meta-annotation
 	 * thereof.
@@ -1173,14 +1173,14 @@ public abstract class AnnotationUtils {
 		return MergedAnnotation.of(annotationType).getDefaultValue(attributeName).orElse(null);
 	}
 
-	/**
+ 	/**
 	 * <em>Synthesize</em> an annotation from the supplied {@code annotation}
 	 * by wrapping it in a dynamic proxy that transparently enforces
 	 * <em>attribute alias</em> semantics for annotation attributes that are
 	 * annotated with {@link AliasFor @AliasFor}.
 	 * @param annotation the annotation to synthesize
 	 * @param annotatedElement the element that is annotated with the supplied
-	 * annotation; may be {@code null} if unknown
+	 * annotation; may be {@code null} if unknown 被注解元素注解的对象，可为null
 	 * @return the synthesized annotation if the supplied annotation is
 	 * <em>synthesizable</em>; {@code null} if the supplied annotation is
 	 * {@code null}; otherwise the supplied annotation unmodified
@@ -1189,10 +1189,17 @@ public abstract class AnnotationUtils {
 	 * @since 4.2
 	 * @see #synthesizeAnnotation(Map, Class, AnnotatedElement)
 	 * @see #synthesizeAnnotation(Class)
+	 *
+	 * 作用：来获取一个动态代理注解（相当于调用者传进来的注解会被代理掉），该方法是别名注解@AliasFor的核心原理。
 	 */
 	public static <A extends Annotation> A synthesizeAnnotation(
 			A annotation, @Nullable AnnotatedElement annotatedElement) {
 
+		/**
+		 * 注解被代理或者
+		 * JAVA元注解(java.lang)+Spring元注解(org.springframework.lang)
+		 * 直接返回.
+		 */
 		if (annotation instanceof SynthesizedAnnotation || AnnotationFilter.PLAIN.matches(annotation)) {
 			return annotation;
 		}

@@ -116,6 +116,7 @@ class ResolvableTypeTests {
 	@Test
 		// gh-23321
 	void forRawClassAssignableFromTypeVariable() throws Exception {
+		TypeVariable<Class<ExtendsList>>[] typeParameters = ExtendsList.class.getTypeParameters();
 		ResolvableType typeVariable = ResolvableType.forClass(ExtendsList.class).as(ArrayList.class).getGeneric();
 		ResolvableType raw = ResolvableType.forRawClass(CharSequence.class);
 		assertThat(raw.resolve()).isEqualTo(CharSequence.class);
@@ -153,6 +154,7 @@ class ResolvableTypeTests {
 		ResolvableType type = ResolvableType.forInstance(new MyGenericInterfaceType<String>(null));
 		assertThat(type.getType()).isEqualTo(MyGenericInterfaceType.class);
 		assertThat(type.resolve()).isEqualTo(MyGenericInterfaceType.class);
+		assertThat(type.getGeneric().resolveType()).isEqualTo(ResolvableType.NONE);
 	}
 
 	@Test

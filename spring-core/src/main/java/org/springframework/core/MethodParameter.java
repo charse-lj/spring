@@ -63,8 +63,8 @@ public class MethodParameter {
 	private static final Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 
 
-	/**
-	 * 方法或者构造函数.
+ 	/**
+	 * 方法或者构造方法.
 	 */
 	private final Executable executable;
 
@@ -84,7 +84,7 @@ public class MethodParameter {
 	 */
 	private int nestingLevel;
 
-	/**
+ 	/**
 	 * Map from Integer level to Integer type index.
 	 *  List<Map<String,List<Integer>>>
 	 *  typeIndexesPerLevel=(1,0) --> List
@@ -137,7 +137,7 @@ public class MethodParameter {
 	private volatile MethodParameter nestedMethodParameter;
 
 
-	/**
+ 	/**
 	 * Create a new {@code MethodParameter} for the given method, with nesting level 1.
 	 * @param method the Method to specify a parameter for
 	 * @param parameterIndex the index of the parameter: -1 for the method return type; 0 for the first method parameter; 1 for the second method parameter, etc.
@@ -148,7 +148,7 @@ public class MethodParameter {
 		this(method, parameterIndex, 1);
 	}
 
-	/**
+ 	/**
 	 * Create a new {@code MethodParameter} for the given method.
 	 * @param method the Method to specify a parameter for
 	 * @param parameterIndex the index of the parameter: -1 for the method
@@ -165,6 +165,7 @@ public class MethodParameter {
 		this.executable = method;
 		// 校验参数索引.
 		this.parameterIndex = validateIndex(method, parameterIndex);
+		//参数的嵌套层次
 		this.nestingLevel = nestingLevel;
 	}
 
@@ -422,7 +423,7 @@ public class MethodParameter {
 		return nestedParam;
 	}
 
-	/**
+ 	/**
 	 * List<List<Map<String,Integer>>>
 	 *  |    |    |    |      |
 	 * 1:1  2:1  3:1  4:1    4:2 --> 4:1和4:2不能同时存在

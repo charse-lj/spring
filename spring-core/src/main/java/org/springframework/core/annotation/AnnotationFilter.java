@@ -34,22 +34,21 @@ import java.lang.annotation.Annotation;
 @FunctionalInterface
 public interface AnnotationFilter {
 
-	/**
+  	/**
 	 * {@link AnnotationFilter} that matches annotations in the
 	 * {@code java.lang} and {@code org.springframework.lang} packages
 	 * and their subpackages.
 	 * <p>This is the default filter in the {@link MergedAnnotations} model.
 	 *
-	 * JAVA元注解+Spring元注解
-	 * java.lang 位于rt.jar中,org.springframework.lang 位于 spring-core包中
+	 * 类是否属于 java.lang、org.springframework.lang 包
 	 */
 	AnnotationFilter PLAIN = packages("java.lang", "org.springframework.lang");
 
-	/**
+ 	/**
 	 * {@link AnnotationFilter} that matches annotations in the
 	 * {@code java} and {@code javax} packages and their subpackages.
 	 *
-	 * JAVA元注解
+	 * 类是否属于 java、javax包
 	 */
 	AnnotationFilter JAVA = packages("java", "javax");
 
@@ -109,28 +108,34 @@ public interface AnnotationFilter {
 	};
 
 
-	/**
+ 	/**
 	 * Test if the given annotation matches the filter.
 	 * @param annotation the annotation to test
 	 * @return {@code true} if the annotation matches
+	 *
+	 * 根据注解匹配
 	 */
 	default boolean matches(Annotation annotation) {
 		return matches(annotation.annotationType());
 	}
 
-	/**
+ 	/**
 	 * Test if the given type matches the filter.
 	 * @param type the annotation type to test
 	 * @return {@code true} if the annotation matches
+	 *
+	 * 根据类匹配
 	 */
 	default boolean matches(Class<?> type) {
 		return matches(type.getName());
 	}
 
-	/**
+ 	/**
 	 * Test if the given type name matches the filter.
 	 * @param typeName the fully qualified class name of the annotation type to test
 	 * @return {@code true} if the annotation matches
+	 *
+	 * 根据名称匹配
 	 */
 	boolean matches(String typeName);
 
